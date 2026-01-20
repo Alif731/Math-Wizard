@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
 const QuestionCard = ({ problem, onSubmit }) => {
-  const [answer, setAnswer] = useState('');
+  const [answer, setAnswer] = useState("");
 
   const handleSubmit = (e) => {
     e.preventDefault();
     onSubmit(answer);
-    setAnswer('');
+    setAnswer("");
   };
 
   if (!problem) return <div className="text-center p-8">Loading...</div>;
@@ -16,7 +16,7 @@ const QuestionCard = ({ problem, onSubmit }) => {
       <h2 className="text-xl font-bold text-gray-700 mb-4 uppercase tracking-wide">
         {problem.concept.title}
       </h2>
-      
+
       <div className="text-3xl font-bold text-blue-600 mb-8 text-center">
         {problem.question.text}
       </div>
@@ -30,7 +30,7 @@ const QuestionCard = ({ problem, onSubmit }) => {
           className="p-4 text-xl border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none text-center"
           autoFocus
         />
-        <button 
+        <button
           type="submit"
           className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-xl text-lg transition-transform transform hover:scale-105 active:scale-95"
         >

@@ -1,0 +1,33 @@
+// @forward "global";
+@forward "util";
+
+body {
+  // background-color: rgb(48, 48, 48);
+  font-family: cursive;
+  background-color: rgb(255 255 251);
+}
+
+.homeScreen > h1 {
+  color: rgb(173, 125, 125);
+  text-align: end;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.content {
+  padding: 16px;
+}
+
+form {
+  font-size: 2.2rem;
+}
+
+input {
+  border-radius: 6px;
+  font-size: 1.2rem;
+  font-family: cursive;
+}
