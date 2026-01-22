@@ -1,4 +1,6 @@
+// Big O Analysis: O(1) - Rendering cost is constant per interaction.
 import React, { useState } from "react";
+import "../sass/components/questionCard.scss"; // Ensure this file exists
 
 const QuestionCard = ({ problem, onSubmit }) => {
   const [answer, setAnswer] = useState("");
@@ -9,31 +11,27 @@ const QuestionCard = ({ problem, onSubmit }) => {
     setAnswer("");
   };
 
-  if (!problem) return <div className="text-center p-8">Loading...</div>;
+  if (!problem) return <div className="loading-state">Loading...</div>;
 
   return (
-    <div className="bg-white p-8 rounded-2xl shadow-xl max-w-lg mx-auto mt-10 border-4 border-blue-200">
-      <h2 className="text-xl font-bold text-gray-700 mb-4 uppercase tracking-wide">
-        {problem.concept.title}
-      </h2>
+    <div className="question-card">
+      <h1 className="card-header">{problem.concept.title}</h1>
 
-      <div className="text-3xl font-bold text-blue-600 mb-8 text-center">
-        {problem.question.text}
+      <div className="question-text">
+        {" "}
+        <span className="highlight1">Q,</span> {problem.question.text}
       </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <form onSubmit={handleSubmit} className="answer-form">
         <input
           type="text"
           value={answer}
           onChange={(e) => setAnswer(e.target.value)}
           placeholder="Type your answer here..."
-          className="p-4 text-xl border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none text-center"
+          className="answer-input"
           autoFocus
         />
-        <button
-          type="submit"
-          className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-xl text-lg transition-transform transform hover:scale-105 active:scale-95"
-        >
+        <button type="submit" className="submit-btn">
           Submit Answer
         </button>
       </form>

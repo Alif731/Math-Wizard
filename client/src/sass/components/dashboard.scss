@@ -1,0 +1,154 @@
+// Variables for colors (Tailwind approximations)
+$white: #ffffff;
+$gray-50: #f9fafb;
+$gray-200: #e5e7eb;
+$gray-300: #d1d5db;
+$gray-500: #6b7280;
+$gray-600: #4b5563;
+$gray-700: #374151;
+$gray-800: #1f2937;
+
+$green-50: #f0fdf4;
+$green-200: #bbf7d0;
+$green-500: #22c55e;
+$green-800: #166534;
+
+$yellow-50: #fefce8;
+$yellow-200: #fde047;
+$yellow-400: #facc15;
+$yellow-800: #854d0e;
+
+// --- Main Dashboard Card ---
+.dashboard-card {
+  min-height: 500px;
+  background-color: $white;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  // margin-bottom: 2rem;
+
+  .dashboard-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: $gray-800;
+    margin: 0;
+    margin-bottom: 1.5rem;
+    color: #f2e9e4;
+    background: #343463;
+    border-radius: 20px;
+    padding: 10px;
+    text-align: center;
+  }
+
+  .dashboard-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem; // gap-4
+  }
+}
+
+// --- Individual Node Item ---
+.node-item {
+  padding: 1rem; // p-4
+  border-radius: 0.5rem; // rounded-lg
+  border-left-width: 4px; // border-l-4
+  border-left-style: solid;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); // shadow-sm
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  // 1. Mastered State
+  &.mastered {
+    background-color: $green-50;
+    border-left-color: $green-500;
+  }
+
+  // 2. Unlocked State
+  &.unlocked {
+    background-color: $yellow-50;
+    border-left-color: $yellow-400;
+  }
+
+  // 3. Locked State (Default)
+  &.locked,
+  &:not(.mastered):not(.unlocked) {
+    background-color: $gray-50;
+    border-left-color: $gray-300;
+    opacity: 0.7;
+  }
+}
+
+// --- Node Header (Title + Badge) ---
+.node-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem; // mb-2
+
+  .node-title {
+    font-weight: 700; // font-bold
+    font-size: 0.875rem; // text-sm
+    color: $gray-700;
+    text-transform: uppercase;
+    letter-spacing: 0.025em; // tracking-wide
+  }
+
+  .node-badge {
+    font-size: 0.75rem; // text-xs
+    font-weight: 700;
+    padding: 0.25rem 0.5rem; // px-2 py-1
+    border-radius: 9999px; // rounded-full
+
+    &.mastered {
+      background-color: $green-200;
+      color: $green-800;
+    }
+
+    &.unlocked {
+      background-color: $yellow-200;
+      color: $yellow-800;
+    }
+
+    &.locked,
+    &:not(.mastered):not(.unlocked) {
+      background-color: $gray-200;
+      color: $gray-600;
+    }
+  }
+}
+
+// --- Progress Section ---
+.progress-container {
+  width: 100%;
+  margin-top: 0.25rem; // mt-1
+
+  .progress-track {
+    width: 100%;
+    background-color: $gray-200;
+    border-radius: 9999px; // rounded-full
+    height: 0.625rem; // h-2.5
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 9999px;
+    transition: width 0.3s ease;
+
+    &.mastered {
+      background-color: $green-500;
+    }
+    // Default/Unlocked color
+    &:not(.mastered) {
+      background-color: $yellow-400;
+    }
+  }
+
+  .progress-text {
+    text-align: right;
+    font-size: 10px; // specific pixel value from original
+    color: $gray-500;
+    margin-top: 0.25rem;
+  }
+}
