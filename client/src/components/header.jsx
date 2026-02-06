@@ -43,6 +43,9 @@ export default function Header() {
           <Link to="/home" className="navbar__item__title">
             Maths Wizard
           </Link>
+          <div className="navbar__item__icon" onClick={navBarExpandHandler}>
+            <IoMenuSharp />
+          </div>
         </li>
         {/* --- CONDITIONAL RENDERING --- */}
         {userInfo && userInfo.isAdmin && (
@@ -93,23 +96,37 @@ export default function Header() {
           </>
         ) : (
           // If user is not logged in, show a Sign In link
-          <li
-            className={isNavExpanded ? "navbar__item" : "navbar__item expanded"}
-          >
-            <Link to="/" className="navbar__item__link">
-              <div
-                className="navbar__item__link__innerChild"
-                style={{ display: "flex" }}
-              >
-                Sign In
-              </div>
-            </Link>
-          </li>
+          <>
+            <li
+              className={
+                isNavExpanded ? "navbar__item" : "navbar__item expanded"
+              }
+            >
+              <Link to="/" className="navbar__item__link">
+                <div
+                  className="navbar__item__link__innerChild"
+                  style={{ display: "flex" }}
+                >
+                  Sign In
+                </div>
+              </Link>
+            </li>
+            <li
+              className={
+                isNavExpanded ? "navbar__item" : "navbar__item expanded"
+              }
+            >
+              <Link to="/profile" className="navbar__item__link">
+                <div
+                  className="navbar__item__link__innerChild"
+                  style={{ display: "flex" }}
+                >
+                  Profile
+                </div>
+              </Link>
+            </li>
+          </>
         )}
-
-        <div className="navbar__item" onClick={navBarExpandHandler}>
-          <IoMenuSharp />
-        </div>
       </ul>
     </nav>
   );

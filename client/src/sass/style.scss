@@ -1,13 +1,16 @@
 // @forward "global";
 @forward "util";
+
 body {
-  // background-color: rgb(48, 48, 48);
   font-family: cursive;
-  // background-color: whitesmoke;
-  background-color: #ebeae9;
+  // background-color: #ebeae9;
   margin: 0px;
 }
 
+// #root {
+//   display: flex;
+//   justify-content: center;
+// }
 .homeScreen > h1 {
   color: rgb(173, 125, 125);
   text-align: end;
@@ -17,6 +20,8 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  // align-items: center;
+  // width: 100%;
 }
 
 .content {
@@ -31,4 +36,19 @@ input {
   border-radius: 6px;
   font-size: 1.2rem;
   font-family: cursive;
+}
+
+main {
+  // width: 85%;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
 }

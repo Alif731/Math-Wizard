@@ -54,25 +54,27 @@ const Home = () => {
 
   const isMastered = problem?.complete;
 
+  if (!problem) return <div className="loading-state">Loading...</div>;
   return (
     <div className="home-page">
       {/* --- ADDED BACK: GAME HEADER --- */}
       <header className="game-header">
-        <div className="zpd__text">
+        <h1 className="card__header">{problem.concept.title}</h1>
+        {/* <div className="zpd__text">
           <strong className="zpd-title">
             {status?.zpdNodes?.join(", ") || "Analyzing..."}:
           </strong>
           ZP <span className="highlight">D </span> Level
-        </div>
+        </div> */}
         <div className="player-badge highlight2">
-          <span className="highlight1">H</span>i there
+          <span className="highlight1">G</span>ood{" "}
+          <span className="highlight2">M</span>orning {username}
           <strong style={{ marginLeft: "0.4rem" }}>
             {" "}
-            {username}. Let's Continue this Journey!
+            . <span className="highlight1">L</span>et's Continue this Journey!
           </strong>
         </div>
       </header>
-
       <main className="home-layout">
         {/* --- LEFT COLUMN: GAME AREA --- */}
         {/* <section className="game-section"> */}
@@ -122,11 +124,6 @@ const Home = () => {
             />
           )
         )}
-        {/* --- RIGHT COLUMN: DASHBOARD --- */}
-        <aside className="sidebar-section">
-          <Dashboard status={status} />
-        </aside>
-        {/* </section> */}
       </main>
     </div>
   );

@@ -40,31 +40,35 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     // font-style: italic;
     border-radius: 12px;
     border-right: 5px solid #eab308;
+    border-bottom: 5px solid #eab308;
+    // background: #9a8c98;
+
     font-family: cursive;
 
     color: #9a8c98;
     padding: 10px;
     border-radius: 9999px;
     font-weight: bold;
-    font-size: 1.5rem;
+    font-size: 1.4rem;
 
     // transition
     display: flex;
     align-items: center;
     cursor: default;
-    transition: all 0.3s ease;
-    animation: tilt-shaking 1s ease-in-out infinite;
+    transition: all 0.7s ease;
+    // animation: tilt-shaking 1s ease-in-out infinite;
 
     &:hover {
       background-color: #22223b;
-      color: #9a8c98;
+      color: white;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); // Slight lift on hover
       animation: none;
+      cursor: pointer;
     }
 
     // --- THE HOVER LOGIC ---
     strong {
-      color: #f2e9e4;
+      color: #ffffff;
 
       // 1. Hidden State (Default)
       max-width: 0; // Takes up no width
@@ -194,6 +198,7 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
       color: #f2e9e4;
       background: #343463;
       transform: scale(1.05);
+      cursor: pointer;
     }
   }
 }
@@ -231,6 +236,11 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 .highlight1 {
   font-weight: bolder;
   color: #eab308;
+}
+.highlight2 {
+  font-weight: bolder;
+  color: #eab308;
+  margin-left: 0.4rem;
 }
 
 .zpd__text {
@@ -282,48 +292,31 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   }
 }
 
+
 // --- 7. ANIMATIONS ---
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
+// @keyframes spin {
+//   from {
+//     transform: rotate(0deg);
+//   }
+//   to {
+//     transform: rotate(360deg);
+//   }
+// }
 
-@keyframes tilt-shaking {
-  0% {
-    transform: rotate(0deg);
-  }
-  25% {
-    transform: rotate(1deg);
-  }
-  50% {
-    transform: rotate(0deg);
-  }
-  75% {
-    transform: rotate(-1deg);
-  }
-  100% {
-    transform: rotate(0deg);
-  }
-}
-
-@keyframes tilt-n-move-shaking {
-  0% {
-    transform: translate(0, 0) rotate(0deg);
-  }
-  25% {
-    transform: translate(1px, 1px) rotate(1deg);
-  }
-  50% {
-    transform: translate(0, 0) rotate(0eg);
-  }
-  75% {
-    transform: translate(-1px, 1px) rotate(-1deg);
-  }
-  100% {
-    transform: translate(0, 0) rotate(0deg);
-  }
-}
+// @keyframes tilt-shaking {
+//   0% {
+//     transform: rotate(0deg);
+//   }
+//   25% {
+//     transform: rotate(2deg);
+//   }
+//   50% {
+//     transform: rotate(0deg);
+//   }
+//   75% {
+//     transform: rotate(-2deg);
+//   }
+//   100% {
+//     transform: rotate(0deg);
+//   }
+// }

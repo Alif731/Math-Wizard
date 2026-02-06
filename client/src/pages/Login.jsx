@@ -29,7 +29,7 @@ const Login = () => {
   };
 
   return (
-    <>
+    <div className="login__main">
       <div className="login__container">
         <h1 className="login__container__header">Math Master</h1>
         <p>Enter your details to start the adventure!</p>
@@ -75,7 +75,7 @@ const Login = () => {
         </div>
       </div>
       <div className="login__container__image">Insert Image here</div>
-    </>
+    </div>
   );
 };
 
