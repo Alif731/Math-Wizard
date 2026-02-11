@@ -9,14 +9,7 @@
 // --- Main Card Container ---
 .question__card {
   height: 100%;
-  > h1 {
-    padding: 10px;
-    text-align: center;
-    border-right: 5px solid #eab308;
-    border-left: 5px solid #eab308;
-  }
-  background-color: #f9f9f9;
-  // background-color: #17172b;
+  // background-color: #f9f9f9;
   padding: 4rem 2rem;
   padding-top: 0;
   border-radius: 1rem;
@@ -28,19 +21,20 @@
   font-family: cursive;
   border-bottom: 5px solid #eab308;
   border-right: 5px solid #eab308;
+  box-shadow: rgb(234 179 8 / 18%) 3px 3px 6px 0px inset, rgb(255 255 255 / 0%) -3px -3px 6px 1px inset;
 }
 
 // --- Question Display ---
 .question__text {
   font-family: cursive;
   font-weight: 700;
-  padding: 10px 5px;
+  padding: 7px;
   // color: #9e9ba0;
   // background-color: #17172b;
-  background-color: #4A4E69;
-  // color: #cfdbd5;
-  // font-size: 3rem;
-  // text-shadow: 1px -3px white;
+  background-color: #22223B;
+  border-radius: 1rem;
+  border-left: 5px solid #eab308;
+  // border-top: 5px solid #eab308;
   color: #dfc9db;
   font-size: 2rem;
   text-shadow: 1px 2px white;
@@ -123,26 +117,21 @@
     margin-left: auto;
     margin-right: auto;
     font-family: cursive;
-    background-color: #4A4E69;
+    background-color: #22223B;
     color: #F2E9E4;
     font-weight: 700; // font-bold
-    padding: 0.75rem 1.5rem; // py-3 px-6
-    border-radius: 0.75rem; // rounded-xl
-    font-size: 1.125rem; // text-lg
+    padding: 0.75rem 1.5rem; 
+    border-radius: 0.75rem;
+    font-size: 1.5rem;
     border: none;
     cursor: pointer;
     transition:all 0.8s ease;
 
     &:hover {
-    width: 100%;
-    // background-color: #b1a0ae;
-    background-color: #22223B;
-    color:#F2E9E4 ;
+    background-color: #4A4E69;
+    color:#dfc9db ;
     transform:none; // hover:scale-105
-    }
-
-    &:active {
-      transform: scale(0.95); // active:scale-95
+    transform: scale(1.2);
     }
   }
 }
@@ -289,19 +278,25 @@
   }
   &__success {
     color: white;
-        box-shadow: none;
+    box-shadow: none;
     width: 100%;
-    background-color: #c34646;
     background-color: #46c388;
     color: white;
     font-weight: bold;
     border: 3px solid rgb(240, 239, 239) !important;
-
     animation: none; // Stop breathing
-    // transform: scale(1.05); // Slightly bigger
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.281);
     padding: 0;
+    animation: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
   }
+  &__error {
+  width: 100%;
+  box-shadow: none;
+  background-color: #c34646;
+  color: #ffffff !important;
+  padding: 0;
+  animation: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
 }
 
 .visual__input__icon {
@@ -423,4 +418,12 @@
     // background-color: #c7c6c6;
 
   }
+}
+
+
+@keyframes shake {
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(2px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+  40%, 60% { transform: translate3d(4px, 0, 0); }
 }

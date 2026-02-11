@@ -57,34 +57,32 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     display: flex;
     align-items: center;
     cursor: default;
-    transition: all 1s ease-in-out ;
+    transition: all 0.5s ease-in-out ;
     // animation: tilt-shaking 1s ease-in-out infinite;
 
     &:hover {
       background-color: #22223b;
-      color: white;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); // Slight lift on hover
-      animation: none;
+      // animation: none;
+      color: white;
       text-shadow: none;
       cursor: pointer;
     }
 
     // --- THE HOVER LOGIC ---
-    strong {
-      color: #ffffff;
-
+    strong { 
       // 1. Hidden State (Default)
       max-width: 0; // Takes up no width
       opacity: 1; // Invisible
       overflow: hidden; // Hides the text that overflows width 0
       white-space: nowrap; // Keeps text on one line so it slides out
       transition:
-        max-width 0.8s ease-in-out,
-        opacity 0.8s ease-in-out,
-        margin 0.8s ease;
+      max-width 0.8s ease-in-out,
+      opacity 0.8s ease-in-out,
+      margin 0.8s ease;
       margin-right: 0; // No gap when hidden
-      text-shadow: none;
-
+      color: white;// perfect animation
+      text-shadow: none;// perfect animation
     }
 
     // 2. Visible State (On Parent Hover)
@@ -265,7 +263,7 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   align-items: center;
   cursor: default;
   transition: all 0.3s ease;
-  animation: tilt-shaking 1s ease-in-out infinite;
+  // animation: tilt-shaking 1s ease-in-out infinite;
 
   &:hover {
     animation: none;
@@ -299,5 +297,10 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   }
 }
 
-
-
+@keyframes tilt-shake {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(-4deg); }
+  50% { transform: rotate(4deg); }
+  75% { transform: rotate(-4deg); }
+  100% { transform: rotate(0deg); }
+}

@@ -256,14 +256,14 @@ const seedData = async () => {
       role: "student",
       mastery: {},
       // zpdNodes: ["add_single"], // Root node
-      // zpdNodes: ["foundation_signs"],
-      zpdNodes: ["visual_addition"],
+      zpdNodes: ["foundation_signs"],
+      // zpdNodes: ["visual_addition"],
     });
 
     // Initialize mastery for root
     // testUser.mastery.set("add_single", {
-    // testUser.mastery.set("foundation_signs", {
-    testUser.mastery.set("visual_addition", {
+    testUser.mastery.set("foundation_signs", {
+    // testUser.mastery.set("visual_addition", {
       status: "unlocked",
       successCount: 0,
       attemptCount: 0,

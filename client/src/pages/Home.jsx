@@ -43,16 +43,10 @@ const handleAnswerSubmit = async (answer) => {
         response: answer,
       }).unwrap();
 
-      // ✅ LOGIC SPLIT:
-      if (result.isCorrect) {
-        // 1. CORRECT: Do NOT set feedback. 
-        // The QuestionCard has already shown the green bar animation.
+        // refetch questions
         setFeedback(null); 
         refetchProblem(); 
-      } else {
-        // 2. WRONG: Set feedback to show the Red "Wrong" Card.
-        setFeedback(result);
-      }
+      
 
     } catch (err) {
       console.error("Failed to submit:", err);
@@ -113,9 +107,9 @@ const handleAnswerSubmit = async (answer) => {
             </button>
           </div>
         ) : // 2. MASTERY MESSAGE */}
-        {feedback && !feedback.isCorrect ? (
+        {/*
+        feedback && !feedback.isCorrect ? (
           <div className="feedback-card error">
-             {/* ... inside here is your Red X and explanation ... */}
              <div className="feedback-icon">❌</div>
              <h2 className="feedback-title">Wrong</h2>
              <p className="feedback-text">
@@ -123,8 +117,9 @@ const handleAnswerSubmit = async (answer) => {
              </p>
              <button onClick={handleNext} className="btn-next">Next</button>
           </div>
-        ):
-       isMastered ? (
+        ) : 
+         */}
+       {isMastered ? (
           <div className="status-card master">
             You have mastered all available concepts!
           </div>

@@ -1,29 +1,23 @@
-// Big O Analysis: O(1) - Rendering cost is constant per interaction.
 import React, { useState,useEffect } from "react";
 import "../sass/components/questionCard.scss"; // Ensure this file exists
-import { IoIosCheckmarkCircle } from "react-icons/io";
-
-
 
 const QuestionCard = ({ problem, onSubmit }) => {
   const [answer, setAnswer] = useState("");
   const [isSuccess, setIsSuccess] = useState(false); 
+  const [isError, setIsError] = useState(false);
 
   // Reset state when the problem changes
   useEffect(() => {
     setAnswer("");
     setIsSuccess(false);
+    setIsError(false);
   }, [problem]);
-  console.log(problem);
+  // console.log(problem);
 
-  // const safeAnswer = answer ? answer.toString().trim() : "";
-  // if (!safeAnswer) return;
-  // const dbAnswer = problem.question.correctAnswer.toString();
-  // const isCorrect = safeAnswer === dbAnswer;
 const handleSubmit = (e) => {
     if (e && e.preventDefault) e.preventDefault();
     
-    // 1. SAFETY: Check for empty input
+    // SAFETY: Check for empty input
     if (answer === "" || answer === null || answer === undefined) return;
 
     // 2. SAFETY: Check if backend data exists (prevents crash)
@@ -33,26 +27,32 @@ const handleSubmit = (e) => {
       return;
     }
 
-    // 3. COMPARISON FIX: Convert both to Strings so "15" == 15
+    // Convert both to Strings so "15" == 15
     const userAnswer = String(answer).trim();
     const dbAnswer = String(rawCorrect).trim();
     const isCorrect = userAnswer === dbAnswer;
 
-    // 4. ANIMATION LOGIC
-    if (isCorrect && problem.question.type === "visual") {
-      setIsSuccess(true); // <--- Triggers the Green Bar swap
-
-      // Wait 1.5 seconds for animation, THEN submit
-      setTimeout(() => {
-        onSubmit(userAnswer);
-      }, 1500); 
+    // ANIMATION LOGIC
+   if (problem.question.type === "visual") {
+      if (isCorrect) {
+        // SUCCESS ANIMATION
+        setIsSuccess(true);
+        setTimeout(() => {
+          onSubmit(userAnswer);
+        }, 1500);
+      } else {
+        // ERROR ANIMATION
+        setIsError(true);
+        setTimeout(() => {
+            onSubmit(userAnswer);
+        }, 1500);
+      }
     } else {
-      // If wrong or not visual, submit immediately
+      // If not visual, submit immediately without animation
       onSubmit(userAnswer);
     }
   };
   
-  // Helper for Enter key in the new visual input
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
       handleSubmit(e);
@@ -66,15 +66,16 @@ const handleSubmit = (e) => {
   const questionType = problem.question.type;
   const visualData = problem.question.visualData;
 
+  // Helper to determine bars container class based on state
+  const getInputClass = () => {
+      if (isSuccess) return "visual__input visual__input__success";
+      if (isError) return "visual__input visual__input__error";
+      return "visual__input";
+  };
+
+  // ------------------------------------------------------------------------------------------------------- // 
   return (
     <div className="question__card">
-      {/* <h1 className="card__header">{problem.concept.title}</h1> */}
-      {/* {isConceptual && (
-        <h2 className="card__header__type">
-          Select Correct Operator{" "}
-        </h2>
-      )} */}
-
       <div className="question__text">
         {" "}
         <span className="highlight1">Q,</span> {problem.question.text}
@@ -88,27 +89,25 @@ const handleSubmit = (e) => {
             <div className="visual__bracket">
                  <input
                 type="number"
-                className={`visual__input ${isSuccess ? "visual__input__success" : ""}`}
+                className={getInputClass()}
                 value={answer }
-                onChange={(e) => !isSuccess && setAnswer(e.target.value)}
+                onChange={(e) => !isSuccess &&  !isError && setAnswer(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="?"
                 autoComplete="off"
-                readOnly={isSuccess}
+                readOnly={isSuccess || isError}
               />
-              {isSuccess && (
+              {/* {isSuccess && (
                   <IoIosCheckmarkCircle className="visual__input__icon" />
-                )}
+                )} */}
               <div className="visual__line"><span className = 'visual__line__span'>|</span></div>
             </div>
           )}
 
           {/* Bars */}
-      <div className={`visual__bars ${isSuccess ? "visual__bars__success" : ""}`}>
-      
-<div
-  className={`visual__bars ${isSuccess ? "visual__bars__success" : ""}`}
->
+       {/* <div className={`visual__bars ${isSuccess ? "visual__bars__success" : ""}`}> */}
+       <div className={`visual__bars`}>
+        
   {visualData.parts.map((part, index) => (
     <div
       key={index}
@@ -123,7 +122,6 @@ const handleSubmit = (e) => {
   ))}
 </div>
           </div>
-        </div>
       )}
 
       {isConceptual ? (
@@ -153,9 +151,12 @@ const handleSubmit = (e) => {
             autoFocus
           />
         )}
-          <button type="submit" className="submit__btn">
+          {/* <button type="submit" className="submit__btn">
             Submit Answer
-          </button>
+          </button> */}
+          <button onClick={handleSubmit} className="submit__btn" disabled={isSuccess || isError}>
+               {isSuccess ? "Correct" : isError ? "Wrong" : "Submit Answer"}
+             </button>
         </form>
         </div>
       )}
