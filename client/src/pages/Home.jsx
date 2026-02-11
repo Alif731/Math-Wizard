@@ -11,6 +11,8 @@ import QuestionCard from "../components/QuestionCard";
 import Dashboard from "../components/Dashboard";
 import "../sass/page/homePage.scss";
 
+
+
 const Home = () => {
   const { userInfo } = useSelector((state) => state.auth);
   const username = userInfo?.username || "student1";
@@ -30,7 +32,7 @@ const Home = () => {
   const [feedback, setFeedback] = useState(null);
 
   // --- HANDLERS ---
-  const handleAnswerSubmit = async (answer) => {
+const handleAnswerSubmit = async (answer) => {
     if (!problem?.question) return;
 
     try {
@@ -41,7 +43,17 @@ const Home = () => {
         response: answer,
       }).unwrap();
 
-      setFeedback(result);
+      // ✅ LOGIC SPLIT:
+      if (result.isCorrect) {
+        // 1. CORRECT: Do NOT set feedback. 
+        // The QuestionCard has already shown the green bar animation.
+        setFeedback(null); 
+        refetchProblem(); 
+      } else {
+        // 2. WRONG: Set feedback to show the Red "Wrong" Card.
+        setFeedback(result);
+      }
+
     } catch (err) {
       console.error("Failed to submit:", err);
     }
@@ -59,7 +71,9 @@ const Home = () => {
     <div className="home-page">
       {/* --- ADDED BACK: GAME HEADER --- */}
       <header className="game-header">
-        <h1 className="card__header">{problem.concept.title}</h1>
+       <h1 className="card__header">
+          {problem.concept?.title || "Math Wizard"} 
+        </h1>
         {/* <div className="zpd__text">
           <strong className="zpd-title">
             {status?.zpdNodes?.join(", ") || "Analyzing..."}:
@@ -79,7 +93,7 @@ const Home = () => {
         {/* --- LEFT COLUMN: GAME AREA --- */}
         {/* <section className="game-section"> */}
         {/* 1. FEEDBACK CARD */}
-        {feedback ? (
+        {/* {feedback ? (
           <div
             className={`feedback-card ${feedback.isCorrect ? "success" : "error"}`}
           >
@@ -98,8 +112,19 @@ const Home = () => {
               Next Question
             </button>
           </div>
-        ) : // 2. MASTERY MESSAGE
-        isMastered ? (
+        ) : // 2. MASTERY MESSAGE */}
+        {feedback && !feedback.isCorrect ? (
+          <div className="feedback-card error">
+             {/* ... inside here is your Red X and explanation ... */}
+             <div className="feedback-icon">❌</div>
+             <h2 className="feedback-title">Wrong</h2>
+             <p className="feedback-text">
+               {feedback.explanation || `Correct answer: ${feedback.correctAnswer}`}
+             </p>
+             <button onClick={handleNext} className="btn-next">Next</button>
+          </div>
+        ):
+       isMastered ? (
           <div className="status-card master">
             You have mastered all available concepts!
           </div>

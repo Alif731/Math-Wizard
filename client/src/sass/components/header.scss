@@ -16,7 +16,9 @@
 }
 
 #navbarParent {
-  background-color: #17172b;
+  // background-color: #17172b;
+  background-color: #4A4E69;
+
   display: flex;
   justify-content: center;
   align-items: center;
@@ -25,7 +27,7 @@
     #131212 0px 0px 1px 0px;
   position: sticky;
   top: 0;
-  overflow: hidden;
+  // overflow: hidden;
   z-index: 5;
   @include ut.breakpoint(large) {
     justify-content: flex-start;
@@ -62,12 +64,9 @@
     transition: all 0.7s;
     padding: 0 15px;
     &:hover {
-      border-radius: 10px;
-      // background-color: #000000a1;
       text-decoration: underline;
-      & a {
-        color: whitesmoke;
-      }
+      text-decoration-thickness: 4px;
+      text-underline-offset: 6px;
     }
     @include ut.breakpoint(xLarge) {
       font-size: 1.3rem;

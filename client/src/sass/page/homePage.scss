@@ -11,7 +11,7 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 
 // --- 2. PAGE CONTAINER ---
 .home-page {
-  min-height: 100vh;
+  min-height: 88vh;
   // background-color: whitesmoke;
   font-family: cursive;
 }
@@ -45,7 +45,9 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 
     font-family: cursive;
 
-    color: #9a8c98;
+    // color: #bdbbbb;
+    color: #dfc9db;
+    text-shadow: 1px 2px #595151;
     padding: 10px;
     border-radius: 9999px;
     font-weight: bold;
@@ -55,7 +57,7 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     display: flex;
     align-items: center;
     cursor: default;
-    transition: all 0.7s ease;
+    transition: all 1s ease-in-out ;
     // animation: tilt-shaking 1s ease-in-out infinite;
 
     &:hover {
@@ -63,6 +65,7 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
       color: white;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); // Slight lift on hover
       animation: none;
+      text-shadow: none;
       cursor: pointer;
     }
 
@@ -80,6 +83,8 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         opacity 0.8s ease-in-out,
         margin 0.8s ease;
       margin-right: 0; // No gap when hidden
+      text-shadow: none;
+
     }
 
     // 2. Visible State (On Parent Hover)
@@ -88,6 +93,8 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
       opacity: 1; // Fade in
       margin-right: 0.5rem; // Add a small gap between message and username
       color: #f2e9e4;
+      text-shadow: none;
+
     }
   }
 }
@@ -293,30 +300,4 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
 
-// --- 7. ANIMATIONS ---
-// @keyframes spin {
-//   from {
-//     transform: rotate(0deg);
-//   }
-//   to {
-//     transform: rotate(360deg);
-//   }
-// }
 
-// @keyframes tilt-shaking {
-//   0% {
-//     transform: rotate(0deg);
-//   }
-//   25% {
-//     transform: rotate(2deg);
-//   }
-//   50% {
-//     transform: rotate(0deg);
-//   }
-//   75% {
-//     transform: rotate(-2deg);
-//   }
-//   100% {
-//     transform: rotate(0deg);
-//   }
-// }

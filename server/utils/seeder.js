@@ -77,7 +77,7 @@ const conceptsData = [
   // ====================================================
   // 2. LEVEL 2: Bar Model
   // ====================================================
-{
+  {
     id: "visual_addition",
     title: "Visual Addition",
     description: "Using bar models to visualize addition.",
@@ -91,13 +91,13 @@ const conceptsData = [
         visualData: {
           showTotal: true, // Shows the "?" bracket
           parts: [
-            { value: 17, label: "17", color: "#fca5a5" }, // Red-ish
-            { value: 6, label: "6", color: "#93c5fd" }   // Blue-ish
-          ]
-        }
+            { value: 17, label: "17", color: "#fca5a5" }, 
+            { value: 6, label: "6", color: "#93c5fd" }, 
+          ],
+        },
       },
       {
-        text: "Liam has 10 stickers. He buys 5 more. Total?",
+        text: "Liam has 10 stickers. He buys 5 more. How much stickers is there with him?",
         correctAnswer: "15",
         type: "visual",
         difficulty: 1,
@@ -105,11 +105,50 @@ const conceptsData = [
           showTotal: true,
           parts: [
             { value: 10, label: "10", color: "#fcd34d" }, // Yellow
-            { value: 5, label: "5", color: "#86efac" }    // Green
-          ]
-        }
-      }
-    ]
+            { value: 5, label: "5", color: "#86efac" }, // Green
+          ],
+        },
+      },
+      {
+    "text": "Sam has 18 cards. Someone gives them 6 more. How many cards do they have altogether?",
+    "correctAnswer": "24",
+    "type": "visual",
+    "difficulty": 1,
+    "visualData": {
+      "showTotal": true,
+      "parts": [
+        { "value": 18, "label": "18", "color": "#fc4d4d" },
+        { "value": 6, "label": "6", "color": "#efdc86" }
+      ]
+    }
+  },
+  {
+    "text": "In a class there are 9 boys and 13 girls. How many children are in the class?",
+    "correctAnswer": "22",
+    "type": "visual",
+    "difficulty": 2,
+    "visualData": {
+      "showTotal": true,
+      "parts": [
+        { "value": 9, "label": "9", "color": "#fd93d4" },
+        { "value": 13, "label": "13", "color": "#a5fce6" }
+      ]
+    }
+  },
+  {
+    "text": "A shop had 18 books. They received 3 more. How many books does the shop have now?",
+    "correctAnswer": "21",
+    "type": "visual",
+    "difficulty": 2,
+    "visualData": {
+      "showTotal": true,
+      "parts": [
+        { "value": 18, "label": "18", "color": "#c084fc" },
+        { "value": 3, "label": "3", "color": "#fdba74" }
+      ]
+    }
+  },
+    ],
   },
 
   // ====================================================
@@ -217,14 +256,14 @@ const seedData = async () => {
       role: "student",
       mastery: {},
       // zpdNodes: ["add_single"], // Root node
-      zpdNodes: ["foundation_signs"],
-      // zpdNodes: ["visual_addition"],
+      // zpdNodes: ["foundation_signs"],
+      zpdNodes: ["visual_addition"],
     });
 
     // Initialize mastery for root
     // testUser.mastery.set("add_single", {
-    testUser.mastery.set("foundation_signs", {
-    // testUser.mastery.set("visual_addition", {
+    // testUser.mastery.set("foundation_signs", {
+    testUser.mastery.set("visual_addition", {
       status: "unlocked",
       successCount: 0,
       attemptCount: 0,

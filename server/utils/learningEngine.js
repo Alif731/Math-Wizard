@@ -40,7 +40,7 @@ async function updateMastery(user, conceptId, isCorrect) {
 
   if (
     masteryData.status !== "mastered" &&
-    masteryData.lastAttempts.length >= 5 && // Minimum attempts before mastery
+    masteryData.lastAttempts.length >= 15 && // Minimum attempts before mastery
     recentSuccessRate >= MASTERY_THRESHOLD
   ) {
     masteryData.status = "mastered";
