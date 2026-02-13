@@ -65,9 +65,9 @@ const handleAnswerSubmit = async (answer) => {
     <div className="home-page">
       {/* --- ADDED BACK: GAME HEADER --- */}
       <header className="game-header">
-       <h1 className="card__header">
+       {/* <h1 className="card__header">
           {problem.concept?.title || "Math Wizard"} 
-        </h1>
+        </h1> */}
         {/* <div className="zpd__text">
           <strong className="zpd-title">
             {status?.zpdNodes?.join(", ") || "Analyzing..."}:

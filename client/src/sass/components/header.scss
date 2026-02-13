@@ -16,15 +16,14 @@
 }
 
 #navbarParent {
-  // background-color: #17172b;
-  background-color: #22223B;
+  background-color: #F4F1DE;
 
   display: flex;
   justify-content: center;
   align-items: center;
   box-shadow:
-    rgba(109, 108, 108, 0.231372549) 0px 0px 5px 0px,
-    #131212 0px 0px 1px 0px;
+    rgba(224, 122, 95, 0.231372549) 0px 0px 5px 0px,
+    #E07A5F 0px 0px 1px 0px;
   position: sticky;
   top: 0;
   // overflow: hidden;
@@ -52,20 +51,21 @@
   }
   & a {
     font-weight: bold;
-    // color: #463f3a;
-    color: #ffffff;
-
+    color: #E07A5F;
     transition: all 0.7s;
   }
   & li {
     margin: 15px 0;
     font-size: 1.1rem;
-    color: silver;
+    color: #3D405B;
     transition: all 0.7s;
     padding: 0 15px;
+      text-decoration-color: #81b29a00;
+
     &:hover {
       text-decoration: underline;
       text-decoration-thickness: 4px;
+      text-decoration-color: #81B29A;
       text-underline-offset: 6px;
     }
     @include ut.breakpoint(xLarge) {

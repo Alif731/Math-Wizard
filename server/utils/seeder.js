@@ -143,8 +143,8 @@ const conceptsData = [
     "visualData": {
       "showTotal": true,
       "parts": [
-        { "value": 18, "label": "18", "color": "#c084fc" },
-        { "value": 3, "label": "3", "color": "#fdba74" }
+        { "value": 18, "label": "18", "color": "#E07A5F" },
+        { "value": 3, "label": "3", "color": "#F2CC8F" }
       ]
     }
   },
@@ -152,91 +152,85 @@ const conceptsData = [
   },
 
   // ====================================================
-  // 3. LEVEL 1: Word Problems
+  // 3. LEVEL: Word Problems
   // ====================================================
-  // {
-  //   id: "add_single",
-  //   title: "Single Digit Addition",
-  //   description: "Adding numbers from 0 to 9.",
-  //   prerequisites: ["visual_addition"],
-  //   questions: [
-  //     {
-  //       text: "What is 2 + 3?",
-  //       correctAnswer: "5",
-  //       type: "direct",
-  //       difficulty: 1,
-  //     },
-  //     {
-  //       text: "If you have 4 apples and get 2 more, how many do you have?",
-  //       correctAnswer: "6",
-  //       type: "direct",
-  //       difficulty: 1,
-  //     },
-  //     {
-  //       text: "5 + 0 = ?",
-  //       correctAnswer: "5",
-  //       type: "distractor",
-  //       difficulty: 1,
-  //     },
-  //     { text: "3 + 4", correctAnswer: "7", type: "direct", difficulty: 2 },
-  //     {
-  //       text: "What is 9 + 1?",
-  //       correctAnswer: "10",
-  //       type: "direct",
-  //       difficulty: 2,
-  //     },
-  //   ],
-  // },
-  // {
-  //   id: "sub_single",
-  //   title: "Single Digit Subtraction",
-  //   description: "Subtracting numbers from 0 to 9.",
-  //   prerequisites: ["add_single"],
-  //   questions: [
-  //     { text: "5 - 2 = ?", correctAnswer: "3", type: "direct", difficulty: 1 },
-  //     { text: "9 - 1 = ?", correctAnswer: "8", type: "direct", difficulty: 1 },
-  //     {
-  //       text: "You have 5 candies and eat 5. How many are left?",
-  //       correctAnswer: "0",
-  //       type: "distractor",
-  //       difficulty: 2,
-  //     },
-  //   ],
-  // },
-  // {
-  //   id: "add_double_no_carry",
-  //   title: "Double Digit Addition (No Carry)",
-  //   description: "Adding numbers like 10 + 20.",
-  //   prerequisites: ["add_single"],
-  //   questions: [
-  //     {
-  //       text: "10 + 10 = ?",
-  //       correctAnswer: "20",
-  //       type: "direct",
-  //       difficulty: 3,
-  //     },
-  //     {
-  //       text: "12 + 5 = ?",
-  //       correctAnswer: "17",
-  //       type: "direct",
-  //       difficulty: 3,
-  //     },
-  //   ],
-  // },
-  // {
-  //   id: "mixed_ops_basic",
-  //   title: "Basic Mixed Operations",
-  //   description: "Simple addition and subtraction mixed.",
-  //   prerequisites: ["sub_single", "add_double_no_carry"],
-  //   questions: [
-  //     {
-  //       text: "5 + 2 - 1 = ?",
-  //       correctAnswer: "6",
-  //       type: "algebraic",
-  //       difficulty: 4,
-  //     },
-  //   ],
-  // },
+  {
+    id: "add_single",
+    title: "Single Digit Addition",
+    description: "Adding numbers from 0 to 9.",
+    prerequisites: ["visual_addition"],
+    questions: [
+      {
+        text: "If you have 4 apples and get 2 more, how many do you have?",
+        correctAnswer: "6",
+        type: "direct",
+        difficulty: 1,
+      },
+      {
+        text: "5 + 0 = ?",
+        correctAnswer: "5",
+        type: "distractor",
+        difficulty: 1,
+      },
+      { text: "3 + 4", correctAnswer: "7", type: "direct", difficulty: 2 },
+      {
+        text: "What is 9 + 1?",
+        correctAnswer: "10",
+        type: "direct",
+        difficulty: 2,
+      },
+    ],
+  },
+  {
+    id: "sub_single",
+    title: "Single Digit Subtraction",
+    description: "Subtracting numbers from 0 to 9.",
+    prerequisites: ["add_single"],
+    questions: [
+      { text: "5 - 2 = ?", correctAnswer: "3", type: "direct", difficulty: 1 },
+      { text: "9 - 1 = ?", correctAnswer: "8", type: "direct", difficulty: 1 },
+      {
+        text: "You have 5 candies and eat 5. How many are left?",
+        correctAnswer: "0",
+        type: "distractor",
+        difficulty: 2,
+      },
+    ],
+  },
+  {
+    id: "add_double_no_carry",
+    title: "Double Digit Addition (No Carry)",
+    description: "Adding numbers like 10 + 20.",
+    prerequisites: ["add_single"],
+    questions: [
+      {
+        text: "10 + 10 = ?",
+        correctAnswer: "20",
+        type: "direct",
+        difficulty: 3,
+      },
+      {
+        text: "12 + 5 = ?",
+        correctAnswer: "17",
+        type: "direct",
+        difficulty: 3,
+      },
+    ],
+  },
+  {
+    id: "mixed_ops_basic",
+    title: "Basic Mixed Operations",
+    description: "Simple addition and subtraction mixed.",
+    prerequisites: ["sub_single", "add_double_no_carry"],
+    questions: [
+      {
+        text: "5 + 2 - 1 = ?",
+        correctAnswer: "6",
+        type: "algebraic",
+        difficulty: 4,
+      },
+    ],
+  },
 ];
 
 const seedData = async () => {

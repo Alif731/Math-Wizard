@@ -5,14 +5,39 @@ const QuestionCard = ({ problem, onSubmit }) => {
   const [answer, setAnswer] = useState("");
   const [isSuccess, setIsSuccess] = useState(false); 
   const [isError, setIsError] = useState(false);
+  const [selectedOption, setSelectedOption] = useState(null);
 
   // Reset state when the problem changes
   useEffect(() => {
     setAnswer("");
     setIsSuccess(false);
     setIsError(false);
+    setSelectedOption(null);
   }, [problem]);
   // console.log(problem);
+
+  const handleOptionClick = (option) => {
+    // Prevent clicking other buttons while animating
+    if (isSuccess || isError) return;
+
+    setSelectedOption(option); // Remember which button we clicked
+
+    const rawCorrect = problem?.question?.correctAnswer || problem?.answer;
+    if (rawCorrect === undefined || rawCorrect === null) {
+      onSubmit(option);
+      return;
+    }
+
+    const isCorrect = String(option).trim() === String(rawCorrect).trim();
+
+    if (isCorrect) {
+      setIsSuccess(true);
+      setTimeout(() => onSubmit(option), 1500);
+    } else {
+      setIsError(true);
+      setTimeout(() => onSubmit(option), 1500);
+    }
+  };
 
 const handleSubmit = (e) => {
     if (e && e.preventDefault) e.preventDefault();
@@ -81,7 +106,7 @@ const handleSubmit = (e) => {
         <span className="highlight1">Q,</span> {problem.question.text}
       </div>
 
-   {/* --- SECTION 1: VISUAL BAR MODEL --- */}
+   {/* ---------------------- SECTION 1: VISUAL BAR MODEL -------------------- */}
       {questionType === "visual" && visualData && (
         <div className="visual__container">
           {/* Top Bracket with INPUT instead of '?' */}
@@ -97,17 +122,12 @@ const handleSubmit = (e) => {
                 autoComplete="off"
                 readOnly={isSuccess || isError}
               />
-              {/* {isSuccess && (
-                  <IoIosCheckmarkCircle className="visual__input__icon" />
-                )} */}
               <div className="visual__line"><span className = 'visual__line__span'>|</span></div>
             </div>
           )}
-
-          {/* Bars */}
-       {/* <div className={`visual__bars ${isSuccess ? "visual__bars__success" : ""}`}> */}
-       <div className={`visual__bars`}>
-        
+  {/* Bars */}
+  {/* <div className={`visual__bars ${isSuccess ? "visual__bars__success" : ""}`}> */}
+  <div className={`visual__bars`}> 
   {visualData.parts.map((part, index) => (
     <div
       key={index}
@@ -121,24 +141,34 @@ const handleSubmit = (e) => {
     </div>
   ))}
 </div>
-          </div>
+</div>
       )}
-
+      {/* ---------------------- SECTION 2: Conceptual BAR MODEL -------------------- */}
       {isConceptual ? (
         // 1. OPTION MODE (For Signs)
         <div className="card__options">
-          {problem.question.options?.map((option) => (
-            <button
-              key={option}
-              className="card__options__btn"
-              onClick={() => onSubmit(option)} // Submit immediately on click
-            >
-              {option}
-            </button>
-          ))}
+          {problem.question.options?.map((option) => {
+            // Determine class for this specific button
+            let btnClass = "card__options__btn";
+            if (selectedOption === option) {
+              if (isSuccess) btnClass += " card__options__btn__success";
+              if (isError) btnClass += " card__options__btn__error";
+            }
+
+            return (
+              <button
+                key={option}
+                className={btnClass}
+                onClick={() => handleOptionClick(option)} 
+                disabled={isSuccess || isError} // Disable all buttons during animation
+              >
+                <span className="sike">{option}</span>
+              </button>
+            );
+          })}
         </div>
       ) : (
-        // 3. Normal question
+            // ---------------------- SECTION 2: Normal Questions-------------------- 
         <div>
         <form onSubmit={handleSubmit} className="answer__form"> 
         {questionType !== "visual" && (

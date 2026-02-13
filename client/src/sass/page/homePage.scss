@@ -20,9 +20,10 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 .game-header {
   // max-width: 1200px;
   // margin: 0.5rem;
-  margin: 1.5rem 1rem;
+  margin: 1.5rem 0;   
+  margin-right: 0.5rem;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   flex-wrap: wrap; // Wrap on small phones
   gap: 1rem;
@@ -35,19 +36,13 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   }
 
   .player-badge {
-    // font-family: "Playwrite GB J Guides", cursive;
-    // font-weight: 400;
-    // font-style: italic;
     border-radius: 12px;
-    border-right: 5px solid #eab308;
-    border-bottom: 5px solid #eab308;
-    // background: #9a8c98;
+    border-right: 5px solid #E07A5F;
+    border-bottom: 5px solid #E07A5F;
 
     font-family: cursive;
 
-    // color: #bdbbbb;
-    color: #dfc9db;
-    text-shadow: 1px 2px #595151;
+    color: #81B29A;
     padding: 10px;
     border-radius: 9999px;
     font-weight: bold;
@@ -61,7 +56,7 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     // animation: tilt-shaking 1s ease-in-out infinite;
 
     &:hover {
-      background-color: #22223b;
+      background-color: #3D405B;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); // Slight lift on hover
       // animation: none;
       color: white;
@@ -235,16 +230,16 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 .highlight {
   font-weight: bolder;
-  color: #eab308;
+  color: #E07A5F;
   margin-right: 0.4rem;
 }
 .highlight1 {
   font-weight: bolder;
-  color: #eab308;
+  color: #E07A5F;
 }
 .highlight2 {
   font-weight: bolder;
-  color: #eab308;
+  color: #E07A5F;
   margin-left: 0.4rem;
 }
 
