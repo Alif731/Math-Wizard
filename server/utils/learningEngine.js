@@ -1,5 +1,5 @@
-const Concept = require('../models/Concept');
-const User = require('../models/User');
+const Concept = require("../models/Concept");
+const User = require("../models/User");
 
 // Constants
 const WINDOW_SIZE = 10;
@@ -14,33 +14,36 @@ const MASTERY_THRESHOLD = 0.8; // 80%
 async function updateMastery(user, conceptId, isCorrect) {
   // Initialize mastery entry if not exists
   if (!user.mastery.has(conceptId)) {
-    user.mastery.set(conceptId, { 
-      status: 'unlocked', 
-      successCount: 0, 
-      attemptCount: 0, 
-      lastAttempts: [] 
+    user.mastery.set(conceptId, {
+      status: "unlocked",
+      successCount: 0,
+      attemptCount: 0,
+      lastAttempts: [],
     });
   }
 
   const masteryData = user.mastery.get(conceptId);
-  
+
   // Update sliding window
   masteryData.lastAttempts.push(isCorrect);
   if (masteryData.lastAttempts.length > WINDOW_SIZE) {
     masteryData.lastAttempts.shift();
   }
-  
+
   masteryData.attemptCount += 1;
   if (isCorrect) masteryData.successCount += 1;
 
   // Check for mastery
-  const recentSuccessRate = masteryData.lastAttempts.filter(x => x).length / masteryData.lastAttempts.length;
-  
-  if (masteryData.status !== 'mastered' && 
-      masteryData.lastAttempts.length >= 5 && // Minimum attempts before mastery
-      recentSuccessRate >= MASTERY_THRESHOLD) {
-    
-    masteryData.status = 'mastered';
+  const recentSuccessRate =
+    masteryData.lastAttempts.filter((x) => x).length /
+    masteryData.lastAttempts.length;
+
+  if (
+    masteryData.status !== "mastered" &&
+    masteryData.lastAttempts.length >= 15 && // Minimum attempts before mastery
+    recentSuccessRate >= MASTERY_THRESHOLD
+  ) {
+    masteryData.status = "mastered";
     await unlockChildren(user, conceptId);
   }
 
@@ -60,7 +63,7 @@ async function unlockChildren(user, parentId) {
     let allPrereqsMastered = true;
     for (const prereqId of child.prerequisites) {
       const prereqMastery = user.mastery.get(prereqId);
-      if (!prereqMastery || prereqMastery.status !== 'mastered') {
+      if (!prereqMastery || prereqMastery.status !== "mastered") {
         allPrereqsMastered = false;
         break;
       }
@@ -69,24 +72,29 @@ async function unlockChildren(user, parentId) {
     if (allPrereqsMastered) {
       // Unlock child
       if (!user.mastery.has(child.id)) {
-        user.mastery.set(child.id, { status: 'unlocked', successCount: 0, attemptCount: 0, lastAttempts: [] });
+        user.mastery.set(child.id, {
+          status: "unlocked",
+          successCount: 0,
+          attemptCount: 0,
+          lastAttempts: [],
+        });
       } else {
         const m = user.mastery.get(child.id);
-        if (m.status === 'locked') m.status = 'unlocked';
+        if (m.status === "locked") m.status = "unlocked";
       }
-      
+
       // Add to ZPD if not already there
       if (!user.zpdNodes.includes(child.id)) {
         user.zpdNodes.push(child.id);
       }
     }
   }
-  
+
   // Remove parent from ZPD if mastered (optional, or keep for review)
-  // user.zpdNodes = user.zpdNodes.filter(id => id !== parentId); 
-  // For now, let's keep mastered nodes in ZPD but prioritize others? 
+  // user.zpdNodes = user.zpdNodes.filter(id => id !== parentId);
+  // For now, let's keep mastered nodes in ZPD but prioritize others?
   // Actually, usually ZPD moves forward. Let's remove mastered from ZPD to force progression.
-  user.zpdNodes = user.zpdNodes.filter(id => id !== parentId);
+  user.zpdNodes = user.zpdNodes.filter((id) => id !== parentId);
 }
 
 /**
@@ -97,20 +105,21 @@ async function getNextConcept(user) {
     // If ZPD is empty, maybe they finished everything or just started?
     // If just started, find roots.
     if (user.mastery.size === 0) {
-        // Return root concepts
-        const roots = await Concept.find({ prerequisites: { $size: 0 } });
-        if(roots.length > 0) return roots[0];
+      // Return root concepts
+      const roots = await Concept.find({ prerequisites: { $size: 0 } });
+      if (roots.length > 0) return roots[0];
     }
     return null; // Finished or error
   }
 
   // Simple Bandit:
   // Explore: Nodes with few attempts.
-  // Exploit: Nodes with lower success rate (need practice) ? 
+  // Exploit: Nodes with lower success rate (need practice) ?
   // Actually UCB usually maximizes reward. Here "Reward" is "Learning".
   // Let's just pick a random node from ZPD for now to ensure variety.
-  
-  const randomNodeId = user.zpdNodes[Math.floor(Math.random() * user.zpdNodes.length)];
+
+  const randomNodeId =
+    user.zpdNodes[Math.floor(Math.random() * user.zpdNodes.length)];
   return await Concept.findOne({ id: randomNodeId });
 }
 

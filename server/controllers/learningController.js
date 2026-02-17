@@ -22,7 +22,8 @@ exports.getProblem = async (req, res) => {
     const question = concept.questions[Math.floor(Math.random() * concept.questions.length)];
 
     // Exclude correctAnswer from response
-    const { correctAnswer, ...qData } = question.toObject();
+    // const { correctAnswer, ...qData } = question.toObject();
+    const qData = question.toObject(); // include correct answer
 
     res.json({
       concept: { id: concept.id, title: concept.title },

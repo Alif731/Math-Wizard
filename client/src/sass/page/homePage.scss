@@ -1,0 +1,306 @@
+@import url("https://fonts.googleapis.com/css2?family=Playwrite+GB+J+Guides:ital@0;1&display=swap");
+
+// --- 1. VARIABLES ---
+$primary-color: #1e3a8a; // Dark Blue
+$success-bg: #22c55e; // Green
+$error-bg: #ef4444; // Red
+$white: #ffffff;
+$gold: #f59e0b; // Gold/Yellow for highlights
+$border-radius: 16px;
+$shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+
+// --- 2. PAGE CONTAINER ---
+.home-page {
+  min-height: 88vh;
+  // background-color: whitesmoke;
+  font-family: cursive;
+}
+
+// --- 3. GAME HEADER (Title + Player Badge) ---
+.game-header {
+  // max-width: 1200px;
+  // margin: 0.5rem;
+  margin: 1.5rem 0;   
+  margin-right: 0.5rem;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap; // Wrap on small phones
+  gap: 1rem;
+
+  .game-title {
+    font-size: 2rem;
+    font-weight: 800;
+    color: $primary-color;
+    margin: 0;
+  }
+
+  .player-badge {
+    border-radius: 12px;
+    border-right: 5px solid #F2CC8F;
+    border-bottom: 5px solid #F2CC8F;
+
+    font-family: cursive;
+
+    color: #3D405B;
+    padding: 10px;
+    border-radius: 9999px;
+    font-weight: bold;
+    font-size: 1.4rem;
+
+    // transition
+    display: flex;
+    align-items: center;
+    cursor: default;
+    transition: all 0.5s ease-in-out ;
+    // animation: tilt-shaking 1s ease-in-out infinite;
+
+    &:hover {
+      background-color: #3D405B;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); // Slight lift on hover
+      // animation: none;
+      color: white;
+      text-shadow: none;
+      cursor: pointer;
+    }
+
+    // --- THE HOVER LOGIC ---
+    strong { 
+      // 1. Hidden State (Default)
+      max-width: 0; // Takes up no width
+      opacity: 1; // Invisible
+      overflow: hidden; // Hides the text that overflows width 0
+      white-space: nowrap; // Keeps text on one line so it slides out
+      transition:
+      max-width 0.8s ease-in-out,
+      opacity 0.8s ease-in-out,
+      margin 0.8s ease;
+      margin-right: 0; // No gap when hidden
+      color: white;// perfect animation
+      text-shadow: none;// perfect animation
+    }
+
+    // 2. Visible State (On Parent Hover)
+    &:hover strong {
+      max-width: 1000px; // Expand wide enough to fit the text
+      opacity: 1; // Fade in
+      margin-right: 0.5rem; // Add a small gap between message and username
+      color: #f2e9e4;
+      text-shadow: none;
+
+    }
+  }
+}
+
+// --- 4. MAIN GRID LAYOUT ---
+.home-layout {
+  display: flex;
+  justify-content: space-evenly;
+  max-width: 1200px;
+  margin: 0 auto;
+  @media (min-width: 768px) {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+
+// --- 5. GAME SECTION (Left Column) ---
+.game-section {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+// Status Cards (Loading, Mastered, Error Messages)
+.status-card {
+  padding: 3rem;
+  border-radius: $border-radius;
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: bold;
+
+  &.master {
+    background-color: #dcfce7; // Light green background
+    color: #166534; // Dark green text
+  }
+
+  &.loading {
+    color: #6b7280;
+    .spinner {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      display: inline-block;
+      animation: spin 1s linear infinite;
+    }
+  }
+
+  &.error-msg {
+    background-color: #fee2e2; // Light red background
+    color: #991b1b; // Dark red text
+  }
+}
+
+// Feedback Popup (Correct/Wrong Card)
+.feedback-card {
+  padding: 2rem;
+  border-radius: $border-radius;
+  box-shadow: $shadow;
+  text-align: center;
+  color: $white;
+
+  &.success {
+    background-color: $success-bg;
+    width: 40%;
+    max-width: 36rem;
+  }
+
+  &.error {
+    background-color: $error-bg;
+    width: 40%;
+    max-width: 36rem;
+  }
+
+  .feedback-icon {
+    rotate: 360deg;
+
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    transition: all 0.5s;
+    &:hover {
+      rotate: 1.75turn;
+    }
+  }
+
+  .feedback-title {
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+  }
+
+  .feedback-text {
+    font-size: 1.25rem;
+    margin-bottom: 2rem;
+  }
+
+  .btn-next {
+    font-family: cursive;
+    background-color: $white;
+    color: #333;
+    font-weight: bold;
+    padding: 0.75rem 2rem;
+    border-radius: 9999px; // Pill shape
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.5s;
+
+    &:hover {
+      color: #f2e9e4;
+      background: #343463;
+      transform: scale(1.05);
+      cursor: pointer;
+    }
+  }
+}
+
+// --- 6. SIDEBAR SECTION (Right Column) ---
+.sidebar-section {
+  // display: flex;
+  // flex-direction: column;
+  gap: 2rem;
+}
+
+// ZPD Box (Yellow Info Box)
+.zpd-card {
+  // background-color: #fef9c3; // Light yellow
+  display: flex;
+  align-items: center;
+  border-radius: 9999px;
+  border-left: 5px solid #eab308; // Darker yellow border
+  font-size: 1.5rem;
+  > p {
+    margin: 0px;
+    padding: 10px;
+    font-weight: bold;
+  }
+}
+.zpd-title {
+  color: #854d0e;
+  font-weight: bold;
+}
+.highlight {
+  font-weight: bolder;
+  color: #E07A5F;
+  margin-right: 0.4rem;
+}
+.highlight1 {
+  font-weight: bolder;
+  color: #edb151;
+}
+.highlight2 {
+  font-weight: bolder;
+  color: #edb151;
+  margin-left: 0.4rem;
+}
+.highlight3 {
+  font-weight: bolder;
+  color: #E07A5F;
+  margin-left: 0.4rem;
+}
+
+.zpd__text {
+  display: flex;
+  align-items: center;
+  border-radius: 9999px;
+  border-left: 5px solid #eab308;
+  font-size: 1.5rem;
+  padding: 10px;
+  color: #9a8c98;
+  font-weight: bold;
+
+  // transition
+  display: flex;
+  align-items: center;
+  cursor: default;
+  transition: all 0.3s ease;
+  // animation: tilt-shaking 1s ease-in-out infinite;
+
+  &:hover {
+    animation: none;
+    background-color: #22223b;
+    color: #9a8c98;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); // Slight lift on hover
+  }
+
+  // --- THE HOVER LOGIC ---
+  strong {
+    color: #f2e9e4;
+
+    // 1. Hidden State (Default)
+    max-width: 0; // Takes up no width
+    opacity: 1; // Invisible
+    overflow: hidden; // Hides the text that overflows width 0
+    white-space: nowrap; // Keeps text on one line so it slides out
+    transition:
+      max-width 0.8s ease-in-out,
+      opacity 0.8s ease-in-out,
+      margin 0.8s ease;
+    margin-right: 0; // No gap when hidden
+  }
+
+  // 2. Visible State (On Parent Hover)
+  &:hover strong {
+    max-width: 1000px; // Expand wide enough to fit the text
+    opacity: 1; // Fade in
+    margin-right: 0.5rem; // Add a small gap between message and username
+    color: #f2e9e4;
+  }
+}
+
+@keyframes tilt-shake {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(-4deg); }
+  50% { transform: rotate(4deg); }
+  75% { transform: rotate(-4deg); }
+  100% { transform: rotate(0deg); }
+}

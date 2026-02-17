@@ -1,0 +1,13 @@
+.login__main {
+  display: flex;
+  
+}
+
+.login__container {
+  > p {
+    margin: 0px;
+  }
+  &__header {
+    margin: 0px;
+  }
+}

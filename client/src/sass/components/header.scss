@@ -1,0 +1,181 @@
+@use "../util/breakpoint" as ut;
+
+.cart {
+  background-color: #01b42a;
+  color: white;
+  width: 25px;
+  height: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  & > span {
+    font-size: 1.2rem;
+    font-weight: bold;
+  }
+}
+
+#navbarParent {
+  // background-color: #F4F1DE;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow:
+    rgba(224, 122, 95, 0.231372549) 0px 0px 5px 0px,
+    #E07A5F 0px 0px 1px 0px;
+  position: sticky;
+  top: 0;
+  // overflow: hidden;
+  z-index: 5;
+  @include ut.breakpoint(large) {
+    justify-content: flex-start;
+  }
+}
+.navbar {
+  padding: 0;
+  width: 50%;
+
+  // box-shadow:
+  //   #6d6c6c3b 0px 0px 5px 0px,
+  //   #131212 0px 0px 1px 0px;
+
+  display: flex;
+  align-items: center;
+  margin: 0;
+  position: relative;
+  gap: 20px;
+
+  @include ut.breakpoint(large) {
+    padding: 0px;
+  }
+  & a {
+    font-weight: bold;
+    color: #E07A5F;
+    transition: all 0.7s;
+  }
+  & li {
+    margin: 15px 0;
+    font-size: 1.1rem;
+    color: #3D405B;
+    transition: all 0.7s;
+    padding: 0 15px;
+      text-decoration-color: #81b29a00;
+
+    &:hover {
+      text-decoration: underline;
+      text-decoration-thickness: 4px;
+      text-decoration-color: #81B29A;
+      text-underline-offset: 6px;
+    }
+    @include ut.breakpoint(xLarge) {
+      font-size: 1.3rem;
+    }
+    @include ut.breakpoint(large) {
+      font-size: 1.5rem;
+    }
+    @include ut.breakpoint(medium) {
+      font-size: 1.2rem;
+    }
+  }
+
+  &__item {
+    display: flex;
+    align-items: center;
+    height: 100% !important;
+    // margin: 0 10px;
+    @include ut.breakpoint(large) {
+      margin: 0;
+    }
+    // navbar_item[1st one]
+    &:first-child {
+      margin-right: auto;
+      font-weight: bold;
+    }
+    &:nth-of-type(2) {
+      display: block;
+
+      @include ut.breakpoint(large) {
+        display: none;
+        padding: 10px;
+      }
+    }
+    &:nth-child(3),
+    &:nth-child(4) {
+      display: block;
+      @include ut.breakpoint(large) {
+        display: none;
+        padding: 10px;
+        // padding-bottom: 5px;
+      }
+    }
+    &:nth-child(5) {
+      display: block;
+      @include ut.breakpoint(large) {
+        display: none;
+        padding: 10px;
+        padding-bottom: 10px;
+      }
+    }
+    // &:last-child {
+    //   all: unset;
+    //   color: rgb(153, 153, 153);
+    //   display: none;
+    //   // padding-bottom: 10px;
+    //   @include ut.breakpoint(large) {
+    //     padding: 0px;
+    //     display: block;
+    //     // position: absolute;
+    //     // top: 0;
+    //     // right: 0;
+    //     display: flex;
+    //     align-items: center;
+    //     padding-left: 10px;
+    //     // padding-bottom: 10px;
+    //   }
+    //   & > * {
+    //     width: 30px;
+    //     height: 30px;
+    //   }
+    // }
+    &__link {
+      display: flex;
+      gap: 2px;
+      align-items: center;
+      text-decoration: none;
+      &__innerChild {
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        font-weight: bold;
+      }
+    }
+    &__title {
+      display: flex;
+      gap: 2px;
+      align-items: center;
+      text-decoration: none;
+    }
+  }
+}
+
+// .navbar__toggle {
+//   display: none; // vertical Mobile Navigation Bar
+// }
+
+.expanded {
+  @include ut.breakpoint(large) {
+    display: block !important; // vertical Mobile Navigation Bar
+  }
+}
+
+.navbar__item__icon {
+  display: flex;
+  display: none;
+  @include ut.breakpoint(large) {
+    display: block;
+    padding: 10px;
+    padding-left: 1rem;
+    padding-top: 18px;
+  }
+}

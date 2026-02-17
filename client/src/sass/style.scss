@@ -1,0 +1,54 @@
+// @forward "global";
+@forward "util";
+
+body {
+  font-family: cursive;
+  // background-color: #ebeae9;
+  margin: 0px;
+}
+
+// #root {
+//   display: flex;
+//   justify-content: center;
+// }
+.homeScreen > h1 {
+  color: rgb(173, 125, 125);
+  text-align: end;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 80vh;
+  // align-items: center;
+  // width: 100%;
+}
+
+.content {
+  padding: 16px;
+}
+
+form {
+  font-size: 2.2rem;
+}
+
+input {
+  border-radius: 6px;
+  font-size: 1.2rem;
+  font-family: cursive;
+}
+
+main {
+  // width: 85%;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
