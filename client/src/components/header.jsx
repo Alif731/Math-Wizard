@@ -121,7 +121,7 @@ export default function Header() {
                   className="navbar__item__link__innerChild"
                   style={{ display: "flex" }}
                 >
-                  Profile
+                  Progress
                 </div>
               </Link>
             </li>

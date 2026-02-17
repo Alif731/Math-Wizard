@@ -65,15 +65,6 @@ const handleAnswerSubmit = async (answer) => {
     <div className="home-page">
       {/* --- ADDED BACK: GAME HEADER --- */}
       <header className="game-header">
-       {/* <h1 className="card__header">
-          {problem.concept?.title || "Math Wizard"} 
-        </h1> */}
-        {/* <div className="zpd__text">
-          <strong className="zpd-title">
-            {status?.zpdNodes?.join(", ") || "Analyzing..."}:
-          </strong>
-          ZP <span className="highlight">D </span> Level
-        </div> */}
         <div className="player-badge highlight2">
           <span className="highlight1">G</span>ood{" "}
           <span className="highlight2">M</span>orning {username}
@@ -138,6 +129,7 @@ const handleAnswerSubmit = async (answer) => {
           // 5. QUESTION CARD
           problem && (
             <QuestionCard
+              // key={problem._id}
               problem={problem}
               onSubmit={handleAnswerSubmit}
               disabled={isSubmitting}

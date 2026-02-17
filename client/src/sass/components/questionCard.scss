@@ -97,8 +97,10 @@
 
   // --- Input Field ---
   .answer__input {
+
+      margin-top: 2rem;
     padding: 1rem; // p-4
-    font-size: 1.25rem; // text-xl
+    font-size: 2.25rem; // text-xl
     border: 2px solid gray; // border-2
     border-radius: 0.75rem; // rounded-xl
     text-align: center;
@@ -117,6 +119,7 @@
   }
 
   .submit__btn {
+    margin-top: 1rem;
     width: 50%;
     margin-left: auto;
     margin-right: auto;
@@ -156,14 +159,14 @@
 
   &__btn {
     background-color: #ffffff;
-    color: #E07A5F;
+    color: #81B29A;
     border: none;
     font-size: 2.5rem;
     font-weight: 700;
     padding: 1.5rem;
     border-radius: 1rem;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.7s ease;
     box-shadow:
       rgb(0 0 0 / 49%) 0px 2px 4px,
       rgb(0 0 0) 0px 7px 13px -3px,
@@ -306,11 +309,10 @@
     text-shadow: none;
   }
   &__success {
-    color: white;
+    color: white !important;
     box-shadow: none;
-    width: 100%;
+    width: 90%;
     background-color: #46c388;
-    color: white;
     font-weight: bold;
     border: 3px solid rgb(240, 239, 239) !important;
     animation: none; // Stop breathing
@@ -319,7 +321,7 @@
     animation: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
   }
   &__error {
-  width: 100%;
+  width: 90%;
   box-shadow: none;
   background-color: #c34646;
   color: #ffffff !important;
@@ -391,6 +393,85 @@
   flex-direction: column;
   gap: 1rem;
   width: 100%;
+}
+
+/* --- ICONS ITEMS STYLES --- */
+
+.icons-items__container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  margin: 2rem 0;
+  flex-wrap: wrap; /* Wraps nicely on small screens */
+}
+
+.icons-items__group-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.icons-items__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 3 icons per row */
+  gap: 8px;
+  background-color: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px;
+  min-width: 80px;
+  min-height: 80px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap; /* Fallback */
+}
+
+.icons-items__icon {
+  font-size: 1.8rem; /* Icon size */
+  color: #3b82f6;    /* Default Blue */
+  display: flex;
+  animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
+  
+  svg {
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1));
+  }
+}
+
+.icons-items__label {
+  margin-top: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.icons-items__operator {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #475569;
+  
+  /* Position the operator between groups */
+  .icons-items__group-wrapper & {
+    position: absolute;
+    right: -25px; 
+    top: 35%;
+  }
+}
+
+.icons-items__answer-box {
+  width: 90px;
+  /* Reuses visual input styles but constraints width */
+  .visual__input {
+    text-align: center;
+    padding: 0.5rem;
+  }
+}
+
+@keyframes pop-in {
+  0% { transform: scale(0) rotate(-10deg); opacity: 0; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
 }
 
 @-webkit-keyframes breathing {

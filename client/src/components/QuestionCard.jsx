@@ -1,11 +1,15 @@
-import React, { useState,useEffect } from "react";
-import "../sass/components/questionCard.scss"; // Ensure this file exists
+import  { useState,useEffect } from "react";
+import "../sass/components/questionCard.scss"; 
+import DragDropQuestion from "./DragDropQuestion";
 
 const QuestionCard = ({ problem, onSubmit }) => {
+  
+
   const [answer, setAnswer] = useState("");
   const [isSuccess, setIsSuccess] = useState(false); 
   const [isError, setIsError] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
+
 
   // Reset state when the problem changes
   useEffect(() => {
@@ -14,7 +18,7 @@ const QuestionCard = ({ problem, onSubmit }) => {
     setIsError(false);
     setSelectedOption(null);
   }, [problem]);
-  // console.log(problem);
+
 
   const handleOptionClick = (option) => {
     // Prevent clicking other buttons while animating
@@ -38,6 +42,7 @@ const QuestionCard = ({ problem, onSubmit }) => {
       setTimeout(() => onSubmit(option), 1500);
     }
   };
+  
 
 const handleSubmit = (e) => {
     if (e && e.preventDefault) e.preventDefault();
@@ -58,7 +63,8 @@ const handleSubmit = (e) => {
     const isCorrect = userAnswer === dbAnswer;
 
     // ANIMATION LOGIC
-   if (problem.question.type === "visual") {
+    const shouldAnimate = problem.question.type === "visual" || problem.question.type === "icons_items" || problem.question.type === "direct";
+   if (shouldAnimate) {
       if (isCorrect) {
         // SUCCESS ANIMATION
         setIsSuccess(true);
@@ -87,9 +93,11 @@ const handleSubmit = (e) => {
   if (!problem) return <div className="loading-state">Loading...</div>;
 
   // Check if this is a "Multiple Choice" style question
-  const isConceptual = problem.question.type === "conceptual";
   const questionType = problem.question.type;
+  const isConceptual = problem.question.type === "conceptual";
   const visualData = problem.question.visualData;
+  const isIconsItems = questionType === "icons_items";
+
 
   // Helper to determine bars container class based on state
   const getInputClass = () => {
@@ -98,15 +106,41 @@ const handleSubmit = (e) => {
       return "visual__input";
   };
 
+
   // ------------------------------------------------------------------------------------------------------- // 
   return (
     <div className="question__card">
       <div className="question__text">
         {" "}
-        <span className="highlight1">Q,</span> {problem.question.text}
+        <span className="highlight3">Q,</span> {problem.question.text}
       </div>
 
-   {/* ---------------------- SECTION 1: VISUAL BAR MODEL -------------------- */}
+      {/* ---ICONS ITEMS SECTION --- */}
+      {isIconsItems && problem.question.visualData && (
+        <div className="icons-items__container">
+        {/* Drag MCA Options and Answer Box */}
+        <DragDropQuestion 
+             options={problem.question.visualData.dragOptions || ["5", "7", "10", "6"]} 
+             correctAnswer={problem.question.correctAnswer}
+             
+             // Pass the icon type (e.g., 'apple') to render correct icons
+             iconName={problem.question.visualData.groups?.[0]?.icon || "icon"}
+             
+             onCorrect={(val) => {
+                setIsSuccess(true);
+                setAnswer(val); 
+                setTimeout(() => onSubmit(val), 1500); 
+             }}
+             onWrong={(val) => {
+                setIsError(true); // Triggers Red State in Main Card
+                setAnswer(val);
+                setTimeout(() => onSubmit(val), 1500); // Auto-submit wrong answer
+             }}
+          />
+        </div>
+      )}
+
+   {/* ---------------------- SECTION 2: VISUAL BAR MODEL -------------------- */}
       {questionType === "visual" && visualData && (
         <div className="visual__container">
           {/* Top Bracket with INPUT instead of '?' */}
@@ -143,7 +177,7 @@ const handleSubmit = (e) => {
 </div>
 </div>
       )}
-      {/* ---------------------- SECTION 2: Conceptual BAR MODEL -------------------- */}
+      {/* ---------------------- SECTION 3: BAR MODEL -------------------- */}
       {isConceptual ? (
         // 1. OPTION MODE (For Signs)
         <div className="card__options">
@@ -168,26 +202,23 @@ const handleSubmit = (e) => {
           })}
         </div>
       ) : (
-            // ---------------------- SECTION 2: Normal Questions-------------------- 
+            // ---------------------- SECTION 4: Normal Questions-------------------- 
         <div>
-        <form onSubmit={handleSubmit} className="answer__form"> 
-        {questionType !== "visual" && (
-          <input
-            type="number"
-            value={answer}
-            onChange={(e) => setAnswer(e.target.value)}
-            placeholder="Type your answer here..."
-            className="answer__input"
-            autoFocus
-          />
-        )}
-          {/* <button type="submit" className="submit__btn">
-            Submit Answer
-          </button> */}
-          <button onClick={handleSubmit} className="submit__btn" disabled={isSuccess || isError}>
-               {isSuccess ? "Correct" : isError ? "Wrong" : "Submit Answer"}
-             </button>
-        </form>
+       {!isConceptual && questionType !== "visual" && !isIconsItems && (
+             <form onSubmit={handleSubmit} className="answer__form"> 
+               <input
+                  type="number"
+                  value={answer}
+                  onChange={(e) => setAnswer(e.target.value)}
+                  placeholder="Type your answer here..."
+                  className={isSuccess ? "answer__input visual__input__success" : isError ? "answer__input visual__input__error" : "answer__input"}
+                  autoFocus
+                />
+               <button onClick={handleSubmit} className="submit__btn" disabled={isSuccess || isError}>
+                 {isSuccess ? "Correct!" : isError ? "Wrong..." : "Submit Answer"}
+               </button>
+             </form>
+          )}
         </div>
       )}
     </div>
@@ -196,3 +227,40 @@ const handleSubmit = (e) => {
 
 export default QuestionCard;
 
+
+//  {/* Loop through the groups (e.g., 4 Apples, then 3 Cars) */}
+//           {problem.question?.visualData.groups.map((group, index) => {
+//             // Find the correct icon component from our map
+//             const IconComponent = ICON_MAP[group.icon] || FaQuestionCircle;
+
+//             return (
+//               <div key={index} className="icons-items__group-wrapper">
+                
+//                 {/* The Grid of Icons dynamically */}
+//                 <div className="icons-items__grid">
+//                   {Array.from({ length: group.count }).map((_, i) => (
+//                     <span 
+//                       key={i} 
+//                       className="icons-items__icon" 
+//                       style={{ animationDelay: `${i * 0.1}s` }}
+//                     >
+//                       <IconComponent />
+//                     </span>
+//                   ))}
+//                 </div>
+                
+//                 {/* Label under the icons (e.g. "4 Apples") */}
+//                 <span className="icons-items__label">{group.label}</span>
+
+//                 {/* Show Operator (like +) if it's not the last group */}
+//                 {index < problem.question.visualData.groups.length - 1 && (
+//                    <div className="icons-items__operator">
+//                      {problem.question.visualData.operator || "+"}
+//                    </div>
+//                 )}
+//               </div>
+//             );
+//           })}
+
+//           {/* Equals Sign */}
+//           <div className="icons-items__operator">=</div>

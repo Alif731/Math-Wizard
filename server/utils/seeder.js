@@ -152,7 +152,88 @@ const conceptsData = [
   },
 
   // ====================================================
-  // 3. LEVEL: Word Problems
+  // 3. LEVEL: Icon items
+  // ====================================================
+ {
+    id: "visual_icons", 
+    title: "Counting with Icons", 
+    description: "Add items by counting visual icons.",
+    prerequisites: ["visual_addition"], // Optional: set prerequisite
+    questions: [
+      {
+        text: "To a bag of 5 apples, Messi added 3 more. How many apples are there in the bag?",
+        correctAnswer: "8",
+        type: "icons_items", 
+        difficulty: 1,
+        visualData: {
+          groups: [
+            { count: 4, icon: "apple", label: "4 Apples" }, 
+            { count: 3, icon: "apple", label: "3 Apples" },
+          ],
+          operator: "+",
+          dragOptions: ["5", "8", "10", "6"]
+        },
+      },
+      {
+        text: "Geeta has 6 red pencils and 9 blue pencils. How many pencils does she have?",
+        correctAnswer: "15",
+        type: "icons_items", 
+        difficulty: 1,
+        visualData: {
+          groups: [
+            { count: 6, icon: "pencil", label: "6 Pencils" }, // Changed to 'apple' to match map
+            { count: 9, icon: "pencil", label: "9 Pencils" },
+          ],
+          operator: "+",
+          dragOptions: ["12", "8", "11", "15"]
+        },
+      },
+      {
+        text: "Ravi has 9 stars. Seetha gives him 3 more. How many stars does Ravi have now?",
+        correctAnswer: "12",
+        type: "icons_items", 
+        difficulty: 1,
+        visualData: {
+          groups: [
+            { count: 9, icon: "star", label: "9 Stars" }, // Changed to 'apple' to match map
+            { count: 3, icon: "star", label: "3 Stars" },
+          ],
+          operator: "+",
+          dragOptions: ["5", "10", "12", "8"]
+        },
+      },
+      {
+        text: "In a pet shop there are 6 dogs. After few days 11 more dogs were added. How many dogs are there in the shop?",
+        correctAnswer: "17",
+        type: "icons_items", 
+        difficulty: 1,
+        visualData: {
+          groups: [
+            { count: 6, icon: "dog", label: "6 Dogs" }, 
+            { count: 11, icon: "dog", label: "11 Dogs" },
+          ],
+          operator: "+",
+          dragOptions: ["15", "10", "11", "17"]
+        },
+      },
+      {
+        text: "A Customer bought 5 oranges from a shop. Due to a price cut, he bought 6 more oranges. How many oranges does the Shopkeeper have now?",
+        correctAnswer: "11",
+        type: "icons_items", 
+        difficulty: 1,
+        visualData: {
+          groups: [
+            { count: 5, icon: "orange", label: "5 Oranges" }, 
+            { count: 6, icon: "orange", label: "6 Oranges" },
+          ],
+          operator: "+",
+          dragOptions: ["15", "10", "11", "17"]
+        },
+      },
+    ],
+  },
+  // ====================================================
+  // 4. LEVEL: Word Problems
   // ====================================================
   {
     id: "add_single",
@@ -166,19 +247,25 @@ const conceptsData = [
         type: "direct",
         difficulty: 1,
       },
-      {
-        text: "5 + 0 = ?",
-        correctAnswer: "5",
-        type: "distractor",
+        {
+        text: "Raju has 9 pencils. Geeta gives him 3 more. How many pencils does Raju have now?",
+        correctAnswer: "12",
+        type: "direct",
         difficulty: 1,
       },
-      { text: "3 + 4", correctAnswer: "7", type: "direct", difficulty: 2 },
-      {
-        text: "What is 9 + 1?",
-        correctAnswer: "10",
-        type: "direct",
-        difficulty: 2,
-      },
+      // {
+      //   text: "5 + 0 = ?",
+      //   correctAnswer: "5",
+      //   type: "distractor",
+      //   difficulty: 1,
+      // },
+      // { text: "3 + 4", correctAnswer: "7", type: "direct", difficulty: 2 },
+      // {
+      //   text: "What is 9 + 1?",
+      //   correctAnswer: "10",
+      //   type: "direct",
+      //   difficulty: 2,
+      // },
     ],
   },
   {
@@ -249,15 +336,17 @@ const seedData = async () => {
       username: "student1",
       role: "student",
       mastery: {},
-      // zpdNodes: ["add_single"], // Root node
-      zpdNodes: ["foundation_signs"],
-      // zpdNodes: ["visual_addition"],
+      zpdNodes: ["foundation_signs"], // sign selection
+      // zpdNodes: ["visual_addition"], // bar
+      // zpdNodes: ["visual_icons"], // Drag and Drop
+      // zpdNodes: ["add_single"], // normal
     });
 
     // Initialize mastery for root
-    // testUser.mastery.set("add_single", {
-    testUser.mastery.set("foundation_signs", {
-    // testUser.mastery.set("visual_addition", {
+    testUser.mastery.set("foundation_signs", { // sign selection
+    // testUser.mastery.set("visual_addition", {  // bar
+    // testUser.mastery.set("visual_icons", {  // Drag and Drop
+    // testUser.mastery.set("add_single", {  // normal
       status: "unlocked",
       successCount: 0,
       attemptCount: 0,

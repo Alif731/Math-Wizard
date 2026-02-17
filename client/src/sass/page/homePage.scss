@@ -37,12 +37,12 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 
   .player-badge {
     border-radius: 12px;
-    border-right: 5px solid #E07A5F;
-    border-bottom: 5px solid #E07A5F;
+    border-right: 5px solid #F2CC8F;
+    border-bottom: 5px solid #F2CC8F;
 
     font-family: cursive;
 
-    color: #81B29A;
+    color: #3D405B;
     padding: 10px;
     border-radius: 9999px;
     font-weight: bold;
@@ -235,9 +235,14 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 .highlight1 {
   font-weight: bolder;
-  color: #E07A5F;
+  color: #edb151;
 }
 .highlight2 {
+  font-weight: bolder;
+  color: #edb151;
+  margin-left: 0.4rem;
+}
+.highlight3 {
   font-weight: bolder;
   color: #E07A5F;
   margin-left: 0.4rem;
