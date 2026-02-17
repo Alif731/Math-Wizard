@@ -65,6 +65,7 @@ const handleAnswerSubmit = async (answer) => {
     <div className="home-page">
       {/* --- ADDED BACK: GAME HEADER --- */}
       <header className="game-header">
+      <h1 className="card__header">{problem.concept.title}</h1>
         <div className="player-badge highlight2">
           <span className="highlight1">G</span>ood{" "}
           <span className="highlight2">M</span>orning {username}

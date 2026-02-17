@@ -336,17 +336,17 @@ const seedData = async () => {
       username: "student1",
       role: "student",
       mastery: {},
-      zpdNodes: ["foundation_signs"], // sign selection
+      // zpdNodes: ["foundation_signs"], // sign selection
       // zpdNodes: ["visual_addition"], // bar
       // zpdNodes: ["visual_icons"], // Drag and Drop
-      // zpdNodes: ["add_single"], // normal
+      zpdNodes: ["add_single"], // normal
     });
 
     // Initialize mastery for root
-    testUser.mastery.set("foundation_signs", { // sign selection
+    // testUser.mastery.set("foundation_signs", { // sign selection
     // testUser.mastery.set("visual_addition", {  // bar
     // testUser.mastery.set("visual_icons", {  // Drag and Drop
-    // testUser.mastery.set("add_single", {  // normal
+    testUser.mastery.set("add_single", {  // normal
       status: "unlocked",
       successCount: 0,
       attemptCount: 0,

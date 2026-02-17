@@ -110,6 +110,13 @@ const handleSubmit = (e) => {
   // ------------------------------------------------------------------------------------------------------- // 
   return (
     <div className="question__card">
+      {isConceptual && (
+          <h2 className="card__header__type">
+          <span className="highlight1">S</span>elect{" "}
+          <span className="highlight2">C</span>orrect{" "}
+          <span className="highlight2">O</span>perator{" "} 
+        </h2>
+      )} 
       <div className="question__text">
         {" "}
         <span className="highlight3">Q,</span> {problem.question.text}

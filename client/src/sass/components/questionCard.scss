@@ -47,8 +47,9 @@
 }
 
 .card__header {
-    color: #C9ADA7;
-  text-shadow: 1px 2px #595151;
+
+  color: #3D405B;
+  // text-shadow: 1px 2px #595151;
 
   width: fit-content;
   background: #ffffff;
@@ -62,9 +63,10 @@
   text-transform: uppercase;
   letter-spacing: 0.025em; // tracking-wide
   border-radius: 9999px;
-  width: 30%;
+  // width: 30%;
   border-left: 5px solid #eab308;
   border-bottom: 5px solid #eab308;
+      margin-left: 0.6rem;
   transition: all 0.8s;
   &:hover {
     color: #ffffff;
@@ -73,21 +75,29 @@
   }
 
   &__type {
-    text-decoration: overline;
-    text-shadow: -3px 4px #676561;
-    color: #9a8c98;
+    // text-decoration: overline;
+    // color: #E07A5F;
+     color: #3D405B;
     font-family: cursive;
     margin: auto;
     font-size: 3rem;
     margin-bottom: 2rem;
     text-align: center;
     border-radius: 10px;
-    padding: 10px 5px;
+    padding: 10px 15px;
     transition: 0.7s all;
+    // border-left: 5px solid #E07A5F;
+    // border-right:5px solid #E07A5F ;
+    width: fit-content;
+    margin-top: 1rem;
+    border-bottom: 5px solid #F2CC8F;
+    border-radius: 999px;
     // box-shadow: rgba(0, 0, 0, 0.15) 1.95px 1.95px 2.6px;
   }
 }
-
+.highlight5{
+  color:#81B29A;
+}
 // --- Form Layout ---
 .answer__form {
   display: flex;
