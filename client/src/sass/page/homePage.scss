@@ -246,6 +246,9 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   font-weight: bolder;
   color: #E07A5F;
   margin-left: 0.4rem;
+    //   border-left: 5px solid #E07A5F;
+    // border-radius: 10px;
+    // padding-left: 0.5rem;
 }
 
 .zpd__text {
@@ -297,10 +300,3 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   }
 }
 
-@keyframes tilt-shake {
-  0% { transform: rotate(0deg); }
-  25% { transform: rotate(-4deg); }
-  50% { transform: rotate(4deg); }
-  75% { transform: rotate(-4deg); }
-  100% { transform: rotate(0deg); }
-}

@@ -1,15 +1,25 @@
-import  { useState,useEffect } from "react";
-import "../sass/components/questionCard.scss"; 
+import { useState, useEffect } from "react";
+import "../sass/components/questionCard.scss";
 import DragDropQuestion from "./DragDropQuestion";
+import Confetti from "react-confetti";
 
-const QuestionCard = ({ problem, onSubmit }) => {
+// preload audio
+  const audioSuccess = new Audio("/success1.mp3");
+  const audioFailure = new Audio("/failure.mp3");
   
+const QuestionCard = ({ problem, onSubmit }) => {
+
+  // Concatenate for foundational questions
+  const question = problem?.question;
+  let displayOperands = question?.operands || [];
+  const num1 = displayOperands[0];
+  const num2 = displayOperands[1];
+  const showFullEquation = num1 && num2;
 
   const [answer, setAnswer] = useState("");
-  const [isSuccess, setIsSuccess] = useState(false); 
+  const [isSuccess, setIsSuccess] = useState(false);
   const [isError, setIsError] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
-
 
   // Reset state when the problem changes
   useEffect(() => {
@@ -19,12 +29,12 @@ const QuestionCard = ({ problem, onSubmit }) => {
     setSelectedOption(null);
   }, [problem]);
 
-
+  // foundational
   const handleOptionClick = (option) => {
     // Prevent clicking other buttons while animating
     if (isSuccess || isError) return;
 
-    setSelectedOption(option); // Remember which button we clicked
+    setSelectedOption(option);
 
     const rawCorrect = problem?.question?.correctAnswer || problem?.answer;
     if (rawCorrect === undefined || rawCorrect === null) {
@@ -36,17 +46,21 @@ const QuestionCard = ({ problem, onSubmit }) => {
 
     if (isCorrect) {
       setIsSuccess(true);
-      setTimeout(() => onSubmit(option), 1500);
+      audioSuccess.currentTime = 0; // Rewind to start (in case they click fast)
+      audioSuccess.play().catch((e) => console.log("Audio blocked by browser"));
+      setTimeout(() => onSubmit(option), 3000);
     } else {
       setIsError(true);
-      setTimeout(() => onSubmit(option), 1500);
+      audioFailure.currentTime = 0; // Rewind to start (in case they click fast)
+      audioFailure.play().catch((e) => console.log("Audio blocked by browser"));
+      setTimeout(() => onSubmit(option), 2600);
     }
   };
-  
 
-const handleSubmit = (e) => {
+  // normal question
+  const handleSubmit = (e) => {
     if (e && e.preventDefault) e.preventDefault();
-    
+
     // SAFETY: Check for empty input
     if (answer === "" || answer === null || answer === undefined) return;
 
@@ -63,19 +77,22 @@ const handleSubmit = (e) => {
     const isCorrect = userAnswer === dbAnswer;
 
     // ANIMATION LOGIC
-    const shouldAnimate = problem.question.type === "visual" || problem.question.type === "icons_items" || problem.question.type === "direct";
-   if (shouldAnimate) {
+    const shouldAnimate =
+      problem.question.type === "visual" ||
+      problem.question.type === "icons_items" ||
+      problem.question.type === "direct";
+    if (shouldAnimate) {
       if (isCorrect) {
         // SUCCESS ANIMATION
         setIsSuccess(true);
         setTimeout(() => {
           onSubmit(userAnswer);
-        }, 1500);
+        }, 5000);
       } else {
         // ERROR ANIMATION
         setIsError(true);
         setTimeout(() => {
-            onSubmit(userAnswer);
+          onSubmit(userAnswer);
         }, 1500);
       }
     } else {
@@ -83,7 +100,7 @@ const handleSubmit = (e) => {
       onSubmit(userAnswer);
     }
   };
-  
+
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
       handleSubmit(e);
@@ -98,133 +115,181 @@ const handleSubmit = (e) => {
   const visualData = problem.question.visualData;
   const isIconsItems = questionType === "icons_items";
 
-
   // Helper to determine bars container class based on state
   const getInputClass = () => {
-      if (isSuccess) return "visual__input visual__input__success";
-      if (isError) return "visual__input visual__input__error";
-      return "visual__input";
+    if (isSuccess) return "visual__input visual__input__success";
+    if (isError) return "visual__input visual__input__error";
+    return "visual__input";
   };
 
+  // bar model dynamic answer width helper function
+  // Helper to dynamically scale the input width for Visual Bar Models
+  const getDynamicWidth = () => {
+    // 1. If not submitted yet, leave it at its default CSS width (return undefined)
+    if (!isSuccess && !isError) return undefined; 
 
-  // ------------------------------------------------------------------------------------------------------- // 
+    // 2. If correct, span the full 100% of the bar below it
+    if (isSuccess) return "100%";
+
+    // 3. If wrong, calculate how big their number is compared to the correct answer
+    const correctNum = Number(question?.correctAnswer);
+    const userNum = Number(answer);
+
+    if (!isNaN(correctNum) && !isNaN(userNum) && correctNum > 0) {
+      const percentage = (userNum / correctNum) * 100;
+      // Cap the width between 15% (so it doesn't shrink to nothing) and 100% (so it doesn't break the screen)
+      return `${Math.min(100, Math.max(15, percentage))}%`;
+    }
+
+    return "100%"; // Fallback
+  };
+
+  // Foundational Render
+  const conceptualButtons = [];
+  if (isConceptual && question?.options) {
+    for (let i = 0; i < question.options.length; i++) {
+      const option = question.options[i];
+      // Generate A, B, C, D dynamically based on loop index
+      const letter = String.fromCharCode(65 + i); 
+      
+      let btnClass = "card__options__btn";
+      if (selectedOption === option) {
+        if (isSuccess) btnClass += " card__options__btn__success";
+        if (isError) btnClass += " card__options__btn__error";
+      }
+
+      conceptualButtons.push(
+        <button
+          key={option}
+          className={btnClass}
+          onClick={() => handleOptionClick(option)} 
+          disabled={isSuccess || isError}
+        >
+          <span className="sike"> 
+                    <span className="sike__options">{letter}</span>
+                    {showFullEquation ? `${num1} ${option} ${num2}` : option}
+          </span>
+        </button>
+      );
+    }
+  }
+
   return (
     <div className="question__card">
-      {isConceptual && (
-          <h2 className="card__header__type">
-          <span className="highlight1">S</span>elect{" "}
-          <span className="highlight2">C</span>orrect{" "}
-          <span className="highlight2">O</span>perator{" "} 
-        </h2>
-      )} 
+      {/* 🎉 CONFETTI EXPLOSION HERE */}
+      {isSuccess && (
+        <Confetti recycle={false} numberOfPieces={500} gravity={0.3} />
+      )}
       <div className="question__text">
         {" "}
         <span className="highlight3">Q,</span> {problem.question.text}
       </div>
-
-      {/* ---ICONS ITEMS SECTION --- */}
+      {/* --- SECTION 3: Drag and Drop SECTION --- */}
       {isIconsItems && problem.question.visualData && (
         <div className="icons-items__container">
-        {/* Drag MCA Options and Answer Box */}
-        <DragDropQuestion 
-             options={problem.question.visualData.dragOptions || ["5", "7", "10", "6"]} 
-             correctAnswer={problem.question.correctAnswer}
-             
-             // Pass the icon type (e.g., 'apple') to render correct icons
-             iconName={problem.question.visualData.groups?.[0]?.icon || "icon"}
-             
-             onCorrect={(val) => {
-                setIsSuccess(true);
-                setAnswer(val); 
-                setTimeout(() => onSubmit(val), 1500); 
-             }}
-             onWrong={(val) => {
-                setIsError(true); // Triggers Red State in Main Card
-                setAnswer(val);
-                setTimeout(() => onSubmit(val), 1500); // Auto-submit wrong answer
-             }}
+          {/* Drag MCA Options and Answer Box */}
+          <DragDropQuestion
+            options={
+              problem.question.visualData.dragOptions || ["5", "7", "10", "6"]
+            }
+            correctAnswer={problem.question.correctAnswer}
+            // Pass the icon type (e.g., 'apple') to render correct icons
+            iconName={problem.question.visualData.groups?.[0]?.icon || "icon"}
+            onCorrect={(val) => {
+              setIsSuccess(true);
+              setAnswer(val);
+              setTimeout(() => onSubmit(val), 3000);
+            }}
+            onWrong={(val) => {
+              setIsError(true); // Triggers Red State in Main Card
+              setAnswer(val);
+              setTimeout(() => onSubmit(val), 1500); // Auto-submit wrong answer
+            }}
           />
         </div>
       )}
-
-   {/* ---------------------- SECTION 2: VISUAL BAR MODEL -------------------- */}
+      {/* ---------------------- SECTION 2: VISUAL BAR MODEL -------------------- */}
       {questionType === "visual" && visualData && (
         <div className="visual__container">
           {/* Top Bracket with INPUT instead of '?' */}
           {visualData.showTotal && (
             <div className="visual__bracket">
-                 <input
+              <input
                 type="number"
                 className={getInputClass()}
-                value={answer }
-                onChange={(e) => !isSuccess &&  !isError && setAnswer(e.target.value)}
+                value={answer}
+                onChange={(e) =>
+                  !isSuccess && !isError && setAnswer(e.target.value)
+                }
                 onKeyDown={handleKeyDown}
                 placeholder="?"
                 autoComplete="off"
                 readOnly={isSuccess || isError}
+                // Dynamic Width Input
+                style={{ 
+                  width: getDynamicWidth(), 
+                }}
               />
-              <div className="visual__line"><span className = 'visual__line__span'>|</span></div>
+              <div className="visual__line">
+                <span className="visual__line__span">|</span>
+              </div>
             </div>
           )}
-  {/* Bars */}
-  {/* <div className={`visual__bars ${isSuccess ? "visual__bars__success" : ""}`}> */}
-  <div className={`visual__bars`}> 
-  {visualData.parts.map((part, index) => (
-    <div
-      key={index}
-      className="visual__segment"
-      style={{
-        backgroundColor: part.color,
-        flex: part.value,
-      }}
-    >
-      <span className="visual__label">{part.label}</span>
-    </div>
-  ))}
-</div>
-</div>
+          {/* Bars */}
+          {/* <div className={`visual__bars ${isSuccess ? "visual__bars__success" : ""}`}> */}
+          <div className={`visual__bars`}>
+            {visualData.parts.map((part, index) => (
+              <div
+                key={index}
+                className="visual__segment"
+                style={{
+                  backgroundColor: part.color,
+                  flex: part.value,
+                }}
+              >
+                <span className="visual__label">{part.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
-      {/* ---------------------- SECTION 3: BAR MODEL -------------------- */}
+      {/* ---------------------- SECTION 1: Foundational MODEL -------------------- */}
       {isConceptual ? (
         // 1. OPTION MODE (For Signs)
         <div className="card__options">
-          {problem.question.options?.map((option) => {
-            // Determine class for this specific button
-            let btnClass = "card__options__btn";
-            if (selectedOption === option) {
-              if (isSuccess) btnClass += " card__options__btn__success";
-              if (isError) btnClass += " card__options__btn__error";
-            }
-
-            return (
-              <button
-                key={option}
-                className={btnClass}
-                onClick={() => handleOptionClick(option)} 
-                disabled={isSuccess || isError} // Disable all buttons during animation
-              >
-                <span className="sike">{option}</span>
-              </button>
-            );
-          })}
+        {conceptualButtons}
         </div>
       ) : (
-            // ---------------------- SECTION 4: Normal Questions-------------------- 
+        // ---------------------- SECTION 4: Normal Questions--------------------
         <div>
-       {!isConceptual && questionType !== "visual" && !isIconsItems && (
-             <form onSubmit={handleSubmit} className="answer__form"> 
-               <input
-                  type="number"
-                  value={answer}
-                  onChange={(e) => setAnswer(e.target.value)}
-                  placeholder="Type your answer here..."
-                  className={isSuccess ? "answer__input visual__input__success" : isError ? "answer__input visual__input__error" : "answer__input"}
-                  autoFocus
-                />
-               <button onClick={handleSubmit} className="submit__btn" disabled={isSuccess || isError}>
-                 {isSuccess ? "Correct!" : isError ? "Wrong..." : "Submit Answer"}
-               </button>
-             </form>
+          {!isConceptual && questionType !== "visual" && !isIconsItems && (
+            <form onSubmit={handleSubmit} className="answer__form">
+              <input
+                type="number"
+                value={answer}
+                onChange={(e) => setAnswer(e.target.value)}
+                placeholder="Type your answer here..."
+                className={
+                  isSuccess
+                    ? "answer__input visual__input__success"
+                    : isError
+                      ? "answer__input visual__input__error"
+                      : "answer__input"
+                }
+                autoFocus
+              />
+              <button
+                onClick={handleSubmit}
+                className="submit__btn"
+                disabled={isSuccess || isError}
+              >
+                {isSuccess
+                  ? "Correct!"
+                  : isError
+                    ? "Wrong..."
+                    : "Submit Answer"}
+              </button>
+            </form>
           )}
         </div>
       )}
@@ -234,7 +299,6 @@ const handleSubmit = (e) => {
 
 export default QuestionCard;
 
-
 //  {/* Loop through the groups (e.g., 4 Apples, then 3 Cars) */}
 //           {problem.question?.visualData.groups.map((group, index) => {
 //             // Find the correct icon component from our map
@@ -242,20 +306,20 @@ export default QuestionCard;
 
 //             return (
 //               <div key={index} className="icons-items__group-wrapper">
-                
+
 //                 {/* The Grid of Icons dynamically */}
 //                 <div className="icons-items__grid">
 //                   {Array.from({ length: group.count }).map((_, i) => (
-//                     <span 
-//                       key={i} 
-//                       className="icons-items__icon" 
+//                     <span
+//                       key={i}
+//                       className="icons-items__icon"
 //                       style={{ animationDelay: `${i * 0.1}s` }}
 //                     >
 //                       <IconComponent />
 //                     </span>
 //                   ))}
 //                 </div>
-                
+
 //                 {/* Label under the icons (e.g. "4 Apples") */}
 //                 <span className="icons-items__label">{group.label}</span>
 
