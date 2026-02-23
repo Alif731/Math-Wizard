@@ -20,8 +20,8 @@
   //   0 10px 10px -5px #7272c3b4;
   // max-width: 56rem;
   font-family: cursive;
-  border-bottom: 3px solid #81b29a;
-  border-right: 3px solid #81b29a;
+  border-bottom: 5px solid #81b29a;
+  border-right: 5px solid #81b29a;
   box-shadow:
     rgb(129 178 154 / 18%) 3px 3px 6px 0px inset,
     rgb(129 178 154 / 0%) -3px -3px 6px 1px inset;
@@ -31,10 +31,10 @@
 .question__text {
   // text-align: center;
   font-family: cursive;
-  border-left: 5px solid #E07A5F;
+  border-left: 5px solid #e07a5f;
   font-weight: 700;
   padding: 0.5rem;
-  color: #3D405B;
+  color: #3d405b;
   background-color: #81b29a25;
   font-size: 2rem;
   border-radius: 10px;
@@ -42,11 +42,10 @@
 
 .card__options {
   display: grid;
-  grid-template-columns: repeat(2, 1fr); 
-  gap: 1rem; 
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
   margin-top: 1rem;
   padding: 2rem;
-
 
   &__btn {
     background-color: #ffffff;
@@ -76,11 +75,10 @@
       .sike {
         display: inline-block;
         transform: scale(1.2);
-          &__options{
-          border: 3px solid #81B29A;   
-          color: #81B29A;
-          }
-
+        &__options {
+          border: 3px solid #81b29a;
+          color: #81b29a;
+        }
       }
     }
 
@@ -122,24 +120,23 @@
   border-color: white !important;
   color: white !important;
   transition: all 0.7s;
-
 }
 
 .sike {
   transition: all 0.7s;
   font-family: cursive;
-    &__options{
-  display: inline-flex;        
-  justify-content: center;    
-  align-items: center;         
-  width: 30px;                 
-  height: 30px;                
-  border-radius: 50%;          
-  border: 3px solid #3D405B;   
-  font-weight: bold;
-  margin-right: 1rem;
-  color: #3D405B;
-  padding: 3px;
+  &__options {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 3px solid #f2cc8f;
+    font-weight: bold;
+    margin-right: 1rem;
+    color: #f2cc8f;
+    padding: 3px;
   }
 }
 
@@ -169,27 +166,27 @@
     cursor: pointer;
   }
 
-  &__type {
-    // text-decoration: overline;
-    // color: #E07A5F;
-    color: #3d405b;
-    font-family: cursive;
-    margin: auto;
-    font-size: 3rem;
-    margin-bottom: 2rem;
-    text-align: center;
-    border-radius: 10px;
-    padding: 10px 15px;
-    transition: 0.7s all;
-    // border-left: 5px solid #E07A5F;
-    // border-right:5px solid #E07A5F ;
-    width: fit-content;
-    margin-top: 1rem;
-    text-decoration: overline;
-    // border-bottom: 5px solid #F2CC8F;
-    border-radius: 999px;
-    // box-shadow: rgba(0, 0, 0, 0.15) 1.95px 1.95px 2.6px;
-  }
+  // &__type {
+  //   // text-decoration: overline;
+  //   // color: #E07A5F;
+  //   color: #3d405b;
+  //   font-family: cursive;
+  //   margin: auto;
+  //   font-size: 3rem;
+  //   margin-bottom: 2rem;
+  //   text-align: center;
+  //   border-radius: 10px;
+  //   padding: 10px 15px;
+  //   transition: 0.7s all;
+  //   // border-left: 5px solid #E07A5F;
+  //   // border-right:5px solid #E07A5F ;
+  //   width: fit-content;
+  //   margin-top: 1rem;
+  //   text-decoration: overline;
+  //   // border-bottom: 5px solid #F2CC8F;
+  //   border-radius: 999px;
+  //   // box-shadow: rgba(0, 0, 0, 0.15) 1.95px 1.95px 2.6px;
+  // }
 }
 .highlight5 {
   color: #81b29a;
@@ -198,6 +195,7 @@
 .answer__form {
   display: flex;
   flex-direction: column;
+  padding: 2rem;
   gap: 1rem; // gap-4
 
   // --- Input Field ---
@@ -252,12 +250,11 @@
   color: #eab308;
 }
 
-
-
 // --- VISUAL BAR MODEL STYLES ---
 .visual__container {
+  position: relative; // for flowing hint for bar modal
   margin: 2rem 0;
-  padding:2rem;
+  padding: 2rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -312,7 +309,7 @@
   text-align: center;
   margin-bottom: 1.5rem;
   // background-color: #f9f9f9;
-  transition: all 0.8s;
+  transition: all 3s;
   border-radius: 10px;
   box-shadow: 0 4px 6px rgb(224 122 95 / 44%);
   // box-shadow: 0 4px 6px rgba(0, 0, 0, 0.192);
@@ -621,5 +618,60 @@
   } /* Little bounce */
   100% {
     transform: scale(1);
+  }
+}
+
+/* --- Floating Hint Arrow --- */
+.visual__hint {
+  position: absolute;
+  top: 0px; /* Floats above the input */
+  left: 75%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none; /* Prevents the hint from blocking clicks on the input */
+  animation: bounceHint 1.5s infinite; /* Continuous smooth bounce */
+  z-index: 10;
+
+  &-text {
+    background-color: #e07a5f;
+    color: white;
+    font-size: 0.9rem;
+    font-weight: bold;
+    padding: 4px 12px;
+    border-radius: 12px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    white-space: nowrap;
+    position: relative;
+
+    /* Little triangle pointing down from the speech bubble */
+    &::after {
+      content: "";
+      position: absolute;
+      bottom: -4px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 5px 5px 0;
+      border-style: solid;
+      border-color: #e07a5f transparent transparent transparent;
+    }
+  }
+
+  &-arrow {
+    margin-top: 2px;
+    font-size: 5rem;
+    color: #e07a5f;
+  }
+}
+
+/* The Bounce Animation */
+@keyframes bounceHint {
+  0%,
+  100% {
+    transform: translate(-50%, 0);
+  }
+  50% {
+    transform: translate(-50%, -8px); /* Moves up slightly */
   }
 }

@@ -1,14 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import "../sass/components/questionCard.scss";
-import DragDropQuestion from "./DragDropQuestion";
+// import DragDropQuestion from "./DragDropQuestion";
 import Confetti from "react-confetti";
+import MatchTheFollowing from "./MatchTheFollowing";
+
+import { PiArrowBendDoubleUpLeftBold } from "react-icons/pi";
 
 // preload audio
-  const audioSuccess = new Audio("/success1.mp3");
-  const audioFailure = new Audio("/failure.mp3");
-  
-const QuestionCard = ({ problem, onSubmit }) => {
+const audioSuccess = new Audio("/success1.mp3");
+const audioFailure = new Audio("/failure.mp3");
 
+const QuestionCard = ({ problem, onSubmit }) => {
   // Concatenate for foundational questions
   const question = problem?.question;
   let displayOperands = question?.operands || [];
@@ -29,6 +31,16 @@ const QuestionCard = ({ problem, onSubmit }) => {
     setSelectedOption(null);
   }, [problem]);
 
+  const playSuccessSound = () => {
+    audioSuccess.currentTime = 0; // Rewind to start (in case they click fast)
+    audioSuccess.play().catch((e) => console.log("Audio blocked by browser"));
+  };
+
+  const playErrorSound = () => {
+    audioFailure.currentTime = 0; // Rewind to start (in case they click fast)
+    audioFailure.play().catch((e) => console.log("Audio blocked by browser"));
+  };
+
   // foundational
   const handleOptionClick = (option) => {
     // Prevent clicking other buttons while animating
@@ -46,13 +58,11 @@ const QuestionCard = ({ problem, onSubmit }) => {
 
     if (isCorrect) {
       setIsSuccess(true);
-      audioSuccess.currentTime = 0; // Rewind to start (in case they click fast)
-      audioSuccess.play().catch((e) => console.log("Audio blocked by browser"));
+      playSuccessSound();
       setTimeout(() => onSubmit(option), 3000);
     } else {
       setIsError(true);
-      audioFailure.currentTime = 0; // Rewind to start (in case they click fast)
-      audioFailure.play().catch((e) => console.log("Audio blocked by browser"));
+      playErrorSound();
       setTimeout(() => onSubmit(option), 2600);
     }
   };
@@ -83,17 +93,19 @@ const QuestionCard = ({ problem, onSubmit }) => {
       problem.question.type === "direct";
     if (shouldAnimate) {
       if (isCorrect) {
+        playSuccessSound();
         // SUCCESS ANIMATION
         setIsSuccess(true);
         setTimeout(() => {
           onSubmit(userAnswer);
-        }, 5000);
+        }, 3000);
       } else {
+        playErrorSound();
         // ERROR ANIMATION
         setIsError(true);
         setTimeout(() => {
           onSubmit(userAnswer);
-        }, 1500);
+        }, 2600);
       }
     } else {
       // If not visual, submit immediately without animation
@@ -126,7 +138,7 @@ const QuestionCard = ({ problem, onSubmit }) => {
   // Helper to dynamically scale the input width for Visual Bar Models
   const getDynamicWidth = () => {
     // 1. If not submitted yet, leave it at its default CSS width (return undefined)
-    if (!isSuccess && !isError) return undefined; 
+    if (!isSuccess && !isError) return undefined;
 
     // 2. If correct, span the full 100% of the bar below it
     if (isSuccess) return "100%";
@@ -150,8 +162,8 @@ const QuestionCard = ({ problem, onSubmit }) => {
     for (let i = 0; i < question.options.length; i++) {
       const option = question.options[i];
       // Generate A, B, C, D dynamically based on loop index
-      const letter = String.fromCharCode(65 + i); 
-      
+      const letter = String.fromCharCode(65 + i);
+
       let btnClass = "card__options__btn";
       if (selectedOption === option) {
         if (isSuccess) btnClass += " card__options__btn__success";
@@ -162,17 +174,77 @@ const QuestionCard = ({ problem, onSubmit }) => {
         <button
           key={option}
           className={btnClass}
-          onClick={() => handleOptionClick(option)} 
+          onClick={() => handleOptionClick(option)}
           disabled={isSuccess || isError}
         >
-          <span className="sike"> 
-                    <span className="sike__options">{letter}</span>
-                    {showFullEquation ? `${num1} ${option} ${num2}` : option}
+          <span className="sike">
+            <span className="sike__options">{letter}</span>
+            {showFullEquation ? `${num1} ${option} ${num2}` : option}
           </span>
-        </button>
+        </button>,
       );
     }
   }
+
+  // Fallback data for Match The Following if not in DB yet
+  const matchLeft = visualData?.leftItems || [
+    { id: "L1", content: "🐶🐶🐶 + 🐶🐶", matchId: "R1" },
+    { id: "L2", content: "10 - 4", matchId: "R2" },
+    { id: "L3", content: "⭐⭐ × ⭐⭐", matchId: "R3" },
+    { id: "L4", content: "8 ÷ 2", matchId: "R4" },
+  ];
+
+  const matchRight = visualData?.rightItems || [
+    { id: "R4", content: "4" },
+    { id: "R1", content: "5" },
+    { id: "R3", content: "4 Stars" },
+    { id: "R2", content: "6" },
+    { id: "R5", content: "9" },
+  ];
+
+  // Type 3 Play Sound and confetti
+  const timerRef = useRef(null);
+  const handleMatchComplete = (isValid) => {
+    // Fill the state so any empty-checks pass
+    setAnswer("matched");
+
+    if (isValid) {
+      setIsSuccess(true);
+      playSuccessSound();
+
+      // Confetti for 2.5s, then next question
+      setTimeout(() => {
+        onSubmit("matched");
+      }, 2500);
+    } else {
+      setIsError(true);
+      playErrorSound();
+
+      // Show red lines for 2.6s, then move to next question!
+      setTimeout(() => {
+        onSubmit("wrong_answer");
+      }, 2600);
+    }
+  };
+  const [showHint, setShowHint] = useState(false);
+
+  // 1. Check if they have seen the hint yet this session when the component loads
+  useEffect(() => {
+    if (problem?.question?.type === "visual") {
+      const hasSeenHint = sessionStorage.getItem("visualHintSeen");
+      if (!hasSeenHint) {
+        setShowHint(true); // Show it if they haven't seen it!
+      }
+    }
+  }, [problem]);
+
+  // 2. The moment they start typing, hide the hint and save it to session storage
+  useEffect(() => {
+    if (answer !== "" && showHint) {
+      setShowHint(false);
+      sessionStorage.setItem("visualHintSeen", "true"); // Locks it away for the rest of the session!
+    }
+  }, [answer, showHint]);
 
   return (
     <div className="question__card">
@@ -184,27 +256,14 @@ const QuestionCard = ({ problem, onSubmit }) => {
         {" "}
         <span className="highlight3">Q,</span> {problem.question.text}
       </div>
-      {/* --- SECTION 3: Drag and Drop SECTION --- */}
+      {/* --- SECTION 3: Match The Following SECTION --- */}
       {isIconsItems && problem.question.visualData && (
         <div className="icons-items__container">
-          {/* Drag MCA Options and Answer Box */}
-          <DragDropQuestion
-            options={
-              problem.question.visualData.dragOptions || ["5", "7", "10", "6"]
-            }
-            correctAnswer={problem.question.correctAnswer}
-            // Pass the icon type (e.g., 'apple') to render correct icons
-            iconName={problem.question.visualData.groups?.[0]?.icon || "icon"}
-            onCorrect={(val) => {
-              setIsSuccess(true);
-              setAnswer(val);
-              setTimeout(() => onSubmit(val), 3000);
-            }}
-            onWrong={(val) => {
-              setIsError(true); // Triggers Red State in Main Card
-              setAnswer(val);
-              setTimeout(() => onSubmit(val), 1500); // Auto-submit wrong answer
-            }}
+          <MatchTheFollowing
+            key={problem.question.id}
+            leftItems={matchLeft}
+            rightItems={matchRight}
+            onComplete={handleMatchComplete}
           />
         </div>
       )}
@@ -214,6 +273,15 @@ const QuestionCard = ({ problem, onSubmit }) => {
           {/* Top Bracket with INPUT instead of '?' */}
           {visualData.showTotal && (
             <div className="visual__bracket">
+              {showHint && !isSuccess && !isError && (
+                // {!isSuccess && !isError && (
+                <div className="visual__hint">
+                  <div className="visual__hint-text">Type here!</div>
+                  <div className="visual__hint-arrow">
+                    <PiArrowBendDoubleUpLeftBold />
+                  </div>
+                </div>
+              )}
               <input
                 type="number"
                 className={getInputClass()}
@@ -222,12 +290,13 @@ const QuestionCard = ({ problem, onSubmit }) => {
                   !isSuccess && !isError && setAnswer(e.target.value)
                 }
                 onKeyDown={handleKeyDown}
+                onBlur={handleSubmit}
                 placeholder="?"
                 autoComplete="off"
                 readOnly={isSuccess || isError}
                 // Dynamic Width Input
-                style={{ 
-                  width: getDynamicWidth(), 
+                style={{
+                  width: getDynamicWidth(),
                 }}
               />
               <div className="visual__line">
@@ -256,9 +325,7 @@ const QuestionCard = ({ problem, onSubmit }) => {
       {/* ---------------------- SECTION 1: Foundational MODEL -------------------- */}
       {isConceptual ? (
         // 1. OPTION MODE (For Signs)
-        <div className="card__options">
-        {conceptualButtons}
-        </div>
+        <div className="card__options">{conceptualButtons}</div>
       ) : (
         // ---------------------- SECTION 4: Normal Questions--------------------
         <div>

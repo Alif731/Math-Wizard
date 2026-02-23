@@ -11,8 +11,6 @@ import QuestionCard from "../components/QuestionCard";
 import Dashboard from "../components/Dashboard";
 import "../sass/page/homePage.scss";
 
-
-
 const Home = () => {
   const { userInfo } = useSelector((state) => state.auth);
   const username = userInfo?.username || "student1";
@@ -32,7 +30,7 @@ const Home = () => {
   const [feedback, setFeedback] = useState(null);
 
   // --- HANDLERS ---
-const handleAnswerSubmit = async (answer) => {
+  const handleAnswerSubmit = async (answer) => {
     if (!problem?.question) return;
 
     try {
@@ -43,11 +41,9 @@ const handleAnswerSubmit = async (answer) => {
         response: answer,
       }).unwrap();
 
-        // refetch questions
-        setFeedback(null); 
-        refetchProblem(); 
-      
-
+      // refetch questions
+      setFeedback(null);
+      refetchProblem();
     } catch (err) {
       console.error("Failed to submit:", err);
     }
@@ -63,9 +59,8 @@ const handleAnswerSubmit = async (answer) => {
   if (!problem) return <div className="loading-state">Loading...</div>;
   return (
     <div className="home-page">
-      {/* --- ADDED BACK: GAME HEADER --- */}
       <header className="game-header">
-      <h1 className="card__header">{problem.concept.title}</h1>
+        <h1 className="card__header">{problem.concept.title}</h1>
         <div className="player-badge highlight2">
           <span className="highlight1">G</span>ood{" "}
           <span className="highlight2">M</span>orning {username}
@@ -75,43 +70,13 @@ const handleAnswerSubmit = async (answer) => {
           </strong>
         </div>
       </header>
+      {/* Show description ONLY if the concept ID is foundation_signs or visual_icons */}
+      {problem?.description && problem.concept.id === "foundation_signs" && (
+        <h2 className="card__header__type">{problem.description}</h2>
+      )}
+
       <main className="home-layout">
-        {/* --- LEFT COLUMN: GAME AREA --- */}
-        {/* <section className="game-section"> */}
-        {/* 1. FEEDBACK CARD */}
-        {/* {feedback ? (
-          <div
-            className={`feedback-card ${feedback.isCorrect ? "success" : "error"}`}
-          >
-            <div className="feedback-icon">
-              {feedback.isCorrect ? "🌟" : "❌"}
-            </div>
-            <h2 className="feedback-title">
-              {feedback.isCorrect ? "Correct" : "Wrong"}
-            </h2>
-            <p className="feedback-text">
-              {feedback.isCorrect
-                ? feedback.explanation
-                : `The correct answer was: ${feedback.correctAnswer}`}
-            </p>
-            <button onClick={handleNext} className="btn-next">
-              Next Question
-            </button>
-          </div>
-        ) : // 2. MASTERY MESSAGE */}
-        {/*
-        feedback && !feedback.isCorrect ? (
-          <div className="feedback-card error">
-             <div className="feedback-icon">❌</div>
-             <h2 className="feedback-title">Wrong</h2>
-             <p className="feedback-text">
-               {feedback.explanation || `Correct answer: ${feedback.correctAnswer}`}
-             </p>
-             <button onClick={handleNext} className="btn-next">Next</button>
-          </div>
-        ) : 
-         */}
-       {isMastered ? (
+        {isMastered ? (
           <div className="status-card master">
             You have mastered all available concepts!
           </div>

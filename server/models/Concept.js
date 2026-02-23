@@ -21,23 +21,24 @@ const conceptSchema = new mongoose.Schema(
 
         operands: [Number],
 
-        visualData: {
-          showTotal: Boolean,
-          operator: String,
-          dragOptions: [String],
+        // visualData: {
+        //   showTotal: Boolean,
+        //   operator: String,
+        //   dragOptions: [String],
 
-          parts: [{
-            value: Number,
-            label: String,
-            color: String
-          }],
+        //   parts: [{
+        //     value: Number,
+        //     label: String,
+        //     color: String
+        //   }],
           
-          groups: [{
-            count: Number,
-            icon: String,
-            label: String
-          }]
-        },
+        //   groups: [{
+        //     count: Number,
+        //     icon: String,
+        //     label: String
+        //   }]
+        // },
+        visualData: mongoose.Schema.Types.Mixed,
 
         explanation: String,
         generatedByAI: { type: Boolean, default: false },

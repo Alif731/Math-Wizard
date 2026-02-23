@@ -20,7 +20,7 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 .game-header {
   // max-width: 1200px;
   // margin: 0.5rem;
-  margin: 1.5rem 0;   
+  margin: 1.5rem 0;
   margin-right: 0.5rem;
   display: flex;
   justify-content: space-between;
@@ -37,12 +37,12 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 
   .player-badge {
     border-radius: 12px;
-    border-right: 5px solid #F2CC8F;
-    border-bottom: 5px solid #F2CC8F;
+    border-right: 5px solid #f2cc8f;
+    border-bottom: 5px solid #f2cc8f;
 
     font-family: cursive;
 
-    color: #3D405B;
+    color: #3d405b;
     padding: 10px;
     border-radius: 9999px;
     font-weight: bold;
@@ -52,11 +52,11 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     display: flex;
     align-items: center;
     cursor: default;
-    transition: all 0.5s ease-in-out ;
+    transition: all 0.5s ease-in-out;
     // animation: tilt-shaking 1s ease-in-out infinite;
 
     &:hover {
-      background-color: #3D405B;
+      background-color: #3d405b;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); // Slight lift on hover
       // animation: none;
       color: white;
@@ -65,19 +65,19 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     }
 
     // --- THE HOVER LOGIC ---
-    strong { 
+    strong {
       // 1. Hidden State (Default)
       max-width: 0; // Takes up no width
       opacity: 1; // Invisible
       overflow: hidden; // Hides the text that overflows width 0
       white-space: nowrap; // Keeps text on one line so it slides out
       transition:
-      max-width 0.8s ease-in-out,
-      opacity 0.8s ease-in-out,
-      margin 0.8s ease;
+        max-width 0.8s ease-in-out,
+        opacity 0.8s ease-in-out,
+        margin 0.8s ease;
       margin-right: 0; // No gap when hidden
-      color: white;// perfect animation
-      text-shadow: none;// perfect animation
+      color: white; // perfect animation
+      text-shadow: none; // perfect animation
     }
 
     // 2. Visible State (On Parent Hover)
@@ -87,7 +87,6 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
       margin-right: 0.5rem; // Add a small gap between message and username
       color: #f2e9e4;
       text-shadow: none;
-
     }
   }
 }
@@ -98,6 +97,7 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   justify-content: space-evenly;
   max-width: 1200px;
   margin: 0 auto;
+  margin-bottom: 2rem;
   @media (min-width: 768px) {
     grid-template-columns: 2fr 1fr;
   }
@@ -230,7 +230,7 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 .highlight {
   font-weight: bolder;
-  color: #E07A5F;
+  color: #e07a5f;
   margin-right: 0.4rem;
 }
 .highlight1 {
@@ -244,11 +244,11 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 .highlight3 {
   font-weight: bolder;
-  color: #E07A5F;
+  color: #e07a5f;
   margin-left: 0.4rem;
-    //   border-left: 5px solid #E07A5F;
-    // border-radius: 10px;
-    // padding-left: 0.5rem;
+  //   border-left: 5px solid #E07A5F;
+  // border-radius: 10px;
+  // padding-left: 0.5rem;
 }
 
 .zpd__text {
@@ -300,3 +300,22 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   }
 }
 
+.card__header__type {
+  // text-decoration: overline;
+  // color: #E07A5F;
+  color: #e07a5f;
+  font-family: cursive;
+  margin: auto;
+  font-size: 2.8rem;
+  margin-bottom: 2rem;
+  text-align: center;
+  border-radius: 10px;
+  // padding: 10px 15px;
+  transition: 0.7s all;
+  // border-left: 5px solid #f2cc8f;
+  // border-right: 5px solid #f2cc8f;
+  width: fit-content;
+  margin-top: 1rem;
+  text-decoration: underline;
+  // border-bottom: 5px solid #81b29a;
+}
