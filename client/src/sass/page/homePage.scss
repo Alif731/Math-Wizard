@@ -20,10 +20,10 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 .game-header {
   // max-width: 1200px;
   // margin: 0.5rem;
-  margin: 1.5rem 0;   
+  margin: 1.5rem 0;
   margin-right: 0.5rem;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
   flex-wrap: wrap; // Wrap on small phones
   gap: 1rem;
@@ -37,12 +37,12 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 
   .player-badge {
     border-radius: 12px;
-    border-right: 5px solid #F2CC8F;
-    border-bottom: 5px solid #F2CC8F;
+    border-right: 5px solid #f2cc8f;
+    border-bottom: 5px solid #f2cc8f;
 
     font-family: cursive;
 
-    color: #3D405B;
+    color: #3d405b;
     padding: 10px;
     border-radius: 9999px;
     font-weight: bold;
@@ -52,11 +52,11 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     display: flex;
     align-items: center;
     cursor: default;
-    transition: all 0.5s ease-in-out ;
+    transition: all 0.5s ease-in-out;
     // animation: tilt-shaking 1s ease-in-out infinite;
 
     &:hover {
-      background-color: #3D405B;
+      background-color: #3d405b;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); // Slight lift on hover
       // animation: none;
       color: white;
@@ -65,19 +65,19 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     }
 
     // --- THE HOVER LOGIC ---
-    strong { 
+    strong {
       // 1. Hidden State (Default)
       max-width: 0; // Takes up no width
       opacity: 1; // Invisible
       overflow: hidden; // Hides the text that overflows width 0
       white-space: nowrap; // Keeps text on one line so it slides out
       transition:
-      max-width 0.8s ease-in-out,
-      opacity 0.8s ease-in-out,
-      margin 0.8s ease;
+        max-width 0.8s ease-in-out,
+        opacity 0.8s ease-in-out,
+        margin 0.8s ease;
       margin-right: 0; // No gap when hidden
-      color: white;// perfect animation
-      text-shadow: none;// perfect animation
+      color: white; // perfect animation
+      text-shadow: none; // perfect animation
     }
 
     // 2. Visible State (On Parent Hover)
@@ -87,7 +87,6 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
       margin-right: 0.5rem; // Add a small gap between message and username
       color: #f2e9e4;
       text-shadow: none;
-
     }
   }
 }
@@ -98,6 +97,7 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   justify-content: space-evenly;
   max-width: 1200px;
   margin: 0 auto;
+  margin-bottom: 2rem;
   @media (min-width: 768px) {
     grid-template-columns: 2fr 1fr;
   }
@@ -230,7 +230,7 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 .highlight {
   font-weight: bolder;
-  color: #E07A5F;
+  color: #e07a5f;
   margin-right: 0.4rem;
 }
 .highlight1 {
@@ -244,8 +244,11 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 .highlight3 {
   font-weight: bolder;
-  color: #E07A5F;
+  color: #e07a5f;
   margin-left: 0.4rem;
+  //   border-left: 5px solid #E07A5F;
+  // border-radius: 10px;
+  // padding-left: 0.5rem;
 }
 
 .zpd__text {
@@ -297,10 +300,210 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   }
 }
 
-@keyframes tilt-shake {
-  0% { transform: rotate(0deg); }
-  25% { transform: rotate(-4deg); }
-  50% { transform: rotate(4deg); }
-  75% { transform: rotate(-4deg); }
-  100% { transform: rotate(0deg); }
+.card__header__type {
+  // text-decoration: overline;
+  // color: #E07A5F;
+  color: #e07a5f;
+  font-family: cursive;
+  margin: auto;
+  font-size: 2.8rem;
+  margin-bottom: 2rem;
+  text-align: center;
+  border-radius: 10px;
+  // padding: 10px 15px;
+  transition: 0.7s all;
+  // border-left: 5px solid #f2cc8f;
+  // border-right: 5px solid #f2cc8f;
+  width: fit-content;
+  margin-top: 1rem;
+  text-decoration: underline;
+  // border-bottom: 5px solid #81b29a;
 }
+
+/* --- Streak System Badge --- */
+.streak__badge {
+  position: relative;
+  margin-left: auto;
+  width: 20%;
+  text-align: center;
+  // background: linear-gradient(135deg, #f4f1de, #f2cc8f);
+  // border-right: 5px solid #f2cc8f;
+  // border-bottom: 5px solid #f2cc8f;
+  font-family: cursive;
+  color: #ffffff;
+  // background-color: #22223b;
+  padding: 8px 16px;
+  // border-radius: 20px;
+  font-size: 1.2rem;
+  font-weight: 800;
+  // background-color: #3d405b;
+  // text-shadow: rgba(255, 162, 0, 0.84) 0px 0px 39px; // animation: popInBounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  color: #fff;
+  overflow: hidden;
+  border-top: 1px solid rgb(255 49 49);
+  border-right: 1px solid rgb(0 255 255);
+  border-bottom: 1px solid rgb(57 255 20);
+  border-left: 1px solid rgb(255 255 113);
+  background: #22223b;
+}
+
+@keyframes popInBounce {
+  0% {
+    transform: scale(0) rotate(-10deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2) rotate(5deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+// Border Animation
+
+.top {
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 5px;
+  background: linear-gradient(
+    90deg,
+    transparent 50%,
+    rgba(255, 49, 49, 0.5),
+    rgb(255, 49, 49)
+  );
+}
+
+.bottom {
+  right: 0;
+  bottom: 0;
+  height: 5px;
+  background: linear-gradient(
+    90deg,
+    rgb(57, 255, 20),
+    rgba(57, 255, 20, 0.5),
+    transparent 50%
+  );
+}
+
+.right {
+  top: 0;
+  right: 0;
+  width: 5px;
+  height: 0;
+  background: linear-gradient(
+    180deg,
+    transparent 30%,
+    rgba(0, 255, 255, 0.5),
+    rgb(0, 255, 255)
+  );
+}
+
+.left {
+  left: 0;
+  bottom: 0;
+  width: 5px;
+  height: 0;
+  background: linear-gradient(
+    180deg,
+    rgb(255, 255, 113),
+    rgba(255, 255, 113, 0.5),
+    transparent 70%
+  );
+}
+
+.top {
+  animation: animateTop 3s ease-in-out infinite;
+}
+
+.bottom {
+  animation: animateBottom 3s ease-in-out infinite;
+}
+
+.right {
+  animation: animateRight 3s ease-in-out infinite;
+}
+
+.left {
+  animation: animateLeft 3s ease-in-out infinite;
+}
+
+@keyframes animateTop {
+  25% {
+    width: 100%;
+    opacity: 1;
+  }
+
+  30%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes animateBottom {
+  0%,
+  50% {
+    opacity: 0;
+    width: 0;
+  }
+
+  75% {
+    opacity: 1;
+    width: 100%;
+  }
+
+  76%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes animateRight {
+  0%,
+  25% {
+    opacity: 0;
+    height: 0;
+  }
+
+  50% {
+    opacity: 1;
+    height: 100%;
+  }
+
+  55%,
+  100% {
+    height: 100%;
+    opacity: 0;
+  }
+}
+
+@keyframes animateLeft {
+  0%,
+  75% {
+    opacity: 0;
+    bottom: 0;
+    height: 0;
+  }
+
+  100% {
+    opacity: 1;
+    height: 100%;
+  }
+}
+.top,
+.bottom,
+.right,
+.left {
+  position: absolute;
+  border-radius: 100vmax;
+}
+
+// *,
+// ::before,
+// ::after {
+//   margin: 0;
+//   padding: 0;
+//   box-sizing: border-box;
+// }

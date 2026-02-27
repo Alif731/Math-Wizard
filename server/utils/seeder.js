@@ -13,64 +13,80 @@ const conceptsData = [
       {
         text: "A box has 7 items. You add 5 more.",
         correctAnswer: "+",
+        concept: "foundation_signs",
         type: "conceptual",
         difficulty: 1,
         options: ["+", "-", "×", "÷"],
+        operands: [7, 5],
       },
       {
         text: "A box has 12 items. You add 4 more.",
         correctAnswer: "+",
+        concept: "foundation_signs",
         type: "conceptual",
         difficulty: 1,
         options: ["+", "-", "×", "÷"],
+        operands: [12, 4],
       },
 
       // --- SUBTRACTION SIGNS ---
       {
         text: "A box has 10 items. You remove 2.",
         correctAnswer: "-",
+        concept: "foundation_signs",
         type: "conceptual",
         difficulty: 1,
         options: ["+", "-", "×", "÷"],
+        operands: [10, 2],
       },
       {
         text: "A box has 5 items. You remove 3.",
         correctAnswer: "-",
+        concept: "foundation_signs",
         type: "conceptual",
         difficulty: 1,
         options: ["+", "-", "×", "÷"],
+        operands: [5, 3],
       },
       {
         text: "A box has 5 items. You remove 4.",
         correctAnswer: "-",
+        concept: "foundation_signs",
         type: "conceptual",
         difficulty: 1,
         options: ["+", "-", "×", "÷"],
+        operands: [5, 4],
       },
 
       // --- MULTIPLICATION SIGNS (Difficulty 2) ---
       {
         text: "There are 4 boxes with 11 items in each.",
         correctAnswer: "×",
+        concept: "foundation_signs",
         type: "conceptual",
         difficulty: 2,
         options: ["+", "-", "×", "÷"],
+        operands: [4, 11],
       },
 
       // --- DIVISION SIGNS (Difficulty 2) ---
       {
         text: "44 items are shared into 4 piles.",
         correctAnswer: "÷",
+        concept: "foundation_signs",
         type: "conceptual",
         difficulty: 2,
         options: ["+", "-", "×", "÷"],
+        operands: [44, 4],
       },
       {
         text: "22 items are shared into 2 piles.",
         correctAnswer: "÷",
+        concept: "foundation_signs",
         type: "conceptual",
         difficulty: 2,
         options: ["+", "-", "×", "÷"],
+        operands: [22, 2],
       },
     ],
   },
@@ -91,8 +107,8 @@ const conceptsData = [
         visualData: {
           showTotal: true, // Shows the "?" bracket
           parts: [
-            { value: 17, label: "17", color: "#fca5a5" }, 
-            { value: 6, label: "6", color: "#93c5fd" }, 
+            { value: 17, label: "17", color: "#fca5a5" },
+            { value: 6, label: "6", color: "#93c5fd" },
           ],
         },
       },
@@ -110,124 +126,249 @@ const conceptsData = [
         },
       },
       {
-    "text": "Sam has 18 cards. Someone gives them 6 more. How many cards do they have altogether?",
-    "correctAnswer": "24",
-    "type": "visual",
-    "difficulty": 1,
-    "visualData": {
-      "showTotal": true,
-      "parts": [
-        { "value": 18, "label": "18", "color": "#fc4d4d" },
-        { "value": 6, "label": "6", "color": "#efdc86" }
-      ]
-    }
-  },
-  {
-    "text": "In a class there are 9 boys and 13 girls. How many children are in the class?",
-    "correctAnswer": "22",
-    "type": "visual",
-    "difficulty": 2,
-    "visualData": {
-      "showTotal": true,
-      "parts": [
-        { "value": 9, "label": "9", "color": "#fd93d4" },
-        { "value": 13, "label": "13", "color": "#a5fce6" }
-      ]
-    }
-  },
-  {
-    "text": "A shop had 18 books. They received 3 more. How many books does the shop have now?",
-    "correctAnswer": "21",
-    "type": "visual",
-    "difficulty": 2,
-    "visualData": {
-      "showTotal": true,
-      "parts": [
-        { "value": 18, "label": "18", "color": "#E07A5F" },
-        { "value": 3, "label": "3", "color": "#F2CC8F" }
-      ]
-    }
-  },
+        text: "Sam has 18 cards. Someone gives them 6 more. How many cards do they have altogether?",
+        correctAnswer: "24",
+        type: "visual",
+        difficulty: 1,
+        visualData: {
+          showTotal: true,
+          parts: [
+            { value: 18, label: "18", color: "#fc4d4d" },
+            { value: 6, label: "6", color: "#efdc86" },
+          ],
+        },
+      },
+      {
+        text: "In a class there are 9 boys and 13 girls. How many children are in the class?",
+        correctAnswer: "22",
+        type: "visual",
+        difficulty: 2,
+        visualData: {
+          showTotal: true,
+          parts: [
+            { value: 9, label: "9", color: "#fd93d4" },
+            { value: 13, label: "13", color: "#a5fce6" },
+          ],
+        },
+      },
+      {
+        text: "A shop had 18 books. They received 3 more. How many books does the shop have now?",
+        correctAnswer: "21",
+        type: "visual",
+        difficulty: 2,
+        visualData: {
+          showTotal: true,
+          parts: [
+            { value: 18, label: "18", color: "#E07A5F" },
+            { value: 3, label: "3", color: "#F2CC8F" },
+          ],
+        },
+      },
     ],
   },
 
   // ====================================================
   // 3. LEVEL: Icon items
   // ====================================================
- {
-    id: "visual_icons", 
-    title: "Counting with Icons", 
-    description: "Add items by counting visual icons.",
-    prerequisites: ["visual_addition"], // Optional: set prerequisite
+  {
+    id: "visual_icons",
+    title: "Match the Operations",
+    description: "Match The Following",
+    prerequisites: ["visual_addition"],
     questions: [
       {
-        text: "To a bag of 5 apples, Messi added 3 more. How many apples are there in the bag?",
-        correctAnswer: "8",
-        type: "icons_items", 
-        difficulty: 1,
+        text: "Connect the problem on the left to its correct answer on the right",
+        correctAnswer: "matched",
+        type: "icons_items",
+        difficulty: 2,
         visualData: {
-          groups: [
-            { count: 4, icon: "apple", label: "4 Apples" }, 
-            { count: 3, icon: "apple", label: "3 Apples" },
+          leftItems: [
+            {
+              id: "L1",
+              type: "iconEquation",
+              groups: [
+                { count: 4, icon: "cat" },
+                { count: 2, icon: "cat" },
+              ],
+              operator: "+",
+              matchId: "R1",
+            },
+            { id: "L2", type: "text", content: "15 - 8", matchId: "R2" }, // Equals 7
+            {
+              id: "L3",
+              type: "iconEquation",
+              groups: [
+                { count: 3, icon: "banana" },
+                { count: 3, icon: "banana" },
+              ],
+              operator: "×",
+              matchId: "R3", // Equals 9
+            },
+            { id: "L4", type: "text", content: "12 ÷ 3", matchId: "R4" }, // Equals 4
           ],
-          operator: "+",
-          dragOptions: ["5", "8", "10", "6"]
+          rightItems: [
+            { id: "R3", type: "text", content: "9" },
+            { id: "R4", type: "text", content: "4" },
+            { id: "R1", type: "text", content: "6" },
+            { id: "R5", type: "text", content: "8" }, // Distractor
+            { id: "R2", type: "text", content: "7" },
+          ],
         },
       },
       {
-        text: "Geeta has 6 red pencils and 9 blue pencils. How many pencils does she have?",
-        correctAnswer: "15",
-        type: "icons_items", 
-        difficulty: 1,
+        text: "Connect the problem on the left to its correct answer on the right",
+        correctAnswer: "matched",
+        type: "icons_items",
+        difficulty: 3,
         visualData: {
-          groups: [
-            { count: 6, icon: "pencil", label: "6 Pencils" }, // Changed to 'apple' to match map
-            { count: 9, icon: "pencil", label: "9 Pencils" },
+          leftItems: [
+            {
+              id: "L1",
+              type: "iconEquation",
+              groups: [
+                { count: 5, icon: "orange" },
+                { count: 3, icon: "orange" },
+              ],
+              operator: "+",
+              matchId: "R1", // Equals 8
+            },
+            { id: "L2", type: "text", content: "14 - 5", matchId: "R2" }, // Equals 9
+            {
+              id: "L3",
+              type: "iconEquation",
+              groups: [
+                { count: 3, icon: "pencil" },
+                { count: 2, icon: "pencil" },
+              ],
+              operator: "×",
+              matchId: "R3", // Equals 6
+            },
+            { id: "L4", type: "text", content: "16 ÷ 4", matchId: "R4" }, // Equals 4
           ],
-          operator: "+",
-          dragOptions: ["12", "8", "11", "15"]
+          rightItems: [
+            { id: "R4", type: "text", content: "4" },
+            { id: "R2", type: "text", content: "9" },
+            { id: "R5", type: "text", content: "10" }, // Distractor
+            { id: "R3", type: "text", content: "6" },
+            { id: "R1", type: "text", content: "8" },
+          ],
         },
       },
       {
-        text: "Ravi has 9 stars. Seetha gives him 3 more. How many stars does Ravi have now?",
-        correctAnswer: "12",
-        type: "icons_items", 
-        difficulty: 1,
+        text: "Connect the problem on the left to its correct answer on the right",
+        correctAnswer: "matched",
+        type: "icons_items",
+        difficulty: 3,
         visualData: {
-          groups: [
-            { count: 9, icon: "star", label: "9 Stars" }, // Changed to 'apple' to match map
-            { count: 3, icon: "star", label: "3 Stars" },
+          leftItems: [
+            {
+              id: "L1",
+              type: "iconEquation",
+              groups: [
+                { count: 3, icon: "dog" },
+                { count: 4, icon: "dog" },
+              ],
+              operator: "+",
+              matchId: "R1", // Equals 7
+            },
+            { id: "L2", type: "text", content: "20 - 8", matchId: "R2" }, // Equals 12
+            {
+              id: "L3",
+              type: "iconEquation",
+              groups: [
+                { count: 5, icon: "apple" },
+                { count: 2, icon: "apple" },
+              ],
+              operator: "×",
+              matchId: "R3", // Equals 10
+            },
+            { id: "L4", type: "text", content: "15 ÷ 3", matchId: "R4" }, // Equals 5
           ],
-          operator: "+",
-          dragOptions: ["5", "10", "12", "8"]
+          rightItems: [
+            { id: "R1", type: "text", content: "7" },
+            { id: "R5", type: "text", content: "15" }, // Distractor
+            { id: "R3", type: "text", content: "10" },
+            { id: "R2", type: "text", content: "12" },
+            { id: "R4", type: "text", content: "5" },
+          ],
         },
       },
       {
-        text: "In a pet shop there are 6 dogs. After few days 11 more dogs were added. How many dogs are there in the shop?",
-        correctAnswer: "17",
-        type: "icons_items", 
-        difficulty: 1,
+        text: "Connect the problem on the left to its correct answer on the right",
+        correctAnswer: "matched",
+        type: "icons_items",
+        difficulty: 4,
         visualData: {
-          groups: [
-            { count: 6, icon: "dog", label: "6 Dogs" }, 
-            { count: 11, icon: "dog", label: "11 Dogs" },
+          leftItems: [
+            {
+              id: "L1",
+              type: "iconEquation",
+              groups: [
+                { count: 6, icon: "star" },
+                { count: 3, icon: "star" },
+              ],
+              operator: "+",
+              matchId: "R1", // Equals 9
+            },
+            { id: "L2", type: "text", content: "18 - 7", matchId: "R2" }, // Equals 11
+            {
+              id: "L3",
+              type: "iconEquation",
+              groups: [
+                { count: 4, icon: "car" },
+                { count: 3, icon: "car" },
+              ],
+              operator: "×",
+              matchId: "R3", // Equals 12
+            },
+            { id: "L4", type: "text", content: "20 ÷ 5", matchId: "R4" }, // Equals 4
           ],
-          operator: "+",
-          dragOptions: ["15", "10", "11", "17"]
+          rightItems: [
+            { id: "R2", type: "text", content: "11" },
+            { id: "R1", type: "text", content: "9" },
+            { id: "R4", type: "text", content: "4" },
+            { id: "R3", type: "text", content: "12" },
+            { id: "R5", type: "text", content: "10" }, // Distractor
+          ],
         },
       },
       {
-        text: "A Customer bought 5 oranges from a shop. Due to a price cut, he bought 6 more oranges. How many oranges does the Shopkeeper have now?",
-        correctAnswer: "11",
-        type: "icons_items", 
-        difficulty: 1,
+        text: "Connect the problem on the left to its correct answer on the right",
+        correctAnswer: "matched",
+        type: "icons_items",
+        difficulty: 4,
         visualData: {
-          groups: [
-            { count: 5, icon: "orange", label: "5 Oranges" }, 
-            { count: 6, icon: "orange", label: "6 Oranges" },
+          leftItems: [
+            {
+              id: "L1",
+              type: "iconEquation",
+              groups: [
+                { count: 2, icon: "banana" },
+                { count: 6, icon: "banana" },
+              ],
+              operator: "+",
+              matchId: "R1", // Equals 8
+            },
+            { id: "L2", type: "text", content: "11 - 4", matchId: "R2" }, // Equals 7
+            {
+              id: "L3",
+              type: "iconEquation",
+              groups: [
+                { count: 5, icon: "pencil" },
+                { count: 3, icon: "pencil" },
+              ],
+              operator: "×",
+              matchId: "R3", // Equals 15
+            },
+            { id: "L4", type: "text", content: "18 ÷ 3", matchId: "R4" }, // Equals 6
           ],
-          operator: "+",
-          dragOptions: ["15", "10", "11", "17"]
+          rightItems: [
+            { id: "R3", type: "text", content: "15" },
+            { id: "R4", type: "text", content: "6" },
+            { id: "R5", type: "text", content: "9" }, // Distractor
+            { id: "R1", type: "text", content: "8" },
+            { id: "R2", type: "text", content: "7" },
+          ],
         },
       },
     ],
@@ -247,7 +388,7 @@ const conceptsData = [
         type: "direct",
         difficulty: 1,
       },
-        {
+      {
         text: "Raju has 9 pencils. Geeta gives him 3 more. How many pencils does Raju have now?",
         correctAnswer: "12",
         type: "direct",
@@ -343,10 +484,11 @@ const seedData = async () => {
     });
 
     // Initialize mastery for root
-    testUser.mastery.set("foundation_signs", { // sign selection
-    // testUser.mastery.set("visual_addition", {  // bar
-    // testUser.mastery.set("visual_icons", {  // Drag and Drop
-    // testUser.mastery.set("add_single", {  // normal
+    testUser.mastery.set("foundation_signs", {
+      // sign selection
+      // testUser.mastery.set("visual_addition", { // bar
+      // testUser.mastery.set("visual_icons", {// Drag and Drop
+      // testUser.mastery.set("add_single", { // normal
       status: "unlocked",
       successCount: 0,
       attemptCount: 0,
