@@ -5,11 +5,7 @@ const { getNextConcept, updateMastery } = require('../utils/learningEngine');
 
 exports.getProblem = async (req, res) => {
   try {
-    const { username } = req.query;
-    if (!username) return res.status(400).json({ error: 'Username required' });
-
-    const user = await User.findOne({ username });
-    if (!user) return res.status(404).json({ error: 'User not found' });
+    const user = req.user; // Set by protect middleware
 
     const concept = await getNextConcept(user);
     
@@ -18,16 +14,11 @@ exports.getProblem = async (req, res) => {
     }
 
     // Select a question (Simple Random for now)
-    // In real app, avoid recently used questions
     const question = concept.questions[Math.floor(Math.random() * concept.questions.length)];
-
-    // Exclude correctAnswer from response
-    // const { correctAnswer, ...qData } = question.toObject();
-    const qData = question.toObject(); // include correct answer
 
     res.json({
       concept: { id: concept.id, title: concept.title },
-      question: { ...qData, id: question._id }
+      question: { ...question.toObject(), id: question._id }
     });
 
   } catch (error) {
@@ -38,12 +29,12 @@ exports.getProblem = async (req, res) => {
 
 exports.submitAnswer = async (req, res) => {
   try {
-    const { username, conceptId, questionId, response } = req.body;
+    const { conceptId, questionId, response } = req.body;
+    const user = req.user; // Set by protect middleware
     
-    const user = await User.findOne({ username });
     const concept = await Concept.findOne({ id: conceptId });
 
-    if (!user || !concept) return res.status(404).json({ error: 'Not found' });
+    if (!concept) return res.status(404).json({ error: 'Concept not found' });
 
     const question = concept.questions.id(questionId);
     if (!question) return res.status(404).json({ error: 'Question not found' });
@@ -80,9 +71,7 @@ exports.submitAnswer = async (req, res) => {
 
 exports.getUserStatus = async (req, res) => {
   try {
-    const { username } = req.query;
-    const user = await User.findOne({ username });
-    if (!user) return res.status(404).json({ error: 'User not found' });
+    const user = req.user; // Set by protect middleware
 
     res.json({
       username: user.username,

@@ -15,6 +15,8 @@ const questionSchema = new mongoose.Schema({
     ],
     default: "direct",
   },
+  concept: { type: String },
+  operands: [{ type: Number }],
   difficulty: { type: Number, default: 1 },
   options: [{ type: String }],
 

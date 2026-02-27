@@ -15,7 +15,7 @@ import "../sass/page/homePage.scss";
 
 const Home = () => {
   const { userInfo } = useSelector((state) => state.auth);
-  const username = userInfo?.username || "student1";
+  const username = userInfo?.username;
 
   // --- RTK QUERY HOOKS ---
   const {
@@ -23,9 +23,9 @@ const Home = () => {
     isLoading: loadingProblem,
     isError: errorProblem,
     refetch: refetchProblem,
-  } = useGetProblemQuery(username);
+  } = useGetProblemQuery();
 
-  const { data: status } = useGetUserStatusQuery(username);
+  const { data: status } = useGetUserStatusQuery();
   const [submitAnswer, { isLoading: isSubmitting }] = useSubmitAnswerMutation();
 
   // --- LOCAL STATE ---
@@ -37,7 +37,6 @@ const handleAnswerSubmit = async (answer) => {
 
     try {
       const result = await submitAnswer({
-        username,
         conceptId: problem.concept.id,
         questionId: problem.question.id,
         response: answer,

@@ -89,18 +89,18 @@ export const gameApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     // --- GAME ROUTES ---
     getProblem: builder.query({
-      query: (username) => `/problem?username=${username}`,
+      query: () => '/learning/problem',
       providesTags: ["Problem"],
     }),
 
     getUserStatus: builder.query({
-      query: (username) => `/status?username=${username}`,
+      query: () => '/learning/status',
       providesTags: ["UserStatus"],
     }),
 
     submitAnswer: builder.mutation({
       query: (payload) => ({
-        url: "/submit",
+        url: "/learning/submit",
         method: "POST",
         body: payload,
       }),
