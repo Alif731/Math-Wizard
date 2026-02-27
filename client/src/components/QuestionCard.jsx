@@ -10,7 +10,23 @@ import { PiArrowBendDoubleUpLeftBold } from "react-icons/pi";
 const audioSuccess = new Audio("/success1.mp3");
 const audioFailure = new Audio("/failure.mp3");
 
-const QuestionCard = ({ problem, onSubmit }) => {
+const QuestionCard = ({ problem, onSubmit, setStreak }) => {
+  // --- STREAK SYSTEM ---
+  // const [streak, setStreak] = useState(0);
+
+  // // Load the streak from browser memory when the component mounts
+  // useEffect(() => {
+  //   const savedStreak = sessionStorage.getItem("mathStreak");
+  //   if (savedStreak) setStreak(Number(savedStreak));
+  // }, []);
+
+  // // Helper function to update the streak
+  // const handleStreakUpdate = (isCorrect) => {
+  //   const newStreak = isCorrect ? streak + 1 : 0;
+  //   setStreak(newStreak);
+  //   sessionStorage.setItem("mathStreak", newStreak);
+  // };
+  // -----------------------------------------------------------
   // Concatenate for foundational questions
   const question = problem?.question;
   let displayOperands = question?.operands || [];
@@ -57,10 +73,12 @@ const QuestionCard = ({ problem, onSubmit }) => {
     const isCorrect = String(option).trim() === String(rawCorrect).trim();
 
     if (isCorrect) {
+      setStreak((prev) => prev + 1);
       setIsSuccess(true);
       playSuccessSound();
       setTimeout(() => onSubmit(option), 3000);
     } else {
+      setStreak(0);
       setIsError(true);
       playErrorSound();
       setTimeout(() => onSubmit(option), 2600);
@@ -247,119 +265,121 @@ const QuestionCard = ({ problem, onSubmit }) => {
   }, [answer, showHint]);
 
   return (
-    <div className="question__card">
-      {/* 🎉 CONFETTI EXPLOSION HERE */}
-      {isSuccess && (
-        <Confetti recycle={false} numberOfPieces={500} gravity={0.3} />
-      )}
-      <div className="question__text">
-        {" "}
-        <span className="highlight3">Q,</span> {problem.question.text}
-      </div>
-      {/* --- SECTION 3: Match The Following SECTION --- */}
-      {isIconsItems && problem.question.visualData && (
-        <div className="icons-items__container">
-          <MatchTheFollowing
-            key={problem.question.id}
-            leftItems={matchLeft}
-            rightItems={matchRight}
-            onComplete={handleMatchComplete}
-          />
+    <div>
+      <div className="question__card">
+        {/* 🎉 CONFETTI EXPLOSION HERE */}
+        {isSuccess && (
+          <Confetti recycle={false} numberOfPieces={500} gravity={0.3} />
+        )}
+        <div className="question__text">
+          {" "}
+          <span className="highlight3">Q,</span> {problem.question.text}
         </div>
-      )}
-      {/* ---------------------- SECTION 2: VISUAL BAR MODEL -------------------- */}
-      {questionType === "visual" && visualData && (
-        <div className="visual__container">
-          {/* Top Bracket with INPUT instead of '?' */}
-          {visualData.showTotal && (
-            <div className="visual__bracket">
-              {showHint && !isSuccess && !isError && (
-                // {!isSuccess && !isError && (
-                <div className="visual__hint">
-                  <div className="visual__hint-text">Type here!</div>
-                  <div className="visual__hint-arrow">
-                    <PiArrowBendDoubleUpLeftBold />
-                  </div>
-                </div>
-              )}
-              <input
-                type="number"
-                className={getInputClass()}
-                value={answer}
-                onChange={(e) =>
-                  !isSuccess && !isError && setAnswer(e.target.value)
-                }
-                onKeyDown={handleKeyDown}
-                onBlur={handleSubmit}
-                placeholder="?"
-                autoComplete="off"
-                readOnly={isSuccess || isError}
-                // Dynamic Width Input
-                style={{
-                  width: getDynamicWidth(),
-                }}
-              />
-              <div className="visual__line">
-                <span className="visual__line__span">|</span>
-              </div>
-            </div>
-          )}
-          {/* Bars */}
-          {/* <div className={`visual__bars ${isSuccess ? "visual__bars__success" : ""}`}> */}
-          <div className={`visual__bars`}>
-            {visualData.parts.map((part, index) => (
-              <div
-                key={index}
-                className="visual__segment"
-                style={{
-                  backgroundColor: part.color,
-                  flex: part.value,
-                }}
-              >
-                <span className="visual__label">{part.label}</span>
-              </div>
-            ))}
+        {/* --- SECTION 3: Match The Following SECTION --- */}
+        {isIconsItems && problem.question.visualData && (
+          <div className="icons-items__container">
+            <MatchTheFollowing
+              key={problem.question.id}
+              leftItems={matchLeft}
+              rightItems={matchRight}
+              onComplete={handleMatchComplete}
+            />
           </div>
-        </div>
-      )}
-      {/* ---------------------- SECTION 1: Foundational MODEL -------------------- */}
-      {isConceptual ? (
-        // 1. OPTION MODE (For Signs)
-        <div className="card__options">{conceptualButtons}</div>
-      ) : (
-        // ---------------------- SECTION 4: Normal Questions--------------------
-        <div>
-          {!isConceptual && questionType !== "visual" && !isIconsItems && (
-            <form onSubmit={handleSubmit} className="answer__form">
-              <input
-                type="number"
-                value={answer}
-                onChange={(e) => setAnswer(e.target.value)}
-                placeholder="Type your answer here..."
-                className={
-                  isSuccess
-                    ? "answer__input visual__input__success"
+        )}
+        {/* ---------------------- SECTION 2: VISUAL BAR MODEL -------------------- */}
+        {questionType === "visual" && visualData && (
+          <div className="visual__container">
+            {/* Top Bracket with INPUT instead of '?' */}
+            {visualData.showTotal && (
+              <div className="visual__bracket">
+                {showHint && !isSuccess && !isError && (
+                  // {!isSuccess && !isError && (
+                  <div className="visual__hint">
+                    <div className="visual__hint-text">Type here!</div>
+                    <div className="visual__hint-arrow">
+                      <PiArrowBendDoubleUpLeftBold />
+                    </div>
+                  </div>
+                )}
+                <input
+                  type="number"
+                  className={getInputClass()}
+                  value={answer}
+                  onChange={(e) =>
+                    !isSuccess && !isError && setAnswer(e.target.value)
+                  }
+                  onKeyDown={handleKeyDown}
+                  onBlur={handleSubmit}
+                  placeholder="?"
+                  autoComplete="off"
+                  readOnly={isSuccess || isError}
+                  // Dynamic Width Input
+                  style={{
+                    width: getDynamicWidth(),
+                  }}
+                />
+                <div className="visual__line">
+                  <span className="visual__line__span">|</span>
+                </div>
+              </div>
+            )}
+            {/* Bars */}
+            {/* <div className={`visual__bars ${isSuccess ? "visual__bars__success" : ""}`}> */}
+            <div className={`visual__bars`}>
+              {visualData.parts.map((part, index) => (
+                <div
+                  key={index}
+                  className="visual__segment"
+                  style={{
+                    backgroundColor: part.color,
+                    flex: part.value,
+                  }}
+                >
+                  <span className="visual__label">{part.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {/* ---------------------- SECTION 1: Foundational MODEL -------------------- */}
+        {isConceptual ? (
+          // 1. OPTION MODE (For Signs)
+          <div className="card__options">{conceptualButtons}</div>
+        ) : (
+          // ---------------------- SECTION 4: Normal Questions--------------------
+          <div>
+            {!isConceptual && questionType !== "visual" && !isIconsItems && (
+              <form onSubmit={handleSubmit} className="answer__form">
+                <input
+                  type="number"
+                  value={answer}
+                  onChange={(e) => setAnswer(e.target.value)}
+                  placeholder="Type your answer here..."
+                  className={
+                    isSuccess
+                      ? "answer__input visual__input__success"
+                      : isError
+                        ? "answer__input visual__input__error"
+                        : "answer__input"
+                  }
+                  autoFocus
+                />
+                <button
+                  onClick={handleSubmit}
+                  className="submit__btn"
+                  disabled={isSuccess || isError}
+                >
+                  {isSuccess
+                    ? "Correct!"
                     : isError
-                      ? "answer__input visual__input__error"
-                      : "answer__input"
-                }
-                autoFocus
-              />
-              <button
-                onClick={handleSubmit}
-                className="submit__btn"
-                disabled={isSuccess || isError}
-              >
-                {isSuccess
-                  ? "Correct!"
-                  : isError
-                    ? "Wrong..."
-                    : "Submit Answer"}
-              </button>
-            </form>
-          )}
-        </div>
-      )}
+                      ? "Wrong..."
+                      : "Submit Answer"}
+                </button>
+              </form>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

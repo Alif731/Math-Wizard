@@ -1,5 +1,5 @@
 // Big O Analysis: O(1) - Rendering logic is constant time relative to data size.
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import {
   useGetProblemQuery,
@@ -12,7 +12,17 @@ import Dashboard from "../components/Dashboard";
 import "../sass/page/homePage.scss";
 
 const Home = () => {
-  const { userInfo } = useSelector((state) => state.auth);
+  const { userInfo } = useSelector((state) => state.auth); // 1. Initialize streak from sessionStorage (Lazy Initialization for performance)
+  const [streak, setStreak] = useState(() => {
+    const savedStreak = sessionStorage.getItem("mathStreak");
+    return savedStreak ? Number(savedStreak) : 0;
+  });
+
+  // 2. Automatically sync streak to sessionStorage whenever it changes
+  useEffect(() => {
+    sessionStorage.setItem("mathStreak", streak);
+  }, [streak]);
+  // -----------------------------------------------------------
   const username = userInfo?.username || "student1";
 
   // --- RTK QUERY HOOKS ---
@@ -60,7 +70,6 @@ const Home = () => {
   return (
     <div className="home-page">
       <header className="game-header">
-        <h1 className="card__header">{problem.concept.title}</h1>
         <div className="player-badge highlight2">
           <span className="highlight1">G</span>ood{" "}
           <span className="highlight2">M</span>orning {username}
@@ -69,6 +78,20 @@ const Home = () => {
             . <span className="highlight1">L</span>et's Continue this Journey!
           </strong>
         </div>
+        {streak >= 1 && (
+          <>
+            <div className="streak__badge">
+              <span className="highlight1">S</span>treak:{" "}
+              <span className="highlight2">x</span>
+              {streak} <span class="top"></span>
+              <span class="right"></span>
+              <span class="bottom"></span>
+              <span class="left"></span>
+            </div>
+          </>
+        )}
+
+        {/* <h1 className="card__header">{problem.concept.title}</h1> */}
       </header>
       {/* Show description ONLY if the concept ID is foundation_signs or visual_icons */}
       {problem?.description && problem.concept.id === "foundation_signs" && (
@@ -99,6 +122,7 @@ const Home = () => {
               problem={problem}
               onSubmit={handleAnswerSubmit}
               disabled={isSubmitting}
+              setStreak={setStreak}
             />
           )
         )}
