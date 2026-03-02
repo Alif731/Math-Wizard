@@ -5,9 +5,9 @@ import { useSelector } from "react-redux";
 
 export default function Profile() {
   const { userInfo } = useSelector((state) => state.auth);
-  const username = userInfo?.username || "student1";
+  const username = userInfo?.username;
 
-  const { data: status } = useGetUserStatusQuery(username);
+  const { data: status } = useGetUserStatusQuery(username, { skip: !username });
   return (
     <>
       {/* --- RIGHT COLUMN: DASHBOARD --- */}

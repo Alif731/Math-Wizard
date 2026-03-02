@@ -89,12 +89,12 @@ export const gameApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     // --- GAME ROUTES ---
     getProblem: builder.query({
-      query: () => '/learning/problem',
+      query: (_username) => '/learning/problem',
       providesTags: ["Problem"],
     }),
 
     getUserStatus: builder.query({
-      query: () => '/learning/status',
+      query: (_username) => '/learning/status',
       providesTags: ["UserStatus"],
     }),
 
@@ -104,8 +104,8 @@ export const gameApiSlice = apiSlice.injectEndpoints({
         method: "POST",
         body: payload,
       }),
-      // Magic: Refresh UserStatus when an answer is submitted
-      invalidatesTags: ["UserStatus"],
+      // Magic: Refresh UserStatus AND Problem when an answer is submitted
+      invalidatesTags: ["UserStatus", "Problem"],
     }),
   }),
   overrideExisting: false, // Prevent errors in hot-reloading

@@ -122,31 +122,31 @@ async function unlockChildren(user, parentId) {
  * Proactively refreshes ZPD to ensure newly added concepts are discovered.
  */
 async function getNextConcept(user) {
-  // 1. Proactive ZPD Discovery: Find all concepts that are currently "learnable"
-  // (all prerequisites mastered) but not yet mastered themselves.
+  // 1. Proactive ZPD Discovery
   const allConcepts = await Concept.find({});
   
   const eligibleNodes = allConcepts.filter(concept => {
+    // Skip if already mastered
     const m = user.mastery.get(concept.id);
     if (m && m.status === "mastered") return false;
 
-    // Check if ALL prerequisites are mastered
+    // Check if ALL prerequisites are mastered in the user's record
     if (!concept.prerequisites || concept.prerequisites.length === 0) return true;
+    
     return concept.prerequisites.every(pId => {
       const pm = user.mastery.get(pId);
       return pm && pm.status === "mastered";
     });
   });
 
-  // Update the user's ZPD cache
+  // Update the user's ZPD cache string array
   user.zpdNodes = eligibleNodes.map(c => c.id);
 
   if (eligibleNodes.length === 0) {
-    return null; // Entire curriculum mastered
+    return null; // Curriculum complete
   }
 
   // 2. KL-UCB Selection
-  // nt = Total attempts across all eligible nodes in ZPD
   const nt = eligibleNodes.reduce((sum, node) => {
     const m = user.mastery.get(node.id);
     return sum + (m ? m.attemptCount : 0);
@@ -162,7 +162,7 @@ async function getNextConcept(user) {
     let score;
 
     if (!m || m.attemptCount === 0) {
-      score = Infinity; // Prioritize exploration
+      score = Infinity; // Explore new nodes first
     } else {
       const p = m.successCount / m.attemptCount;
       const upperBound = logTerm / m.attemptCount;

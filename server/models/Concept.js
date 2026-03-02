@@ -36,7 +36,25 @@ const questionSchema = new mongoose.Schema({
       icon: String,   // "apple", "car", etc.
       label: String 
     }],
-    dragOptions: [String]
+    dragOptions: [String],
+
+    // --- Match-The-Following Fields ---
+    leftItems: [{
+      id: String,
+      type: String,
+      content: String,
+      groups: [{
+        count: Number,
+        icon: String,
+      }],
+      operator: String,
+      matchId: String,
+    }],
+    rightItems: [{
+      id: String,
+      type: String,
+      content: String,
+    }],
   },
 
   correctAnswer: { type: String, required: true },

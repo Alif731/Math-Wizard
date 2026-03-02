@@ -1,5 +1,5 @@
 // Big O Analysis: O(1) - Rendering logic is constant time relative to data size.
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import {
   useGetProblemQuery,
@@ -10,12 +10,28 @@ import {
 import QuestionCard from "../components/QuestionCard";
 import Dashboard from "../components/Dashboard";
 import "../sass/page/homePage.scss";
-
-
-
 const Home = () => {
   const { userInfo } = useSelector((state) => state.auth);
   const username = userInfo?.username;
+  const [streak, setStreak] = useState(() => {
+    if (!username) return 0;
+    const savedStreak = sessionStorage.getItem(`mathStreak:${username}`);
+    return savedStreak ? Number(savedStreak) : 0;
+  });
+
+  useEffect(() => {
+    if (!username) {
+      setStreak(0);
+      return;
+    }
+    const savedStreak = sessionStorage.getItem(`mathStreak:${username}`);
+    setStreak(savedStreak ? Number(savedStreak) : 0);
+  }, [username]);
+
+  useEffect(() => {
+    if (!username) return;
+    sessionStorage.setItem(`mathStreak:${username}`, String(streak));
+  }, [streak, username]);
 
   // --- RTK QUERY HOOKS ---
   const {
@@ -23,30 +39,28 @@ const Home = () => {
     isLoading: loadingProblem,
     isError: errorProblem,
     refetch: refetchProblem,
-  } = useGetProblemQuery();
+  } = useGetProblemQuery(username, { skip: !username });
 
-  const { data: status } = useGetUserStatusQuery();
+  const { data: status } = useGetUserStatusQuery(username, { skip: !username });
   const [submitAnswer, { isLoading: isSubmitting }] = useSubmitAnswerMutation();
 
   // --- LOCAL STATE ---
   const [feedback, setFeedback] = useState(null);
 
   // --- HANDLERS ---
-const handleAnswerSubmit = async (answer) => {
+  const handleAnswerSubmit = async (answer) => {
     if (!problem?.question) return;
 
     try {
-      const result = await submitAnswer({
+      await submitAnswer({
         conceptId: problem.concept.id,
         questionId: problem.question.id,
         response: answer,
       }).unwrap();
 
-        // refetch questions
-        setFeedback(null); 
-        refetchProblem(); 
-      
-
+      // refetch questions
+      setFeedback(null);
+      refetchProblem();
     } catch (err) {
       console.error("Failed to submit:", err);
     }
@@ -59,6 +73,7 @@ const handleAnswerSubmit = async (answer) => {
 
   const isMastered = problem?.complete;
 
+  if (!username) return <div className="loading-state">Loading...</div>;
   if (!problem) return <div className="loading-state">Loading...</div>;
   return (
     <div className="home-page">
@@ -72,7 +87,20 @@ const handleAnswerSubmit = async (answer) => {
             . <span className="highlight1">L</span>et's Continue this Journey!
           </strong>
         </div>
+        {streak >= 1 && (
+          <div className="streak__badge">
+            <span className="highlight1">S</span>treak:{" "}
+            <span className="highlight2">x</span>
+            {streak} <span className="top"></span>
+            <span className="right"></span>
+            <span className="bottom"></span>
+            <span className="left"></span>
+          </div>
+        )}
       </header>
+      {problem?.description && problem.concept.id === "foundation_signs" && (
+        <h2 className="card__header__type">{problem.description}</h2>
+      )}
       <main className="home-layout">
         {/* --- LEFT COLUMN: GAME AREA --- */}
         {/* <section className="game-section"> */}
@@ -126,12 +154,13 @@ const handleAnswerSubmit = async (answer) => {
           </div>
         ) : (
           // 5. QUESTION CARD
-          problem && (
+          problem && problem.question && (
             <QuestionCard
-              // key={problem._id}
+              key={problem.question.id}
               problem={problem}
               onSubmit={handleAnswerSubmit}
               disabled={isSubmitting}
+              setStreak={setStreak}
             />
           )
         )}

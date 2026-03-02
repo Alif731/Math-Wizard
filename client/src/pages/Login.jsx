@@ -3,6 +3,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { setCredentials } from "../store/slices/authSlice";
 import { useLoginMutation, useRegisterMutation } from "../store/slices/usersApiSlice";
+import { apiSlice } from "../store/slices/apiSlice";
+import { cleanupLegacySessionStorage } from "../utils/cleanupLegacySessionStorage";
 import "../sass/page/loginPage.scss";
 
 const Login = () => {
@@ -22,7 +24,7 @@ const Login = () => {
 
   useEffect(() => {
     if (userInfo) {
-      navigate("/");
+      navigate("/home");
     }
   }, [navigate, userInfo]);
 
@@ -36,8 +38,10 @@ const Login = () => {
 
     try {
       const res = await login({ username, password }).unwrap();
+      cleanupLegacySessionStorage();
+      dispatch(apiSlice.util.resetApiState()); // Clear any old cache
       dispatch(setCredentials({ ...res }));
-      navigate("/");
+      navigate("/home");
     } catch (err) {
       setError(err?.data?.message || err.error || "Login failed");
     }
@@ -53,8 +57,10 @@ const Login = () => {
 
     try {
       const res = await register({ username, password }).unwrap();
+      cleanupLegacySessionStorage();
+      dispatch(apiSlice.util.resetApiState()); // Clear any old cache
       dispatch(setCredentials({ ...res }));
-      navigate("/");
+      navigate("/home");
     } catch (err) {
       setError(err?.data?.message || err.error || "Registration failed");
     }

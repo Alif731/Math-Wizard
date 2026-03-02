@@ -8,6 +8,7 @@ exports.getProblem = async (req, res) => {
     const user = req.user; // Set by protect middleware
 
     const concept = await getNextConcept(user);
+    await user.save(); // Persist the updated ZPD cache
     
     if (!concept) {
       return res.json({ message: 'No available problems. You might have mastered everything!', complete: true });
@@ -18,7 +19,8 @@ exports.getProblem = async (req, res) => {
 
     res.json({
       concept: { id: concept.id, title: concept.title },
-      question: { ...question.toObject(), id: question._id }
+      question: { ...question.toObject(), id: question._id },
+      description: concept.description,
     });
 
   } catch (error) {

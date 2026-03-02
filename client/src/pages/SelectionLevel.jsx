@@ -6,8 +6,8 @@ import { useGetUserStatusQuery } from "../store/slices/gameApiSlice";
 
 export default function SelectionLevel() {
   const { userInfo } = useSelector((state) => state.auth);
-  const username = userInfo?.username || "student1";
-  const { data: status } = useGetUserStatusQuery(username);
+  const username = userInfo?.username;
+  const { data: status } = useGetUserStatusQuery(username, { skip: !username });
 
   return (
     <>
@@ -22,7 +22,7 @@ export default function SelectionLevel() {
           <span className="highlight1">H</span>i there
           <strong style={{ marginLeft: "0.4rem" }}>
             {" "}
-            {username}. Let's Continue this Journey!
+            {username || "Student"}. Let's Continue this Journey!
           </strong>
         </div>
       </header>

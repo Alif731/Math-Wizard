@@ -4,6 +4,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { useLogoutMutation } from "../store/slices/usersApiSlice";
 import { logout } from "../store/slices/authSlice";
+import { apiSlice } from "../store/slices/apiSlice";
+import { cleanupLegacySessionStorage } from "../utils/cleanupLegacySessionStorage";
 import "../sass/components/header.scss";
 
 export default function Header() {
@@ -27,9 +29,12 @@ export default function Header() {
     try {
       // 1. Call the backend endpoint to clear the cookie
       await logoutApiCall().unwrap();
-      // 2. Dispatch the logout action to clear frontend state (localStorage)
+      cleanupLegacySessionStorage();
+      // 2. Dispatch the logout action to clear frontend auth state
       dispatch(logout());
-      // 3. Navigate the user to the login page
+      // 3. Reset the API state to clear RTK Query cache
+      dispatch(apiSlice.util.resetApiState());
+      // 4. Navigate the user to the login page
       navigate("/");
     } catch (err) {
       console.error(err);

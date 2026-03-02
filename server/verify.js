@@ -19,35 +19,45 @@ async function verify() {
   let user = await User.findOne({ username: 'student1' });
   console.log('Initial ZPD:', user.zpdNodes);
 
-  // 4. Simulate Mastery of 'add_single' (Root)
-  // Logic requires >= 5 attempts and > 80% success
-  console.log('Simulating 5 correct attempts for add_single...');
-  for (let i = 0; i < 5; i++) {
-    await updateMastery(user, 'add_single', true);
+  // 4. Simulate Mastery of 'foundation_signs' (Root)
+  console.log('Simulating 15 correct attempts for foundation_signs...');
+  for (let i = 0; i < 15; i++) {
+    await updateMastery(user, 'foundation_signs', true);
   }
   
-  // Reload user to see changes (though updateMastery modifies doc in place, saving might be needed if logic re-fetches, but here we passed doc)
-  // But updateMastery implementation modifies the object `user` directly.
-  // However, `unlockChildren` calls `Concept.find`, so that's fine.
-  
   // Check Mastery
-  const m = user.mastery.get('add_single');
-  console.log('Mastery Status (add_single):', m.status);
+  let m = user.mastery.get('foundation_signs');
+  console.log('Mastery Status (foundation_signs):', m.status);
 
   if (m.status !== 'mastered') {
-    console.error('FAILED: add_single should be mastered.');
+    console.error('FAILED: foundation_signs should be mastered.');
     process.exit(1);
   }
 
-  // Check Unlock
-  const sub = user.mastery.get('sub_single');
-  console.log('Mastery Status (sub_single):', sub ? sub.status : 'undefined');
+  // Check Unlock of 'visual_addition'
+  const visualAdd = user.mastery.get('visual_addition');
+  console.log('Mastery Status (visual_addition):', visualAdd ? visualAdd.status : 'undefined');
   
-  if (!sub || sub.status !== 'unlocked') {
-     // Debug: Check if sub_single exists
-     const c = await Concept.findOne({ id: 'sub_single' });
-     console.log('Sub Single Concept Prereqs:', c.prerequisites);
-     console.error('FAILED: sub_single should be unlocked.');
+  if (!visualAdd || visualAdd.status !== 'unlocked') {
+     console.error('FAILED: visual_addition should be unlocked.');
+     process.exit(1);
+  }
+
+  // 5. Simulate Mastery of 'visual_addition'
+  console.log('Simulating 15 correct attempts for visual_addition...');
+  for (let i = 0; i < 15; i++) {
+    await updateMastery(user, 'visual_addition', true);
+  }
+
+  m = user.mastery.get('visual_addition');
+  console.log('Mastery Status (visual_addition):', m.status);
+
+  // Check Unlock of 'add_single'
+  const addSingle = user.mastery.get('add_single');
+  console.log('Mastery Status (add_single):', addSingle ? addSingle.status : 'undefined');
+
+  if (!addSingle || addSingle.status !== 'unlocked') {
+     console.error('FAILED: add_single should be unlocked.');
      process.exit(1);
   }
 
