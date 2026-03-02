@@ -21,7 +21,6 @@ This platform dynamically personalizes the learning journey for each student. By
 
 -   **Frontend**: React 19, Vite, Redux Toolkit, DnD Kit, Sass, Tailwind CSS.
 -   **Backend**: Node.js, Express.js (v5), MongoDB, Mongoose.
--   **AI Integration**: Google Gemini API.
 -   **Utilities**: mathjs, Concurrently (for local development).
 
 ## 📁 Project Structure
@@ -66,8 +65,6 @@ From the **root directory**, run both the frontend and backend concurrently:
 ```bash
 npm run dev
 ```
-- **Frontend**: http://localhost:5173
-- **Backend**: http://localhost:5000
 
 ---
 
