@@ -28,6 +28,11 @@ const Login = () => {
     }
   }, [navigate, userInfo]);
 
+  const handleModeToggle = () => {
+    setIsLogin((prev) => !prev);
+    setError("");
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
 
@@ -69,8 +74,34 @@ const Login = () => {
   return (
     <div className="login__main">
       <div className="login__container">
+        <p className="login__eyebrow">Maths Wizard</p>
         <h1 className="login__container__header">Math Master</h1>
-        <p>{isLogin ? "Welcome back! Ready for more math?" : "Join the adventure!"}</p>
+        <p className="login__subtitle">
+          {isLogin
+            ? "Welcome back. Ready for more math challenges?"
+            : "Create your account and start your math journey."}
+        </p>
+
+        <div className="login__modeSwitch">
+          <button
+            type="button"
+            className={`login__modeBtn ${isLogin ? "active" : ""}`}
+            onClick={() => {
+              if (!isLogin) handleModeToggle();
+            }}
+          >
+            Login
+          </button>
+          <button
+            type="button"
+            className={`login__modeBtn ${!isLogin ? "active" : ""}`}
+            onClick={() => {
+              if (isLogin) handleModeToggle();
+            }}
+          >
+            Sign Up
+          </button>
+        </div>
 
         <div className="login__container__form">
           <form onSubmit={isLogin ? handleLogin : handleRegister} className="login-form">
@@ -91,7 +122,6 @@ const Login = () => {
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                style={{ marginTop: "10px" }}
               />
             </div>
 
@@ -103,25 +133,25 @@ const Login = () => {
                   placeholder="Confirm Password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  style={{ marginTop: "10px" }}
                 />
               </div>
             )}
 
-            {error && <p style={{ color: "red", marginTop: "10px" }}>{error}</p>}
+            {error && <p className="login__error">{error}</p>}
 
-            <button 
-              type="submit" 
-              className="loginMain__btn" 
+            <button
+              type="submit"
+              className="loginMain__btn"
               disabled={isLoginLoading || isRegisterLoading}
             >
-              {isLoginLoading || isRegisterLoading ? "Loading..." : (isLogin ? "Login" : "Sign Up")}
+              {isLoginLoading || isRegisterLoading
+                ? "Loading..."
+                : isLogin
+                  ? "Login"
+                  : "Sign Up"}
             </button>
 
-            <p className="login__toggle" onClick={() => {
-              setIsLogin(!isLogin);
-              setError("");
-            }} style={{ cursor: "pointer", marginTop: "15px", color: "#4f46e5" }}>
+            <p className="login__toggle" onClick={handleModeToggle}>
               {isLogin ? "Don't have an account? Sign Up" : "Already have an account? Login"}
             </p>
           </form>
