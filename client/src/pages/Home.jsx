@@ -137,7 +137,7 @@ const Home = () => {
           </div>
         ) : 
          */}
-       {isMastered ? (
+        {isMastered ? (
           <div className="status-card master">
             You have mastered all available concepts!
           </div>
@@ -154,7 +154,8 @@ const Home = () => {
           </div>
         ) : (
           // 5. QUESTION CARD
-          problem && problem.question && (
+          problem &&
+          problem.question && (
             <QuestionCard
               key={problem.question.id}
               problem={problem}

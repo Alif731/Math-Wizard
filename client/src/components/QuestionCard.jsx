@@ -234,6 +234,7 @@ const QuestionCard = ({ problem, onSubmit, setStreak }) => {
     setAnswer("matched");
 
     if (isValid) {
+      setStreak((prev) => prev + 1);
       setIsSuccess(true);
       playSuccessSound();
 
@@ -242,6 +243,7 @@ const QuestionCard = ({ problem, onSubmit, setStreak }) => {
         onSubmit("matched");
       }, 2500);
     } else {
+      setStreak(0);
       setIsError(true);
       playErrorSound();
 
@@ -313,7 +315,7 @@ const QuestionCard = ({ problem, onSubmit, setStreak }) => {
             />
           </div>
         )}
-        {isIconDragDrop && (
+        {/* {isIconDragDrop && (
           <div className="icons-items__container">
             <DragDropQuestion
               options={visualData.dragOptions}
@@ -323,7 +325,7 @@ const QuestionCard = ({ problem, onSubmit, setStreak }) => {
               onWrong={handleDragDropWrong}
             />
           </div>
-        )}
+        )} */}
         {/* ---------------------- SECTION 2: VISUAL BAR MODEL -------------------- */}
         {questionType === "visual" && visualData && (
           <div className="visual__container">

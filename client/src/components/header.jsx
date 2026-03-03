@@ -55,34 +55,52 @@ export default function Header() {
         {userInfo ? (
           // If user is logged in, show Navigation, Profile and Logout links
           <>
-            <li className={isNavExpanded ? "navbar__item" : "navbar__item expanded"}>
+            <li
+              className={
+                isNavExpanded ? "navbar__item" : "navbar__item expanded"
+              }
+            >
               <Link to="/home" className="navbar__item__link">
                 Home
               </Link>
             </li>
-            <li className={isNavExpanded ? "navbar__item" : "navbar__item expanded"}>
+            <li
+              className={
+                isNavExpanded ? "navbar__item" : "navbar__item expanded"
+              }
+            >
               <Link to="/level" className="navbar__item__link">
                 Levels
               </Link>
             </li>
-            <li className={isNavExpanded ? "navbar__item" : "navbar__item expanded"}>
+            <li
+              className={
+                isNavExpanded ? "navbar__item" : "navbar__item expanded"
+              }
+            >
               <Link to="/profile" className="navbar__item__link">
                 Profile
               </Link>
             </li>
-            <li className={isNavExpanded ? "navbar__item" : "navbar__item expanded"}>
-              <div
+            <li
+              className={
+                isNavExpanded ? "navbar__item" : "navbar__item expanded"
+              }
+            >
+              <a
                 onClick={logoutHandler}
                 className="navbar__item__link"
                 style={{ cursor: "pointer" }}
               >
                 Logout
-              </div>
+              </a>
             </li>
           </>
         ) : (
           // If user is not logged in, show a Sign In link
-          <li className={isNavExpanded ? "navbar__item" : "navbar__item expanded"}>
+          <li
+            className={isNavExpanded ? "navbar__item" : "navbar__item expanded"}
+          >
             <Link to="/" className="navbar__item__link">
               Sign In
             </Link>

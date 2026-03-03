@@ -11,7 +11,7 @@ const questionSchema = new mongoose.Schema({
       "algebraic",
       "conceptual",
       "visual",
-      "icons_items" 
+      "icons_items",
     ],
     default: "direct",
   },
@@ -22,39 +22,49 @@ const questionSchema = new mongoose.Schema({
 
   visualData: {
     // --- Bar Model Fields ---
-    parts: [{ 
-      value: Number, 
-      label: String, 
-      color: String 
-    }],
+    parts: [
+      {
+        value: Number,
+        label: String,
+        color: String,
+      },
+    ],
     showTotal: Boolean,
 
     // --- Icon Model Fields (Moved INSIDE here) ---
     operator: String, // Stores "+" or "-"
-    groups: [{        
-      count: Number, 
-      icon: String,   // "apple", "car", etc.
-      label: String 
-    }],
+    groups: [
+      {
+        count: Number,
+        icon: String, // "apple", "car", etc.
+        label: String,
+      },
+    ],
     dragOptions: [String],
 
     // --- Match-The-Following Fields ---
-    leftItems: [{
-      id: String,
-      type: String,
-      content: String,
-      groups: [{
-        count: Number,
-        icon: String,
-      }],
-      operator: String,
-      matchId: String,
-    }],
-    rightItems: [{
-      id: String,
-      type: String,
-      content: String,
-    }],
+    leftItems: [
+      {
+        id: String,
+        type: String,
+        content: String,
+        groups: [
+          {
+            count: Number,
+            icon: String,
+          },
+        ],
+        operator: String,
+        matchId: String,
+      },
+    ],
+    rightItems: [
+      {
+        id: String,
+        type: String,
+        content: String,
+      },
+    ],
   },
 
   correctAnswer: { type: String, required: true },
@@ -62,13 +72,69 @@ const questionSchema = new mongoose.Schema({
   generatedByAI: { type: Boolean, default: false },
   verifiedByTeacher: { type: Boolean, default: true },
 });
+// const conceptSchema = new mongoose.Schema(
+//   {
+//     id: { type: String, required: true, unique: true }, // e.g., 'add_single'
+//     title: { type: String, required: true },
+//     description: { type: String },
+//     prerequisites: [{ type: String }], // List of concept IDs
+//     questions: [questionSchema],
+//   },
+//   { timestamps: true },
+// );
 const conceptSchema = new mongoose.Schema(
   {
-    id: { type: String, required: true, unique: true }, // e.g., 'add_single'
+    id: { type: String, required: true, unique: true },
     title: { type: String, required: true },
     description: { type: String },
-    prerequisites: [{ type: String }], // List of concept IDs
-    questions: [questionSchema],
+    prerequisites: [{ type: String }],
+
+    questions: [
+      {
+        text: { type: String, required: true },
+        correctAnswer: { type: String, required: true },
+        type: {
+          type: String,
+          enum: [
+            "direct",
+            "distractor",
+            "comparison_trap",
+            "algebraic",
+            "conceptual",
+            "visual",
+            "icons_items",
+          ],
+          default: "direct",
+        },
+        difficulty: { type: Number, default: 1 },
+        options: [String],
+
+        operands: [Number],
+
+        // visualData: {
+        //   showTotal: Boolean,
+        //   operator: String,
+        //   dragOptions: [String],
+
+        //   parts: [{
+        //     value: Number,
+        //     label: String,
+        //     color: String
+        //   }],
+
+        //   groups: [{
+        //     count: Number,
+        //     icon: String,
+        //     label: String
+        //   }]
+        // },
+        visualData: mongoose.Schema.Types.Mixed,
+
+        explanation: String,
+        generatedByAI: { type: Boolean, default: false },
+        verifiedByTeacher: { type: Boolean, default: true },
+      },
+    ],
   },
   { timestamps: true },
 );
