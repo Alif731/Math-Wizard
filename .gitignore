@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Environment variables
+.env
+.env.*
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -24,4 +28,4 @@ dist-ssr
 *.sw?
 Adaptive_Sequencing_Algorithm.ipynb
 Requirements.txt
-server/.env
+
