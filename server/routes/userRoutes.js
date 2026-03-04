@@ -9,9 +9,10 @@ const {
   getUserRecentActivity,
 } = require('../controllers/userController');
 const { protect } = require('../middleware/authMiddleware');
+const { loginLimiter, registerLimiter } = require('../middleware/rateLimitMiddleware');
 
-router.post('/', registerUser);
-router.post('/auth', authUser);
+router.post('/', registerLimiter, registerUser);
+router.post('/auth', loginLimiter, authUser);
 router.post('/logout', logoutUser);
 router.route('/profile').get(protect, getUserProfile).put(protect, updateUserProfile);
 router.get('/recent-activity', protect, getUserRecentActivity);

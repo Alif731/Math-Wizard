@@ -1,0 +1,113 @@
+.leaderboard-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 2.25rem;
+}
+
+.leaderboard-header {
+  margin-bottom: 1rem;
+
+  h1 {
+    margin: 0;
+    color: #3d405b;
+    font-size: clamp(1.8rem, 3vw, 2.4rem);
+  }
+
+  p {
+    margin: 0.35rem 0 0;
+    color: #6b6f88;
+    font-size: 1rem;
+  }
+}
+
+.leaderboard-card {
+  background: #ffffff;
+  border: 2px solid #f2cc8f;
+  border-radius: 14px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: rgba(61, 64, 91, 0.08) 0 8px 20px -10px;
+
+  &.error {
+    border-color: #f87171;
+    color: #b91c1c;
+  }
+
+  &.settings {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+}
+
+.leaderboard-toggle-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 0.6rem 1rem;
+  background: #3d405b;
+  color: #f2e9e4;
+  font-family: cursive;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background: #e07a5f;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.enabled {
+  color: #15803d;
+  font-weight: 700;
+}
+
+.disabled {
+  color: #b91c1c;
+  font-weight: 700;
+}
+
+.leaderboard-table-wrapper {
+  overflow-x: auto;
+}
+
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px;
+
+  th,
+  td {
+    text-align: left;
+    padding: 0.7rem;
+    border-bottom: 1px solid #f4f1de;
+    color: #3d405b;
+  }
+
+  th {
+    font-size: 0.95rem;
+    color: #6b6f88;
+  }
+}
+
+.student-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.avatar {
+  font-size: 1.2rem;
+}
+
+.empty-state {
+  margin: 0.5rem 0 0;
+  color: #6b6f88;
+}

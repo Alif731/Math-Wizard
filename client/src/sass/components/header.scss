@@ -19,6 +19,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 0 1.25rem;
   box-shadow:
     rgba(224, 122, 95, 0.231372549) 0px 0px 5px 0px,
     #e07a5f 0px 0px 1px 0px;
@@ -26,17 +27,20 @@
   z-index: 5;
   @include ut.breakpoint(large) {
     justify-content: flex-start;
+    padding: 0 0.75rem;
   }
 }
 
 .navbar {
   padding: 0;
-  width: 50%;
+  width: 100%;
+  max-width: 1200px;
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   margin: 0;
   position: relative;
-  gap: 20px;
+  gap: 0.6rem;
 
   @include ut.breakpoint(large) {
     padding: 0px;
@@ -49,14 +53,14 @@
   }
 
   & li {
-    margin: 15px 0;
+    margin: 0;
     font-size: 1.1rem;
     color: #3d405b;
     transition: all 0.7s;
-    padding: 0 15px;
+    padding: 0.45rem 0.75rem;
     text-decoration-color: #81b29a00;
 
-    &:hover {
+    &:hover:not(.navbar__item--avatar) {
       text-decoration: underline;
       text-decoration-thickness: 4px;
       text-decoration-color: #81b29a;
@@ -88,29 +92,20 @@
       font-weight: bold;
     }
 
-    &:nth-of-type(2) {
-      display: block;
-      @include ut.breakpoint(large) {
-        display: none;
-        padding: 10px;
+    &--avatar {
+      padding-right: 0;
+
+      &:hover {
+        text-decoration: none;
       }
     }
 
-    &:nth-child(3),
-    &:nth-child(4) {
+    &--nav {
       display: block;
-      @include ut.breakpoint(large) {
-        display: none;
-        padding: 10px;
-      }
-    }
 
-    &:nth-child(5) {
-      display: block;
       @include ut.breakpoint(large) {
         display: none;
         padding: 10px;
-        padding-bottom: 10px;
       }
     }
 
@@ -140,6 +135,13 @@
 /* User Dropdown Styles */
 .user-dropdown-container {
   position: relative;
+
+  .avatar-trigger {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+  }
   
   .header-avatar {
     font-size: 1.8rem;

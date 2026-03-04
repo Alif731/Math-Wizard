@@ -56,7 +56,7 @@ export const apiSlice = createApi({
     credentials: "include",
   }),
   // 2. Define global tag types here so all injected files can use them
-  tagTypes: ["UserStatus", "Problem", "User"],
+  tagTypes: ["UserStatus", "Problem", "User", "Leaderboard", "LeaderboardSettings"],
 
   // 3. Leave endpoints empty for code splitting
   endpoints: () => ({}),

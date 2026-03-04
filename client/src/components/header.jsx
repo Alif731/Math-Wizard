@@ -72,20 +72,25 @@ export default function Header() {
         </li>
         {userInfo ? (
           <>
-            <li className={isNavExpanded ? "navbar__item" : "navbar__item expanded"}>
+            <li className={isNavExpanded ? "navbar__item navbar__item--nav" : "navbar__item navbar__item--nav expanded"}>
+              <Link to="/leaderboard" className="navbar__item__link">
+                Leaderboard
+              </Link>
+            </li>
+            <li className={isNavExpanded ? "navbar__item navbar__item--nav" : "navbar__item navbar__item--nav expanded"}>
               <Link to="/home" className="navbar__item__link">
                 Home
               </Link>
             </li>
-            <li className={isNavExpanded ? "navbar__item" : "navbar__item expanded"}>
+            <li className={isNavExpanded ? "navbar__item navbar__item--nav" : "navbar__item navbar__item--nav expanded"}>
               <Link to="/level" className="navbar__item__link">
                 Levels
               </Link>
             </li>
             
             {/* RIGHT MOST AVATAR DROPDOWN */}
-            <li className="navbar__item user-dropdown-container" ref={dropdownRef} style={{ marginLeft: 'auto' }}>
-              <div className="avatar-trigger" onClick={toggleDropdown} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+            <li className="navbar__item navbar__item--avatar user-dropdown-container" ref={dropdownRef}>
+              <div className="avatar-trigger" onClick={toggleDropdown}>
                 <span className="header-avatar">{userInfo.avatar || '🐱'}</span>
               </div>
               
@@ -103,7 +108,7 @@ export default function Header() {
             </li>
           </>
         ) : (
-          <li className={isNavExpanded ? "navbar__item" : "navbar__item expanded"}>
+          <li className={isNavExpanded ? "navbar__item navbar__item--nav" : "navbar__item navbar__item--nav expanded"}>
             <Link to="/" className="navbar__item__link">
               Sign In
             </Link>

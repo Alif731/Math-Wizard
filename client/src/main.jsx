@@ -7,6 +7,7 @@ import Home from "./pages/Home.jsx";
 import SelectionLevel from "./pages/SelectionLevel.jsx";
 import Profile from "./pages/Profile.jsx";
 import ResetPassword from "./pages/ResetPassword.jsx";
+import Leaderboard from "./pages/Leaderboard.jsx";
 import PrivateRoute from "./components/PrivateRoute.jsx";
 
 import store from "./store/store.js";
@@ -26,6 +27,7 @@ const route = createBrowserRouter(
       
       {/* Protected Routes */}
       <Route path="" element={<PrivateRoute />}>
+        <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="/home" element={<Home />} />
         <Route path="/level" element={<SelectionLevel />} />
         <Route path="/profile" element={<Profile />} />

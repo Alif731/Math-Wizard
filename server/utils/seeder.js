@@ -1409,7 +1409,21 @@ const conceptsData = [
 const seedData = async () => {
   try {
     const count = await Concept.countDocuments();
-    if (count > 0) return; // Already seeded
+    if (count > 0) {
+      const teacherExists = await User.findOne({ username: "teacher1" });
+      if (!teacherExists) {
+        await User.create({
+          username: "teacher1",
+          password: "password123",
+          role: "teacher",
+          mastery: {},
+          zpdNodes: [],
+          avatar: "🧑‍🏫",
+        });
+        console.log("Teacher User Seeded");
+      }
+      return;
+    }
 
     await Concept.deleteMany({});
     await User.deleteMany({});
@@ -1443,6 +1457,18 @@ const seedData = async () => {
 
     await testUser.save();
     console.log("Test User Seeded");
+
+    const teacherUser = new User({
+      username: "teacher1",
+      password: "password123",
+      role: "teacher",
+      mastery: {},
+      zpdNodes: [],
+      avatar: "🧑‍🏫",
+    });
+
+    await teacherUser.save();
+    console.log("Teacher User Seeded");
   } catch (error) {
     console.error("Seeding Error:", error);
   }

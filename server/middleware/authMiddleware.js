@@ -27,4 +27,13 @@ const protect = async (req, res, next) => {
   }
 };
 
-module.exports = { protect };
+const teacherOnly = (req, res, next) => {
+  if (req.user && req.user.role === 'teacher') {
+    next();
+    return;
+  }
+
+  res.status(403).json({ message: 'Only teachers can perform this action' });
+};
+
+module.exports = { protect, teacherOnly };
