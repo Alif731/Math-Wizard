@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const Attempt = require('../models/Attempt');
 const generateToken = require('../utils/generateToken');
 
 // @desc    Auth user & get token
@@ -17,6 +18,7 @@ const authUser = async (req, res) => {
       username: user.username,
       role: user.role,
       zpdNodes: user.zpdNodes,
+      avatar: user.avatar,
     });
   } else {
     res.status(401).json({ message: 'Invalid username or password' });
@@ -41,7 +43,8 @@ const registerUser = async (req, res) => {
     password,
     role: role || 'student',
     mastery: {},
-    zpdNodes: ['foundation_signs'] // Initial ZPD
+    zpdNodes: ['foundation_signs'], // Initial ZPD
+    avatar: '🐱',
   });
 
   if (user) {
@@ -52,6 +55,7 @@ const registerUser = async (req, res) => {
       username: user.username,
       role: user.role,
       zpdNodes: user.zpdNodes,
+      avatar: user.avatar,
     });
   } else {
     res.status(400).json({ message: 'Invalid user data' });
@@ -80,10 +84,60 @@ const getUserProfile = async (req, res) => {
       _id: user._id,
       username: user.username,
       role: user.role,
+      avatar: user.avatar,
     });
   } else {
     res.status(404).json({ message: 'User not found' });
   }
+};
+
+// @desc    Update user profile
+// @route   PUT /api/users/profile
+// @access  Private
+const updateUserProfile = async (req, res) => {
+  const user = await User.findById(req.user._id);
+
+  if (user) {
+    // If password is being updated, check current password
+    if (req.body.password) {
+      if (!req.body.currentPassword) {
+        res.status(400);
+        throw new Error('Please provide current password to change password');
+      }
+
+      const isMatch = await user.matchPassword(req.body.currentPassword);
+      if (!isMatch) {
+        res.status(401).json({ message: 'Invalid current password' });
+        return;
+      }
+      user.password = req.body.password;
+    }
+
+    user.username = req.body.username || user.username;
+    user.avatar = req.body.avatar || user.avatar;
+
+    const updatedUser = await user.save();
+
+    res.json({
+      _id: updatedUser._id,
+      username: updatedUser.username,
+      role: updatedUser.role,
+      avatar: updatedUser.avatar,
+    });
+  } else {
+    res.status(404).json({ message: 'User not found' });
+  }
+};
+
+// @desc    Get user recent activity
+// @route   GET /api/users/recent-activity
+// @access  Private
+const getUserRecentActivity = async (req, res) => {
+  const attempts = await Attempt.find({ user: req.user._id })
+    .sort({ timestamp: -1 })
+    .limit(5);
+
+  res.json(attempts);
 };
 
 module.exports = {
@@ -91,4 +145,6 @@ module.exports = {
   registerUser,
   logoutUser,
   getUserProfile,
+  updateUserProfile,
+  getUserRecentActivity,
 };

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { IoMenuSharp } from "react-icons/io5";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
@@ -10,6 +10,8 @@ import "../sass/components/header.scss";
 
 export default function Header() {
   const [isNavExpanded, setIsNavExpanded] = useState(true);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef(null);
 
   // Get user info from the Redux store
   const { userInfo } = useSelector((state) => state.auth);
@@ -24,9 +26,25 @@ export default function Header() {
     setIsNavExpanded((prevIsNavExpanded) => !prevIsNavExpanded);
   };
 
+  const toggleDropdown = () => {
+    setShowDropdown(!showDropdown);
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   // --- LOGOUT HANDLER ---
   const logoutHandler = async () => {
     try {
+      setShowDropdown(false);
       // 1. Call the backend endpoint to clear the cookie
       await logoutApiCall().unwrap();
       cleanupLegacySessionStorage();
@@ -53,54 +71,39 @@ export default function Header() {
           </div>
         </li>
         {userInfo ? (
-          // If user is logged in, show Navigation, Profile and Logout links
           <>
-            <li
-              className={
-                isNavExpanded ? "navbar__item" : "navbar__item expanded"
-              }
-            >
+            <li className={isNavExpanded ? "navbar__item" : "navbar__item expanded"}>
               <Link to="/home" className="navbar__item__link">
                 Home
               </Link>
             </li>
-            <li
-              className={
-                isNavExpanded ? "navbar__item" : "navbar__item expanded"
-              }
-            >
+            <li className={isNavExpanded ? "navbar__item" : "navbar__item expanded"}>
               <Link to="/level" className="navbar__item__link">
                 Levels
               </Link>
             </li>
-            <li
-              className={
-                isNavExpanded ? "navbar__item" : "navbar__item expanded"
-              }
-            >
-              <Link to="/profile" className="navbar__item__link">
-                Profile
-              </Link>
-            </li>
-            <li
-              className={
-                isNavExpanded ? "navbar__item" : "navbar__item expanded"
-              }
-            >
-              <a
-                onClick={logoutHandler}
-                className="navbar__item__link"
-                style={{ cursor: "pointer" }}
-              >
-                Logout
-              </a>
+            
+            {/* RIGHT MOST AVATAR DROPDOWN */}
+            <li className="navbar__item user-dropdown-container" ref={dropdownRef} style={{ marginLeft: 'auto' }}>
+              <div className="avatar-trigger" onClick={toggleDropdown} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                <span className="header-avatar">{userInfo.avatar || '🐱'}</span>
+              </div>
+              
+              {showDropdown && (
+                <div className="dropdown-menu">
+                  <Link to="/profile" className="dropdown-item" onClick={() => setShowDropdown(false)}>
+                    Profile
+                  </Link>
+                  <div className="dropdown-divider"></div>
+                  <a onClick={logoutHandler} className="dropdown-item" style={{ cursor: 'pointer' }}>
+                    Logout
+                  </a>
+                </div>
+              )}
             </li>
           </>
         ) : (
-          // If user is not logged in, show a Sign In link
-          <li
-            className={isNavExpanded ? "navbar__item" : "navbar__item expanded"}
-          >
+          <li className={isNavExpanded ? "navbar__item" : "navbar__item expanded"}>
             <Link to="/" className="navbar__item__link">
               Sign In
             </Link>

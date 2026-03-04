@@ -20,7 +20,8 @@ const userSchema = new mongoose.Schema({
     }, { _id: false })
   },
   // Cache current ZPD nodes for quick access
-  zpdNodes: [{ type: String }] 
+  zpdNodes: [{ type: String }],
+  avatar: { type: String, default: '🐱' } 
 }, { timestamps: true });
 
 // Match password to hashed password in database

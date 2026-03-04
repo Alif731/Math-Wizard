@@ -1,0 +1,205 @@
+.profile-page {
+  min-height: 88vh;
+  font-family: cursive;
+  padding: 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  .profile-layout {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 2rem;
+    margin-top: 2rem;
+
+    @media (max-width: 992px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .profile-section {
+    background: white;
+    padding: 2rem;
+    border-radius: 24px;
+    border-right: 5px solid #f2cc8f;
+    border-bottom: 5px solid #f2cc8f;
+    box-shadow: rgba(61, 64, 91, 0.1) 0 4px 12px;
+    margin-bottom: 2rem;
+
+    .profile-section-title {
+      color: #3d405b;
+      font-size: 1.8rem;
+      margin-bottom: 1.5rem;
+      text-shadow: rgba(242, 204, 143, 0.5) 0 0 10px;
+      border-bottom: 2px dashed #f2cc8f;
+      padding-bottom: 0.5rem;
+    }
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1.5rem;
+
+    .stat-card {
+      background: #f4f1de;
+      padding: 1.5rem;
+      border-radius: 16px;
+      text-align: center;
+      border: 2px solid #f2cc8f;
+
+      .stat-label {
+        display: block;
+        color: #6b6f88;
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .stat-value {
+        display: block;
+        color: #e07a5f;
+        font-size: 1.6rem;
+        font-weight: 800;
+      }
+    }
+  }
+
+  .activity-list {
+    background: #fffcf7;
+    border-radius: 12px;
+    padding: 0.5rem;
+  }
+
+  .activity-item {
+    display: flex;
+    align-items: center;
+    padding: 0.8rem;
+    border-bottom: 1px solid #f2cc8f;
+    
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 12px;
+
+      &.correct { background: #81b29a; }
+      &.incorrect { background: #e07a5f; }
+    }
+
+    .activity-text {
+      flex-grow: 1;
+      color: #3d405b;
+      font-size: 1.1rem;
+      strong { color: #e07a5f; }
+    }
+
+    .activity-date {
+      color: #6b6f88;
+      font-size: 0.9rem;
+    }
+  }
+
+  .avatar-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    gap: 1rem;
+    padding: 1rem;
+    background: #fffcf7;
+    border-radius: 16px;
+    border: 2px dashed #f2cc8f;
+
+    .avatar-option {
+      font-size: 2.5rem;
+      padding: 0.5rem;
+      cursor: pointer;
+      text-align: center;
+      border-radius: 12px;
+      transition: all 0.3s;
+      background: white;
+      border: 2px solid transparent;
+
+      &:hover {
+        transform: scale(1.1);
+        background: #f4f1de;
+      }
+
+      &.selected {
+        border-color: #e07a5f;
+        background: #f2cc8f;
+        box-shadow: 0 0 10px rgba(224, 122, 95, 0.3);
+      }
+    }
+  }
+
+  .profile-form {
+    .input__group {
+      margin-bottom: 1rem;
+      label {
+        display: block;
+        color: #3d405b;
+        margin-bottom: 0.4rem;
+        font-weight: bold;
+      }
+      input {
+        width: 100%;
+        box-sizing: border-box;
+        border: 2px solid #f2cc8f;
+        border-radius: 12px;
+        padding: 0.8rem;
+        font-family: cursive;
+        background: #fffcf7;
+      }
+    }
+  }
+
+  .profile-btn {
+    border: none;
+    border-radius: 999px;
+    padding: 0.8rem 1.5rem;
+    background: #3d405b;
+    color: #f2e9e4;
+    font-family: cursive;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+
+    &:hover {
+      background: #e07a5f;
+      transform: translateY(-2px);
+    }
+  }
+
+  .password-link {
+    margin-top: 1.2rem;
+    color: #6b6f88;
+    cursor: pointer;
+    .highlight-text {
+      color: #e07a5f;
+      font-weight: 700;
+      text-decoration: underline;
+    }
+  }
+
+  .profile-message {
+    margin-bottom: 1rem;
+    padding: 0.6rem;
+    border-radius: 8px;
+    font-weight: bold;
+    &.success { background: #f0fdf4; color: #16a34a; }
+    &.error { background: #fef2f2; color: #dc2626; }
+  }
+
+  .sidebar-section {
+    .dashboard-card {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 24px;
+      border-right: 5px solid #f2cc8f;
+      border-bottom: 5px solid #f2cc8f;
+    }
+  }
+}

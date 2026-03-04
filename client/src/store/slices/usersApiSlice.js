@@ -31,6 +31,12 @@ export const usersApiSlice = apiSlice.injectEndpoints({
         body: data,
       }),
     }),
+    getRecentActivity: builder.query({
+      query: () => ({
+        url: `${USERS_URL}/recent-activity`,
+        method: 'GET',
+      }),
+    }),
   }),
 });
 
@@ -39,4 +45,5 @@ export const {
   useLogoutMutation,
   useRegisterMutation,
   useUpdateUserMutation,
+  useGetRecentActivityQuery,
 } = usersApiSlice;
