@@ -80,6 +80,23 @@
   }
 }
 
+.login__roleNote {
+  margin: 0 0 1.15rem;
+  padding: 0.8rem 0.95rem;
+  border: 1px solid #f2cc8f;
+  border-radius: 14px;
+  background: #fffaf2;
+  color: #5f6480;
+  font-size: 0.95rem;
+  text-align: left;
+
+  a {
+    color: #e07a5f;
+    font-weight: 700;
+    text-decoration: none;
+  }
+}
+
 .login-form {
   display: flex;
   flex-direction: column;

@@ -5,6 +5,7 @@ import { setCredentials } from "../store/slices/authSlice";
 import { apiSlice } from "../store/slices/apiSlice";
 import { useLazyGetUserProfileQuery } from "../store/slices/usersApiSlice";
 import { cleanupLegacySessionStorage } from "../utils/cleanupLegacySessionStorage";
+import getDefaultRouteForRole from "../utils/getDefaultRouteForRole";
 import "../sass/page/loginPage.scss";
 
 const LOADING_MESSAGE = "Finishing your Google sign-in...";
@@ -37,7 +38,7 @@ const OAuthCallback = () => {
         cleanupLegacySessionStorage();
         dispatch(apiSlice.util.resetApiState());
         dispatch(setCredentials({ ...profile }));
-        navigate("/home", { replace: true });
+        navigate(getDefaultRouteForRole(profile.role), { replace: true });
       } catch (err) {
         if (!isCancelled) {
           setMessage(err?.data?.message || err?.error || "Google sign-in could not be completed.");

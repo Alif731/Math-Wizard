@@ -1,6 +1,21 @@
 const Concept = require("../models/Concept");
 const User = require("../models/User");
 const Attempt = require("../models/Attempt");
+const TeacherSignupCode = require("../models/TeacherSignupCode");
+
+const DEFAULT_TEACHER_SIGNUP_CODE = "TEACHER2026";
+
+const ensureTeacherSignupCode = async () => {
+  const existingCode = await TeacherSignupCode.findOne({ code: DEFAULT_TEACHER_SIGNUP_CODE });
+
+  if (!existingCode) {
+    await TeacherSignupCode.create({
+      code: DEFAULT_TEACHER_SIGNUP_CODE,
+      label: "Default teacher signup code",
+    });
+    console.log("Teacher Sign-Up Code Seeded");
+  }
+};
 
 const conceptsData = [
   {
@@ -1422,12 +1437,14 @@ const seedData = async () => {
         });
         console.log("Teacher User Seeded");
       }
+      await ensureTeacherSignupCode();
       return;
     }
 
     await Concept.deleteMany({});
     await User.deleteMany({});
     await Attempt.deleteMany({});
+    await TeacherSignupCode.deleteMany({});
 
     await Concept.insertMany(conceptsData);
     console.log("Concepts Seeded");
@@ -1469,6 +1486,8 @@ const seedData = async () => {
 
     await teacherUser.save();
     console.log("Teacher User Seeded");
+
+    await ensureTeacherSignupCode();
   } catch (error) {
     console.error("Seeding Error:", error);
   }
