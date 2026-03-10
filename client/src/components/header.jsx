@@ -82,11 +82,6 @@ export default function Header() {
                 Home
               </Link>
             </li>
-            <li className={isNavExpanded ? "navbar__item navbar__item--nav" : "navbar__item navbar__item--nav expanded"}>
-              <Link to="/level" className="navbar__item__link">
-                Levels
-              </Link>
-            </li>
             
             {/* RIGHT MOST AVATAR DROPDOWN */}
             <li className="navbar__item navbar__item--avatar user-dropdown-container" ref={dropdownRef}>

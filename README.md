@@ -30,7 +30,7 @@ This platform dynamically personalizes the learning journey for each student. By
 ├── client/                 # React frontend application
 │   ├── src/
 │   │   ├── components/     # Dashboard, DragDropQuestion, QuestionCard, etc.
-│   │   ├── pages/          # Home, ConceptMap, SelectionLevel, Profile.
+│   │   ├── pages/          # Home, ConceptMap, Profile, etc.
 │   │   ├── store/          # Redux Toolkit slices (auth, api, game).
 │   │   └── sass/           # Modular SCSS styles and variables.
 ├── server/                 # Express backend application

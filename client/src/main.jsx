@@ -5,7 +5,6 @@ import App from "./App.jsx";
 import Login from "./pages/Login.jsx";
 import Home from "./pages/Home.jsx";
 import OAuthCallback from "./pages/OAuthCallback.jsx";
-import SelectionLevel from "./pages/SelectionLevel.jsx";
 import Profile from "./pages/Profile.jsx";
 import ResetPassword from "./pages/ResetPassword.jsx";
 import Leaderboard from "./pages/Leaderboard.jsx";
@@ -30,7 +29,6 @@ const route = createBrowserRouter(
       <Route path="" element={<PrivateRoute />}>
         <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="/home" element={<Home />} />
-        <Route path="/level" element={<SelectionLevel />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/reset-password" element={<ResetPassword />} />
       </Route>
