@@ -8,6 +8,7 @@ dotenv.config();
 
 const isProduction = process.env.NODE_ENV === 'production';
 const weakSecrets = new Set(['secret', 'jwtsecret', 'changeme', 'password', 'supersecretkey123']);
+const clientUrl = (process.env.CLIENT_URL || 'http://localhost:5173').replace(/\/+$/, '');
 
 if (isProduction) {
   const jwtSecret = process.env.JWT_SECRET || '';
@@ -27,8 +28,8 @@ connectDB().then(() => {
 const app = express();
 
 app.use(cors({
-  origin: 'http://localhost:5173', // Adjust to your frontend port
-  credentials: true
+  origin: clientUrl,
+  credentials: true,
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -42,7 +43,7 @@ app.use('/api/learning', learningRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 
-app.get('/', (req, res) => {
+app.get('/', (_req, res) => {
   res.send('API is running...');
 });
 

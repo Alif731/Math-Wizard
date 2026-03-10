@@ -24,12 +24,26 @@ export const usersApiSlice = apiSlice.injectEndpoints({
         method: 'POST',
       }),
     }),
+    getUserProfile: builder.query({
+      query: () => ({
+        url: `${USERS_URL}/profile`,
+        method: 'GET',
+      }),
+      providesTags: ['User'],
+    }),
+    getOAuthProviders: builder.query({
+      query: () => ({
+        url: `${USERS_URL}/oauth/providers`,
+        method: 'GET',
+      }),
+    }),
     updateUser: builder.mutation({
       query: (data) => ({
         url: `${USERS_URL}/profile`,
         method: 'PUT',
         body: data,
       }),
+      invalidatesTags: ['User'],
     }),
     getRecentActivity: builder.query({
       query: () => ({
@@ -44,6 +58,9 @@ export const {
   useLoginMutation,
   useLogoutMutation,
   useRegisterMutation,
+  useGetUserProfileQuery,
+  useLazyGetUserProfileQuery,
+  useGetOAuthProvidersQuery,
   useUpdateUserMutation,
   useGetRecentActivityQuery,
 } = usersApiSlice;

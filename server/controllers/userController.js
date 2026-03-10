@@ -1,35 +1,137 @@
+const crypto = require('crypto');
 const User = require('../models/User');
 const Attempt = require('../models/Attempt');
 const generateToken = require('../utils/generateToken');
+const {
+  buildGoogleAuthorizationUrl,
+  exchangeGoogleCodeForTokens,
+  fetchGoogleUserProfile,
+  isGoogleOAuthConfigured,
+} = require('../utils/googleOAuth');
+
+const DEFAULT_ROLE = 'student';
+const DEFAULT_ZPD_NODES = ['foundation_signs'];
+const DEFAULT_AVATAR = '🐱';
+const GOOGLE_STATE_COOKIE = 'google_oauth_state';
+
+const buildUserResponse = (user) => ({
+  _id: user._id,
+  username: user.username,
+  role: user.role,
+  zpdNodes: user.zpdNodes,
+  avatar: user.avatar,
+  authProvider: user.authProvider,
+  email: user.email || null,
+  hasPassword: Boolean(user.password),
+});
+
+const getClientUrl = () => (process.env.CLIENT_URL || 'http://localhost:5173').replace(/\/+$/, '');
+
+const getGoogleStateCookieOptions = () => ({
+  httpOnly: true,
+  secure: process.env.NODE_ENV !== 'development',
+  sameSite: 'lax',
+  maxAge: 10 * 60 * 1000,
+});
+
+const clearGoogleStateCookie = (res) => {
+  res.cookie(GOOGLE_STATE_COOKIE, '', {
+    ...getGoogleStateCookieOptions(),
+    expires: new Date(0),
+    maxAge: 0,
+  });
+};
+
+const getGoogleCallbackRedirect = (message) => {
+  const url = new URL('/oauth/callback', getClientUrl());
+
+  if (message) {
+    url.searchParams.set('error', message);
+  }
+
+  return url.toString();
+};
+
+const normalizeUsername = (value) => {
+  const normalized = String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 24);
+
+  return normalized || 'student';
+};
+
+const getPreferredGoogleUsername = (profile) => {
+  const emailPrefix = profile.email ? profile.email.split('@')[0] : '';
+  const nameCandidate = normalizeUsername(profile.name);
+
+  if (nameCandidate !== 'student') {
+    return nameCandidate;
+  }
+
+  return normalizeUsername(emailPrefix);
+};
+
+const ensureUniqueUsername = async (preferredUsername, excludeUserId = null) => {
+  const base = normalizeUsername(preferredUsername);
+  let suffix = 0;
+
+  while (true) {
+    const suffixText = suffix === 0 ? '' : String(suffix);
+    const usernameBase = suffix === 0
+      ? base
+      : base.slice(0, Math.max(1, 24 - suffixText.length));
+    const candidate = `${usernameBase}${suffixText}`;
+    const existingUser = await User.findOne({
+      username: candidate,
+      ...(excludeUserId ? { _id: { $ne: excludeUserId } } : {}),
+    }).select('_id');
+
+    if (!existingUser) {
+      return candidate;
+    }
+
+    suffix += 1;
+  }
+};
 
 // @desc    Auth user & get token
-// @route   POST /api/users/login
+// @route   POST /api/users/auth
 // @access  Public
 const authUser = async (req, res) => {
-  const { username, password } = req.body;
+  const username = String(req.body?.username || '').trim();
+  const password = String(req.body?.password || '');
+
+  if (!username || !password) {
+    res.status(400).json({ message: 'Please enter both username and password' });
+    return;
+  }
 
   const user = await User.findOne({ username });
 
   if (user && (await user.matchPassword(password))) {
     generateToken(res, user._id);
-
-    res.status(200).json({
-      _id: user._id,
-      username: user.username,
-      role: user.role,
-      zpdNodes: user.zpdNodes,
-      avatar: user.avatar,
-    });
-  } else {
-    res.status(401).json({ message: 'Invalid username or password' });
+    res.status(200).json(buildUserResponse(user));
+    return;
   }
+
+  res.status(401).json({ message: 'Invalid username or password' });
 };
 
 // @desc    Register a new user
 // @route   POST /api/users
 // @access  Public
 const registerUser = async (req, res) => {
-  const { username, password, role } = req.body;
+  const username = String(req.body?.username || '').trim();
+  const password = String(req.body?.password || '');
+  const role = req.body?.role || DEFAULT_ROLE;
+
+  if (!username || !password) {
+    res.status(400).json({ message: 'Username and password are required' });
+    return;
+  }
 
   const userExists = await User.findOne({ username });
 
@@ -41,31 +143,22 @@ const registerUser = async (req, res) => {
   const user = await User.create({
     username,
     password,
-    role: role || 'student',
+    role,
+    authProvider: 'local',
     mastery: {},
-    zpdNodes: ['foundation_signs'], // Initial ZPD
-    avatar: '🐱',
+    zpdNodes: DEFAULT_ZPD_NODES,
+    avatar: DEFAULT_AVATAR,
   });
 
-  if (user) {
-    generateToken(res, user._id);
-
-    res.status(201).json({
-      _id: user._id,
-      username: user.username,
-      role: user.role,
-      zpdNodes: user.zpdNodes,
-      avatar: user.avatar,
-    });
-  } else {
-    res.status(400).json({ message: 'Invalid user data' });
-  }
+  generateToken(res, user._id);
+  res.status(201).json(buildUserResponse(user));
 };
 
 // @desc    Logout user / clear cookie
 // @route   POST /api/users/logout
 // @access  Public
 const logoutUser = (req, res) => {
+  clearGoogleStateCookie(res);
   res.cookie('jwt', '', {
     httpOnly: true,
     secure: process.env.NODE_ENV !== 'development',
@@ -75,22 +168,119 @@ const logoutUser = (req, res) => {
   res.status(200).json({ message: 'Logged out successfully' });
 };
 
+// @desc    Get enabled OAuth providers
+// @route   GET /api/users/oauth/providers
+// @access  Public
+const getOAuthProviders = (_req, res) => {
+  res.json({
+    google: isGoogleOAuthConfigured(),
+  });
+};
+
+// @desc    Redirect user to Google OAuth
+// @route   GET /api/users/oauth/google
+// @access  Public
+const startGoogleOAuth = (_req, res) => {
+  if (!isGoogleOAuthConfigured()) {
+    res.redirect(getGoogleCallbackRedirect('Google sign-in is not configured yet.'));
+    return;
+  }
+
+  const state = crypto.randomBytes(24).toString('hex');
+  res.cookie(GOOGLE_STATE_COOKIE, state, getGoogleStateCookieOptions());
+  res.redirect(buildGoogleAuthorizationUrl(state));
+};
+
+// @desc    Handle Google OAuth callback
+// @route   GET /api/users/oauth/google/callback
+// @access  Public
+const handleGoogleOAuthCallback = async (req, res) => {
+  const code = String(req.query?.code || '');
+  const state = String(req.query?.state || '');
+  const providerError = String(req.query?.error || '');
+  const cookieState = String(req.cookies?.[GOOGLE_STATE_COOKIE] || '');
+
+  clearGoogleStateCookie(res);
+
+  if (!isGoogleOAuthConfigured()) {
+    res.redirect(getGoogleCallbackRedirect('Google sign-in is not configured yet.'));
+    return;
+  }
+
+  if (providerError) {
+    res.redirect(getGoogleCallbackRedirect('Google sign-in was cancelled.'));
+    return;
+  }
+
+  if (!code || !state || !cookieState || state !== cookieState) {
+    res.redirect(getGoogleCallbackRedirect('Google sign-in could not be verified.'));
+    return;
+  }
+
+  try {
+    const tokens = await exchangeGoogleCodeForTokens(code);
+    const googleProfile = await fetchGoogleUserProfile(tokens.access_token);
+    const email = String(googleProfile.email || '').toLowerCase();
+
+    if (!googleProfile.sub || !email || !googleProfile.email_verified) {
+      throw new Error('Google account is missing a verified email address.');
+    }
+
+    let user = await User.findOne({ googleId: googleProfile.sub });
+
+    if (!user) {
+      user = await User.findOne({ email });
+    }
+
+    if (!user) {
+      user = await User.create({
+        username: await ensureUniqueUsername(getPreferredGoogleUsername(googleProfile)),
+        email,
+        googleId: googleProfile.sub,
+        authProvider: 'google',
+        role: DEFAULT_ROLE,
+        mastery: {},
+        zpdNodes: DEFAULT_ZPD_NODES,
+        avatar: DEFAULT_AVATAR,
+      });
+    } else {
+      let shouldSave = false;
+
+      if (!user.googleId) {
+        user.googleId = googleProfile.sub;
+        shouldSave = true;
+      }
+
+      if (!user.email) {
+        user.email = email;
+        shouldSave = true;
+      }
+
+      if (shouldSave) {
+        await user.save();
+      }
+    }
+
+    generateToken(res, user._id);
+    res.redirect(getGoogleCallbackRedirect());
+  } catch (error) {
+    console.error('Google OAuth callback failed:', error);
+    res.redirect(getGoogleCallbackRedirect('Google sign-in failed. Please try again.'));
+  }
+};
+
 // @desc    Get user profile
 // @route   GET /api/users/profile
 // @access  Private
 const getUserProfile = async (req, res) => {
   const user = await User.findById(req.user._id);
 
-  if (user) {
-    res.json({
-      _id: user._id,
-      username: user.username,
-      role: user.role,
-      avatar: user.avatar,
-    });
-  } else {
+  if (!user) {
     res.status(404).json({ message: 'User not found' });
+    return;
   }
+
+  res.json(buildUserResponse(user));
 };
 
 // @desc    Update user profile
@@ -99,36 +289,53 @@ const getUserProfile = async (req, res) => {
 const updateUserProfile = async (req, res) => {
   const user = await User.findById(req.user._id);
 
-  if (user) {
-    // If password is being updated, check current password
-    if (req.body.password) {
-      if (!req.body.currentPassword) {
-        res.status(400);
-        throw new Error('Please provide current password to change password');
+  if (!user) {
+    res.status(404).json({ message: 'User not found' });
+    return;
+  }
+
+  const requestedUsername = String(req.body?.username || '').trim();
+  const nextPassword = String(req.body?.password || '');
+  const currentPassword = String(req.body?.currentPassword || '');
+  const requestedAvatar = String(req.body?.avatar || '').trim();
+
+  if (requestedUsername && requestedUsername !== user.username) {
+    const existingUser = await User.findOne({
+      username: requestedUsername,
+      _id: { $ne: user._id },
+    }).select('_id');
+
+    if (existingUser) {
+      res.status(400).json({ message: 'Username is already taken' });
+      return;
+    }
+
+    user.username = requestedUsername;
+  }
+
+  if (requestedAvatar) {
+    user.avatar = requestedAvatar;
+  }
+
+  if (nextPassword) {
+    if (user.password) {
+      if (!currentPassword) {
+        res.status(400).json({ message: 'Please provide your current password to change it' });
+        return;
       }
 
-      const isMatch = await user.matchPassword(req.body.currentPassword);
+      const isMatch = await user.matchPassword(currentPassword);
       if (!isMatch) {
         res.status(401).json({ message: 'Invalid current password' });
         return;
       }
-      user.password = req.body.password;
     }
 
-    user.username = req.body.username || user.username;
-    user.avatar = req.body.avatar || user.avatar;
-
-    const updatedUser = await user.save();
-
-    res.json({
-      _id: updatedUser._id,
-      username: updatedUser.username,
-      role: updatedUser.role,
-      avatar: updatedUser.avatar,
-    });
-  } else {
-    res.status(404).json({ message: 'User not found' });
+    user.password = nextPassword;
   }
+
+  const updatedUser = await user.save();
+  res.json(buildUserResponse(updatedUser));
 };
 
 // @desc    Get user recent activity
@@ -146,6 +353,9 @@ module.exports = {
   authUser,
   registerUser,
   logoutUser,
+  getOAuthProviders,
+  startGoogleOAuth,
+  handleGoogleOAuthCallback,
   getUserProfile,
   updateUserProfile,
   getUserRecentActivity,

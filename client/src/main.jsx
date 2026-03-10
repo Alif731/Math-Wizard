@@ -4,6 +4,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App.jsx";
 import Login from "./pages/Login.jsx";
 import Home from "./pages/Home.jsx";
+import OAuthCallback from "./pages/OAuthCallback.jsx";
 import SelectionLevel from "./pages/SelectionLevel.jsx";
 import Profile from "./pages/Profile.jsx";
 import ResetPassword from "./pages/ResetPassword.jsx";
@@ -24,8 +25,8 @@ const route = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<App />}>
       <Route index={true} element={<Login />} />
-      
-      {/* Protected Routes */}
+      <Route path="/oauth/callback" element={<OAuthCallback />} />
+
       <Route path="" element={<PrivateRoute />}>
         <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="/home" element={<Home />} />

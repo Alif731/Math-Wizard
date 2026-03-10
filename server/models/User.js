@@ -2,36 +2,58 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
+  username: { type: String, required: true, unique: true, trim: true },
+  email: {
+    type: String,
+    lowercase: true,
+    trim: true,
+    unique: true,
+    sparse: true,
+  },
+  password: {
+    type: String,
+    required() {
+      return this.authProvider === 'local';
+    },
+  },
+  googleId: {
+    type: String,
+    unique: true,
+    sparse: true,
+  },
+  authProvider: {
+    type: String,
+    enum: ['local', 'google'],
+    default: 'local',
+  },
   role: { type: String, enum: ['student', 'teacher'], default: 'student' },
-  // Mastery Map: Concept ID -> Mastery Details
   mastery: {
     type: Map,
     of: new mongoose.Schema({
-      status: { 
-        type: String, 
-        enum: ['locked', 'unlocked', 'mastered'], 
-        default: 'locked' 
+      status: {
+        type: String,
+        enum: ['locked', 'unlocked', 'mastered'],
+        default: 'locked'
       },
       successCount: { type: Number, default: 0 },
       attemptCount: { type: Number, default: 0 },
-      lastAttempts: [{ type: Boolean }] // For sliding window (e.g., last 10)
+      lastAttempts: [{ type: Boolean }]
     }, { _id: false })
   },
-  // Cache current ZPD nodes for quick access
   zpdNodes: [{ type: String }],
-  avatar: { type: String, default: '🐱' } 
+  avatar: { type: String, default: '🐱' }
 }, { timestamps: true });
 
-// Match password to hashed password in database
 userSchema.methods.matchPassword = async function (enteredPassword) {
+  if (!this.password) {
+    return false;
+  }
+
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-// Encrypt password using bcrypt
 userSchema.pre('save', async function () {
-  if (!this.isModified('password')) {
+  if (!this.password || !this.isModified('password')) {
     return;
   }
 

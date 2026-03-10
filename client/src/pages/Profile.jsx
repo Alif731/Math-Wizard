@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Dashboard from "../components/Dashboard";
 import { useGetUserStatusQuery } from "../store/slices/gameApiSlice";
 import { useSelector, useDispatch } from "react-redux";
@@ -18,6 +18,8 @@ export default function Profile() {
   const navigate = useNavigate();
   const { userInfo } = useSelector((state) => state.auth);
   const currentUsername = userInfo?.username;
+  const hasPassword = Boolean(userInfo?.hasPassword);
+  const isGooglePrimary = userInfo?.authProvider === 'google';
 
   const { data: status } = useGetUserStatusQuery(currentUsername, { skip: !currentUsername });
   const { data: recentActivity, isLoading: loadingActivity } = useGetRecentActivityQuery();
@@ -40,7 +42,6 @@ export default function Profile() {
       }).unwrap();
       dispatch(setCredentials({ ...res }));
       setMessage("Profile updated successfully!");
-      // Clear message after 3 seconds
       setTimeout(() => setMessage(null), 3000);
     } catch (err) {
       setMessage(err?.data?.message || err.error);
@@ -59,7 +60,6 @@ export default function Profile() {
 
       <main className="profile-layout">
         <div className="profile-main-content">
-          {/* 1. LEARNING SUMMARY */}
           <section className="profile-section">
             <h2 className="profile-section-title">Learning Summary</h2>
             <div className="stats-grid">
@@ -70,19 +70,18 @@ export default function Profile() {
               <div className="stat-card">
                 <span className="stat-label">Unlocked</span>
                 <span className="stat-value">
-                  {status ? Object.values(status.mastery).filter(m => m.status !== 'locked').length : 0}
+                  {status ? Object.values(status.mastery).filter((m) => m.status !== 'locked').length : 0}
                 </span>
               </div>
               <div className="stat-card">
                 <span className="stat-label">Mastered</span>
                 <span className="stat-value">
-                  {status ? Object.values(status.mastery).filter(m => m.status === 'mastered').length : 0}
+                  {status ? Object.values(status.mastery).filter((m) => m.status === 'mastered').length : 0}
                 </span>
               </div>
             </div>
           </section>
 
-          {/* 2. AVATAR SELECTION */}
           <section className="profile-section avatar-card">
             <h2 className="profile-section-title">Choose Your Avatar</h2>
             <div className="avatar-grid">
@@ -97,17 +96,16 @@ export default function Profile() {
               ))}
             </div>
             <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
-                 <button 
-                    className="profile-btn" 
-                    onClick={handleUpdateProfile}
-                    disabled={isLoading || selectedAvatar === userInfo?.avatar}
-                >
-                   Confirm Avatar Change
-                 </button>
+              <button
+                className="profile-btn"
+                onClick={handleUpdateProfile}
+                disabled={isLoading || selectedAvatar === userInfo?.avatar}
+              >
+                Confirm Avatar Change
+              </button>
             </div>
           </section>
 
-          {/* 3. RECENT ACTIVITY */}
           <section className="profile-section">
             <h2 className="profile-section-title">Recent Activity</h2>
             {loadingActivity ? <p>Loading activity...</p> : (
@@ -131,12 +129,18 @@ export default function Profile() {
             )}
           </section>
 
-          {/* 4. ACCOUNT SETTINGS */}
           <section className="profile-section account-card">
             <h2 className="profile-section-title">Account Settings</h2>
             {message && (
               <p className={`profile-message ${message.includes("successfully") ? "success" : "error"}`}>
                 {message}
+              </p>
+            )}
+            {isGooglePrimary && (
+              <p className="profile-auth-note">
+                Signed in with Google{userInfo?.email ? ` as ${userInfo.email}` : ''}. {hasPassword
+                  ? 'You can use Google or your password when you come back.'
+                  : 'Add a password below if you also want to sign in with your username.'}
               </p>
             )}
             <form onSubmit={handleUpdateProfile} className="profile-form">
@@ -154,12 +158,12 @@ export default function Profile() {
               </button>
             </form>
             <p className="password-link" onClick={() => navigate("/reset-password")}>
-              Need to change your password? <span className="highlight-text">Reset Password</span>
+              {hasPassword ? "Need to change your password?" : "Want to add a password for direct sign-in?"}{" "}
+              <span className="highlight-text">{hasPassword ? "Reset Password" : "Create Password"}</span>
             </p>
           </section>
         </div>
 
-        {/* SIDEBAR: PROGRESS MAP */}
         <aside className="sidebar-section">
           <Dashboard status={status} />
         </aside>

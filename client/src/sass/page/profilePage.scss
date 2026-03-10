@@ -74,7 +74,7 @@
     align-items: center;
     padding: 0.8rem;
     border-bottom: 1px solid #f2cc8f;
-    
+
     &:last-child {
       border-bottom: none;
     }
@@ -171,6 +171,15 @@
       background: #e07a5f;
       transform: translateY(-2px);
     }
+  }
+
+  .profile-auth-note {
+    margin: 0 0 1rem;
+    padding: 0.85rem 1rem;
+    border-radius: 12px;
+    background: #fff7ed;
+    color: #9a3412;
+    line-height: 1.5;
   }
 
   .password-link {

@@ -1,11 +1,19 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { setCredentials } from "../store/slices/authSlice";
-import { useLoginMutation, useRegisterMutation } from "../store/slices/usersApiSlice";
+import {
+  useGetOAuthProvidersQuery,
+  useLoginMutation,
+  useRegisterMutation,
+} from "../store/slices/usersApiSlice";
 import { apiSlice } from "../store/slices/apiSlice";
 import { cleanupLegacySessionStorage } from "../utils/cleanupLegacySessionStorage";
 import "../sass/page/loginPage.scss";
+
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api").replace(/\/+$/, "");
+const backendBaseUrl = apiBaseUrl.endsWith("/api") ? apiBaseUrl.slice(0, -4) : apiBaseUrl;
+const googleOAuthUrl = `${backendBaseUrl}/api/users/oauth/google`;
 
 const Login = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -19,8 +27,14 @@ const Login = () => {
 
   const [login, { isLoading: isLoginLoading }] = useLoginMutation();
   const [register, { isLoading: isRegisterLoading }] = useRegisterMutation();
+  const {
+    data: oauthProviders,
+    isLoading: isOAuthProvidersLoading,
+    isError: isOAuthProvidersError,
+  } = useGetOAuthProvidersQuery();
 
   const { userInfo } = useSelector((state) => state.auth);
+  const googleEnabled = Boolean(oauthProviders?.google);
 
   useEffect(() => {
     if (userInfo) {
@@ -33,6 +47,13 @@ const Login = () => {
     setError("");
   };
 
+  const completeLogin = (payload) => {
+    cleanupLegacySessionStorage();
+    dispatch(apiSlice.util.resetApiState());
+    dispatch(setCredentials({ ...payload }));
+    navigate("/home");
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
 
@@ -43,10 +64,7 @@ const Login = () => {
 
     try {
       const res = await login({ username, password }).unwrap();
-      cleanupLegacySessionStorage();
-      dispatch(apiSlice.util.resetApiState()); // Clear any old cache
-      dispatch(setCredentials({ ...res }));
-      navigate("/home");
+      completeLogin(res);
     } catch (err) {
       setError(err?.data?.message || err.error || "Login failed");
     }
@@ -55,6 +73,11 @@ const Login = () => {
   const handleRegister = async (e) => {
     e.preventDefault();
 
+    if (!username.trim() || !password.trim()) {
+      setError("Username and password are required");
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError("Passwords do not match");
       return;
@@ -62,14 +85,29 @@ const Login = () => {
 
     try {
       const res = await register({ username, password }).unwrap();
-      cleanupLegacySessionStorage();
-      dispatch(apiSlice.util.resetApiState()); // Clear any old cache
-      dispatch(setCredentials({ ...res }));
-      navigate("/home");
+      completeLogin(res);
     } catch (err) {
       setError(err?.data?.message || err.error || "Registration failed");
     }
   };
+
+  const handleGoogleSignIn = () => {
+    setError("");
+
+    if (!googleEnabled) {
+      return;
+    }
+
+    window.location.assign(googleOAuthUrl);
+  };
+
+  const oauthTooltip = isOAuthProvidersLoading
+    ? "Checking Google sign-in availability"
+    : isOAuthProvidersError
+      ? "Could not reach the server"
+      : googleEnabled
+        ? ""
+        : "Credentials not added";
 
   return (
     <div className="login__main">
@@ -150,6 +188,24 @@ const Login = () => {
                   ? "Login"
                   : "Sign Up"}
             </button>
+
+            <div className="login__divider">
+              <span>or</span>
+            </div>
+
+            <div
+              className={`login__oauthControl ${googleEnabled ? "" : "login__oauthControl--disabled"}`}
+              data-tooltip={oauthTooltip}
+            >
+              <button
+                type="button"
+                className={`login__oauthBtn ${googleEnabled ? "" : "login__oauthBtn--disabled"}`}
+                onClick={handleGoogleSignIn}
+                disabled={!googleEnabled}
+              >
+                {isLogin ? "Continue with Google" : "Sign up with Google"}
+              </button>
+            </div>
 
             <p className="login__toggle" onClick={handleModeToggle}>
               {isLogin ? "Don't have an account? Sign Up" : "Already have an account? Login"}
