@@ -90,7 +90,13 @@ export default function Header() {
                 Leaderboard
               </Link>
             </li>
-
+            <li className={isNavExpanded ? "navbar__item navbar__item--nav" : "navbar__item navbar__item--nav expanded"}>
+              <Link to="/home" className="navbar__item__link">
+                Home
+              </Link>
+            </li>
+            
+            {/* RIGHT MOST AVATAR DROPDOWN */}
             <li className="navbar__item navbar__item--avatar user-dropdown-container" ref={dropdownRef}>
               <div className="avatar-trigger" onClick={toggleDropdown}>
                 <span className="header-avatar">{userInfo.avatar || "🐱"}</span>
