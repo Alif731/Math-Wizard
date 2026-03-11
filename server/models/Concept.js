@@ -139,4 +139,11 @@ const conceptSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+conceptSchema.statics.findQuestion = async function (conceptId, questionId) {
+  const concept = await this.findOne({ id: conceptId });
+  if (!concept) return { concept: null, question: null };
+  const question = concept.questions.id(questionId);
+  return { concept, question };
+};
+
 module.exports = mongoose.model("Concept", conceptSchema);

@@ -1394,32 +1394,6 @@ const conceptsData = [
   },
 ];
 
-// const seedData = async () => {
-//   try {
-//     // Clear everything to ensure a clean start with new logic
-//     await Concept.deleteMany({});
-//     await User.deleteMany({});
-//     await Attempt.deleteMany({});
-
-//     await Concept.insertMany(conceptsData);
-//     console.log("Concepts Seeded Successfully");
-
-//     // Standard student with hashed password
-//     const testUser = new User({
-//       username: "student1",
-//       password: "password123", // Pre-save hook will hash this
-//       role: "student",
-//       mastery: {},
-//       zpdNodes: [] // Logic will populate this dynamically
-//     });
-
-//     await testUser.save();
-//     console.log("Test User Seeded Successfully");
-//   } catch (error) {
-//     console.error("Seeding Error:", error);
-//   }
-// };
-
 // --------------------------------------------------------- test -------------------------------------------------------
 const seedData = async () => {
   try {

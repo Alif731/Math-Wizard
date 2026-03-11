@@ -8,7 +8,6 @@ import {
   useRegisterMutation,
 } from "../store/slices/usersApiSlice";
 import { apiSlice } from "../store/slices/apiSlice";
-import { cleanupLegacySessionStorage } from "../utils/cleanupLegacySessionStorage";
 import getDefaultRouteForRole from "../utils/getDefaultRouteForRole";
 import PasswordField from "../components/PasswordField";
 import "../sass/page/loginPage.scss";
@@ -56,7 +55,6 @@ const Login = () => {
   };
 
   const completeLogin = (payload) => {
-    cleanupLegacySessionStorage();
     dispatch(apiSlice.util.resetApiState());
     dispatch(setCredentials({ ...payload }));
     navigate(getDefaultRouteForRole(payload?.role), { replace: true });

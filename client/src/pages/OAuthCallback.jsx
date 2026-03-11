@@ -4,7 +4,6 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { setCredentials } from "../store/slices/authSlice";
 import { apiSlice } from "../store/slices/apiSlice";
 import { useLazyGetUserProfileQuery } from "../store/slices/usersApiSlice";
-import { cleanupLegacySessionStorage } from "../utils/cleanupLegacySessionStorage";
 import getDefaultRouteForRole from "../utils/getDefaultRouteForRole";
 import "../sass/page/loginPage.scss";
 
@@ -35,7 +34,6 @@ const OAuthCallback = () => {
           return;
         }
 
-        cleanupLegacySessionStorage();
         dispatch(apiSlice.util.resetApiState());
         dispatch(setCredentials({ ...profile }));
         navigate(getDefaultRouteForRole(profile.role), { replace: true });

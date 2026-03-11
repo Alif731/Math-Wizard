@@ -4,7 +4,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { setCredentials } from "../store/slices/authSlice";
 import { useLoginMutation, useRegisterMutation } from "../store/slices/usersApiSlice";
 import { apiSlice } from "../store/slices/apiSlice";
-import { cleanupLegacySessionStorage } from "../utils/cleanupLegacySessionStorage";
 import getDefaultRouteForRole from "../utils/getDefaultRouteForRole";
 import PasswordField from "../components/PasswordField";
 import "../sass/page/loginPage.scss";
@@ -42,7 +41,6 @@ const TeacherAuth = () => {
   };
 
   const completeLogin = (payload) => {
-    cleanupLegacySessionStorage();
     dispatch(apiSlice.util.resetApiState());
     dispatch(setCredentials({ ...payload }));
     navigate(getDefaultRouteForRole(payload?.role), { replace: true });

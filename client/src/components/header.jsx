@@ -5,7 +5,6 @@ import { useSelector, useDispatch } from "react-redux";
 import { useLogoutMutation } from "../store/slices/usersApiSlice";
 import { logout } from "../store/slices/authSlice";
 import { apiSlice } from "../store/slices/apiSlice";
-import { cleanupLegacySessionStorage } from "../utils/cleanupLegacySessionStorage";
 import getDefaultRouteForRole from "../utils/getDefaultRouteForRole";
 import "../sass/components/header.scss";
 
@@ -49,7 +48,6 @@ export default function Header() {
     try {
       setShowDropdown(false);
       await logoutApiCall().unwrap();
-      cleanupLegacySessionStorage();
       dispatch(logout());
       dispatch(apiSlice.util.resetApiState());
       navigate("/");

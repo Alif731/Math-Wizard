@@ -1,6 +1,36 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
+const adaptiveStateSchema = new mongoose.Schema({
+  timesPlayed: { type: Number, default: 0 },
+  correctnessSum: { type: Number, default: 0 },
+  estimate: { type: Number, default: 0 },
+  ucb: { type: Number, default: 0 },
+  lcb: { type: Number, default: 0 },
+  timeAdded: { type: Number, default: 0 },
+  guessProbability: { type: Number, default: 0 },
+  slipProbability: { type: Number, default: 0 },
+  changePointScore: { type: Number, default: 0 },
+  changePointIndex: { type: Number, default: 0 },
+  correctnessRecord: [{ type: Boolean }],
+  changePointLog: [{ type: Number }],
+}, { _id: false });
+
+const masteryStateSchema = new mongoose.Schema({
+  status: {
+    type: String,
+    enum: ['locked', 'unlocked', 'mastered'],
+    default: 'locked'
+  },
+  successCount: { type: Number, default: 0 },
+  attemptCount: { type: Number, default: 0 },
+  lastAttempts: [{ type: Boolean }],
+  adaptiveState: {
+    type: adaptiveStateSchema,
+    default: () => ({}),
+  },
+}, { _id: false });
+
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true, trim: true },
   email: {
@@ -29,16 +59,7 @@ const userSchema = new mongoose.Schema({
   role: { type: String, enum: ['student', 'teacher'], default: 'student' },
   mastery: {
     type: Map,
-    of: new mongoose.Schema({
-      status: {
-        type: String,
-        enum: ['locked', 'unlocked', 'mastered'],
-        default: 'locked'
-      },
-      successCount: { type: Number, default: 0 },
-      attemptCount: { type: Number, default: 0 },
-      lastAttempts: [{ type: Boolean }]
-    }, { _id: false })
+    of: masteryStateSchema,
   },
   zpdNodes: [{ type: String }],
   avatar: { type: String, default: '🐱' }
