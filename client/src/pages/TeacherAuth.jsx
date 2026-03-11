@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { setCredentials } from "../store/slices/authSlice";
 import { useLoginMutation, useRegisterMutation } from "../store/slices/usersApiSlice";
 import { apiSlice } from "../store/slices/apiSlice";
 import { cleanupLegacySessionStorage } from "../utils/cleanupLegacySessionStorage";
 import getDefaultRouteForRole from "../utils/getDefaultRouteForRole";
+import PasswordField from "../components/PasswordField";
 import "../sass/page/loginPage.scss";
 
 const TeacherAuth = () => {
@@ -14,6 +15,8 @@ const TeacherAuth = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [teacherCode, setTeacherCode] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
 
   const navigate = useNavigate();
@@ -34,6 +37,8 @@ const TeacherAuth = () => {
     setPassword("");
     setConfirmPassword("");
     setTeacherCode("");
+    setShowPassword(false);
+    setShowConfirmPassword(false);
   };
 
   const completeLogin = (payload) => {
@@ -101,9 +106,11 @@ const TeacherAuth = () => {
             : "Create a teacher account with a valid registration code."}
         </p>
 
-        <p className="login__roleNote">
-          Teacher sign-up requires a code stored in the database. <Link to="/">Student sign in</Link>
-        </p>
+        {!isLogin && (
+          <p className="login__roleNote">
+            Teacher sign-up requires a Teacher ID
+          </p>
+        )}
 
         <div className="login__modeSwitch">
           <button
@@ -128,6 +135,18 @@ const TeacherAuth = () => {
 
         <div className="login__container__form">
           <form onSubmit={isLogin ? handleLogin : handleRegister} className="login-form">
+            {!isLogin && (
+              <div className="input__group">
+                <input
+                  className="login__container__password"
+                  type="text"
+                  placeholder="Teacher ID"
+                  value={teacherCode}
+                  onChange={(e) => setTeacherCode(e.target.value.toUpperCase())}
+                />
+              </div>
+            )}
+
             <div className="input__group">
               <input
                 className="login__container__name"
@@ -138,38 +157,26 @@ const TeacherAuth = () => {
               />
             </div>
 
-            <div className="input__group">
-              <input
-                className="login__container__password"
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
+            <PasswordField
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              isVisible={showPassword}
+              onPeekStart={() => setShowPassword(true)}
+              onPeekEnd={() => setShowPassword(false)}
+              autoComplete={isLogin ? "current-password" : "new-password"}
+            />
 
             {!isLogin && (
-              <>
-                <div className="input__group">
-                  <input
-                    className="login__container__password"
-                    type="password"
-                    placeholder="Confirm Password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                  />
-                </div>
-
-                <div className="input__group">
-                  <input
-                    className="login__container__password"
-                    type="text"
-                    placeholder="Teacher Registration Code"
-                    value={teacherCode}
-                    onChange={(e) => setTeacherCode(e.target.value.toUpperCase())}
-                  />
-                </div>
-              </>
+              <PasswordField
+                placeholder="Confirm Password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                isVisible={showConfirmPassword}
+                onPeekStart={() => setShowConfirmPassword(true)}
+                onPeekEnd={() => setShowConfirmPassword(false)}
+                autoComplete="new-password"
+              />
             )}
 
             {error && <p className="login__error">{error}</p>}

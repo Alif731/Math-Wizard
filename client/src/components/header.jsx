@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { IoMenuSharp } from "react-icons/io5";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { useLogoutMutation } from "../store/slices/usersApiSlice";
 import { logout } from "../store/slices/authSlice";
@@ -13,10 +13,15 @@ export default function Header() {
   const [isNavExpanded, setIsNavExpanded] = useState(true);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
+  const location = useLocation();
 
   const { userInfo } = useSelector((state) => state.auth);
   const isTeacher = userInfo?.role === "teacher";
   const defaultRoute = userInfo ? getDefaultRouteForRole(userInfo.role) : "/";
+  const guestAuthLink =
+    location.pathname === "/teacher/auth"
+      ? { to: "/", label: "Student Login" }
+      : { to: "/teacher/auth", label: "Teacher Login" };
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -73,18 +78,11 @@ export default function Header() {
                 </Link>
               </li>
             ) : (
-              <>
-                <li className={isNavExpanded ? "navbar__item navbar__item--nav" : "navbar__item navbar__item--nav expanded"}>
-                  <Link to="/home" className="navbar__item__link">
-                    Home
-                  </Link>
-                </li>
-                <li className={isNavExpanded ? "navbar__item navbar__item--nav" : "navbar__item navbar__item--nav expanded"}>
-                  <Link to="/level" className="navbar__item__link">
-                    Levels
-                  </Link>
-                </li>
-              </>
+              <li className={isNavExpanded ? "navbar__item navbar__item--nav" : "navbar__item navbar__item--nav expanded"}>
+                <Link to="/home" className="navbar__item__link">
+                  Home
+                </Link>
+              </li>
             )}
 
             <li className={isNavExpanded ? "navbar__item navbar__item--nav" : "navbar__item navbar__item--nav expanded"}>
@@ -113,8 +111,8 @@ export default function Header() {
           </>
         ) : (
           <li className={isNavExpanded ? "navbar__item navbar__item--nav" : "navbar__item navbar__item--nav expanded"}>
-            <Link to="/teacher/auth" className="navbar__item__link">
-              Teacher Login
+            <Link to={guestAuthLink.to} className="navbar__item__link">
+              {guestAuthLink.label}
             </Link>
           </li>
         )}

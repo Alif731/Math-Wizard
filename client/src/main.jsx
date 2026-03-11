@@ -5,7 +5,6 @@ import App from "./App.jsx";
 import Login from "./pages/Login.jsx";
 import Home from "./pages/Home.jsx";
 import OAuthCallback from "./pages/OAuthCallback.jsx";
-import SelectionLevel from "./pages/SelectionLevel.jsx";
 import Profile from "./pages/Profile.jsx";
 import ResetPassword from "./pages/ResetPassword.jsx";
 import Leaderboard from "./pages/Leaderboard.jsx";
@@ -22,6 +21,7 @@ import {
   RouterProvider,
   createRoutesFromElements,
   Route,
+  Navigate,
 } from "react-router-dom";
 
 const route = createBrowserRouter(
@@ -39,7 +39,7 @@ const route = createBrowserRouter(
 
       <Route path="" element={<RoleRoute allowedRoles={["student"]} />}>
         <Route path="/home" element={<Home />} />
-        <Route path="/level" element={<SelectionLevel />} />
+        <Route path="/level" element={<Navigate to="/home" replace />} />
       </Route>
 
       <Route path="" element={<RoleRoute allowedRoles={["teacher"]} />}>

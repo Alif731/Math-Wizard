@@ -10,6 +10,7 @@ import {
 import { apiSlice } from "../store/slices/apiSlice";
 import { cleanupLegacySessionStorage } from "../utils/cleanupLegacySessionStorage";
 import getDefaultRouteForRole from "../utils/getDefaultRouteForRole";
+import PasswordField from "../components/PasswordField";
 import "../sass/page/loginPage.scss";
 
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api").replace(/\/+$/, "");
@@ -21,6 +22,8 @@ const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
 
   const navigate = useNavigate();
@@ -48,6 +51,8 @@ const Login = () => {
     setError("");
     setPassword("");
     setConfirmPassword("");
+    setShowPassword(false);
+    setShowConfirmPassword(false);
   };
 
   const completeLogin = (payload) => {
@@ -156,26 +161,26 @@ const Login = () => {
               />
             </div>
 
-            <div className="input__group">
-              <input
-                className="login__container__password"
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
+            <PasswordField
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              isVisible={showPassword}
+              onPeekStart={() => setShowPassword(true)}
+              onPeekEnd={() => setShowPassword(false)}
+              autoComplete={isLogin ? "current-password" : "new-password"}
+            />
 
             {!isLogin && (
-              <div className="input__group">
-                <input
-                  className="login__container__password"
-                  type="password"
-                  placeholder="Confirm Password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                />
-              </div>
+              <PasswordField
+                placeholder="Confirm Password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                isVisible={showConfirmPassword}
+                onPeekStart={() => setShowConfirmPassword(true)}
+                onPeekEnd={() => setShowConfirmPassword(false)}
+                autoComplete="new-password"
+              />
             )}
 
             {error && <p className="login__error">{error}</p>}
