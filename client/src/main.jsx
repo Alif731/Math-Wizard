@@ -33,6 +33,7 @@ const route = createBrowserRouter(
 
       <Route path="" element={<PrivateRoute />}>
         <Route path="/leaderboard" element={<Leaderboard />} />
+        <Route path="/home" element={<Home />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/reset-password" element={<ResetPassword />} />
       </Route>
