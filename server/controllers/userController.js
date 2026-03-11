@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const User = require('../models/User');
 const Attempt = require('../models/Attempt');
+const TeacherSignupCode = require('../models/TeacherSignupCode');
 const generateToken = require('../utils/generateToken');
 const {
   buildGoogleAuthorizationUrl,
@@ -10,6 +11,7 @@ const {
 } = require('../utils/googleOAuth');
 
 const DEFAULT_ROLE = 'student';
+const VALID_ROLES = ['student', 'teacher'];
 const DEFAULT_ZPD_NODES = ['foundation_signs'];
 const DEFAULT_AVATAR = '🐱';
 const GOOGLE_STATE_COOKIE = 'google_oauth_state';
@@ -97,21 +99,50 @@ const ensureUniqueUsername = async (preferredUsername, excludeUserId = null) => 
   }
 };
 
+const parseRequestedRole = (value) => {
+  const normalizedRole = String(value || '').trim().toLowerCase();
+
+  if (!normalizedRole) {
+    return { role: null };
+  }
+
+  if (!VALID_ROLES.includes(normalizedRole)) {
+    return { error: 'Invalid role selected' };
+  }
+
+  return { role: normalizedRole };
+};
+
+const normalizeTeacherCode = (value) => String(value || '').trim().toUpperCase();
+
 // @desc    Auth user & get token
 // @route   POST /api/users/auth
 // @access  Public
 const authUser = async (req, res) => {
   const username = String(req.body?.username || '').trim();
   const password = String(req.body?.password || '');
+  const { role: requestedRole, error: roleError } = parseRequestedRole(req.body?.role);
 
   if (!username || !password) {
     res.status(400).json({ message: 'Please enter both username and password' });
     return;
   }
 
+  if (roleError) {
+    res.status(400).json({ message: roleError });
+    return;
+  }
+
   const user = await User.findOne({ username });
 
   if (user && (await user.matchPassword(password))) {
+    if (requestedRole && user.role !== requestedRole) {
+      res.status(403).json({
+        message: `This account belongs to the ${user.role} portal. Please use the ${user.role} login.`,
+      });
+      return;
+    }
+
     generateToken(res, user._id);
     res.status(200).json(buildUserResponse(user));
     return;
@@ -126,10 +157,21 @@ const authUser = async (req, res) => {
 const registerUser = async (req, res) => {
   const username = String(req.body?.username || '').trim();
   const password = String(req.body?.password || '');
-  const role = req.body?.role || DEFAULT_ROLE;
+  const teacherCode = normalizeTeacherCode(req.body?.teacherCode);
+  const {
+    role: requestedRole,
+    error: roleError,
+  } = parseRequestedRole(req.body?.role);
+  const role = requestedRole || DEFAULT_ROLE;
+  const isTeacherRegistration = role === 'teacher';
 
   if (!username || !password) {
     res.status(400).json({ message: 'Username and password are required' });
+    return;
+  }
+
+  if (roleError) {
+    res.status(400).json({ message: roleError });
     return;
   }
 
@@ -140,14 +182,31 @@ const registerUser = async (req, res) => {
     return;
   }
 
+  if (isTeacherRegistration) {
+    if (!teacherCode) {
+      res.status(400).json({ message: 'Teacher sign up requires a registration code' });
+      return;
+    }
+
+    const matchingTeacherCode = await TeacherSignupCode.findOne({
+      code: teacherCode,
+      isActive: true,
+    }).select('_id');
+
+    if (!matchingTeacherCode) {
+      res.status(403).json({ message: 'Invalid teacher registration code' });
+      return;
+    }
+  }
+
   const user = await User.create({
     username,
     password,
     role,
     authProvider: 'local',
     mastery: {},
-    zpdNodes: DEFAULT_ZPD_NODES,
-    avatar: DEFAULT_AVATAR,
+    zpdNodes: isTeacherRegistration ? [] : DEFAULT_ZPD_NODES,
+    avatar: isTeacherRegistration ? '🧑‍🏫' : DEFAULT_AVATAR,
   });
 
   generateToken(res, user._id);

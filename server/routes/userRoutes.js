@@ -12,11 +12,15 @@ const {
   getUserRecentActivity,
 } = require('../controllers/userController');
 const { protect } = require('../controllers/middleware/authMiddleware');
-const { loginLimiter, registerLimiter } = require('../controllers/middleware/rateLimitMiddleware');
+const {
+  loginLimiter,
+  registerLimiter,
+  oauthLimiter,
+} = require('../controllers/middleware/rateLimitMiddleware');
 
 router.get('/oauth/providers', getOAuthProviders);
-router.get('/oauth/google', startGoogleOAuth);
-router.get('/oauth/google/callback', handleGoogleOAuthCallback);
+router.get('/oauth/google', oauthLimiter, startGoogleOAuth);
+router.get('/oauth/google/callback', oauthLimiter, handleGoogleOAuthCallback);
 
 router.post('/', registerLimiter, registerUser);
 router.post('/auth', loginLimiter, authUser);

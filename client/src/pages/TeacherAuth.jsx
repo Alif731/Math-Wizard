@@ -1,44 +1,29 @@
 import React, { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import { setCredentials } from "../store/slices/authSlice";
-import {
-  useGetOAuthProvidersQuery,
-  useLoginMutation,
-  useRegisterMutation,
-} from "../store/slices/usersApiSlice";
+import { useLoginMutation, useRegisterMutation } from "../store/slices/usersApiSlice";
 import { apiSlice } from "../store/slices/apiSlice";
 import { cleanupLegacySessionStorage } from "../utils/cleanupLegacySessionStorage";
 import getDefaultRouteForRole from "../utils/getDefaultRouteForRole";
 import PasswordField from "../components/PasswordField";
 import "../sass/page/loginPage.scss";
 
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api").replace(/\/+$/, "");
-const backendBaseUrl = apiBaseUrl.endsWith("/api") ? apiBaseUrl.slice(0, -4) : apiBaseUrl;
-const googleOAuthUrl = `${backendBaseUrl}/api/users/oauth/google`;
-
-const Login = () => {
+const TeacherAuth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [teacherCode, setTeacherCode] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
-
   const [login, { isLoading: isLoginLoading }] = useLoginMutation();
   const [register, { isLoading: isRegisterLoading }] = useRegisterMutation();
-  const {
-    data: oauthProviders,
-    isLoading: isOAuthProvidersLoading,
-    isError: isOAuthProvidersError,
-  } = useGetOAuthProvidersQuery();
-
   const { userInfo } = useSelector((state) => state.auth);
-  const googleEnabled = Boolean(oauthProviders?.google);
 
   useEffect(() => {
     if (userInfo) {
@@ -51,6 +36,7 @@ const Login = () => {
     setError("");
     setPassword("");
     setConfirmPassword("");
+    setTeacherCode("");
     setShowPassword(false);
     setShowConfirmPassword(false);
   };
@@ -71,10 +57,10 @@ const Login = () => {
     }
 
     try {
-      const res = await login({ username, password, role: "student" }).unwrap();
+      const res = await login({ username, password, role: "teacher" }).unwrap();
       completeLogin(res);
     } catch (err) {
-      setError(err?.data?.message || err.error || "Login failed");
+      setError(err?.data?.message || err.error || "Teacher login failed");
     }
   };
 
@@ -91,42 +77,40 @@ const Login = () => {
       return;
     }
 
-    try {
-      const res = await register({ username, password, role: "student" }).unwrap();
-      completeLogin(res);
-    } catch (err) {
-      setError(err?.data?.message || err.error || "Registration failed");
-    }
-  };
-
-  const handleGoogleSignIn = () => {
-    setError("");
-
-    if (!googleEnabled) {
+    if (!teacherCode.trim()) {
+      setError("Teacher sign up requires a registration code");
       return;
     }
 
-    window.location.assign(googleOAuthUrl);
+    try {
+      const res = await register({
+        username,
+        password,
+        role: "teacher",
+        teacherCode,
+      }).unwrap();
+      completeLogin(res);
+    } catch (err) {
+      setError(err?.data?.message || err.error || "Teacher sign up failed");
+    }
   };
-
-  const oauthTooltip = isOAuthProvidersLoading
-    ? "Checking Google sign-in availability"
-    : isOAuthProvidersError
-      ? "Could not reach the server"
-      : googleEnabled
-        ? ""
-        : "Credentials not added";
 
   return (
     <div className="login__main">
       <div className="login__container">
         <p className="login__eyebrow">Maths Wizard</p>
-        <h1 className="login__container__header">Math Master</h1>
+        <h1 className="login__container__header">Teacher Portal</h1>
         <p className="login__subtitle">
           {isLogin
-            ? "Welcome back. Ready for more math challenges?"
-            : "Create your account and start your math journey."}
+            ? "Sign in to manage your classroom dashboard."
+            : "Create a teacher account with a valid registration code."}
         </p>
+
+        {!isLogin && (
+          <p className="login__roleNote">
+            Teacher sign-up requires a Teacher ID
+          </p>
+        )}
 
         <div className="login__modeSwitch">
           <button
@@ -151,6 +135,18 @@ const Login = () => {
 
         <div className="login__container__form">
           <form onSubmit={isLogin ? handleLogin : handleRegister} className="login-form">
+            {!isLogin && (
+              <div className="input__group">
+                <input
+                  className="login__container__password"
+                  type="text"
+                  placeholder="Teacher ID"
+                  value={teacherCode}
+                  onChange={(e) => setTeacherCode(e.target.value.toUpperCase())}
+                />
+              </div>
+            )}
+
             <div className="input__group">
               <input
                 className="login__container__name"
@@ -193,30 +189,12 @@ const Login = () => {
               {isLoginLoading || isRegisterLoading
                 ? "Loading..."
                 : isLogin
-                  ? "Login"
-                  : "Sign Up"}
+                  ? "Teacher Login"
+                  : "Teacher Sign Up"}
             </button>
 
-            <div className="login__divider">
-              <span>or</span>
-            </div>
-
-            <div
-              className={`login__oauthControl ${googleEnabled ? "" : "login__oauthControl--disabled"}`}
-              data-tooltip={oauthTooltip}
-            >
-              <button
-                type="button"
-                className={`login__oauthBtn ${googleEnabled ? "" : "login__oauthBtn--disabled"}`}
-                onClick={handleGoogleSignIn}
-                disabled={!googleEnabled}
-              >
-                {isLogin ? "Continue with Google" : "Sign up with Google"}
-              </button>
-            </div>
-
             <p className="login__toggle" onClick={handleModeToggle}>
-              {isLogin ? "Don't have an account? Sign Up" : "Already have an account? Login"}
+              {isLogin ? "Need a teacher account? Sign Up" : "Already registered? Login"}
             </p>
           </form>
         </div>
@@ -225,4 +203,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default TeacherAuth;

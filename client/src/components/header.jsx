@@ -1,25 +1,30 @@
 import { useState, useRef, useEffect } from "react";
 import { IoMenuSharp } from "react-icons/io5";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { useLogoutMutation } from "../store/slices/usersApiSlice";
 import { logout } from "../store/slices/authSlice";
 import { apiSlice } from "../store/slices/apiSlice";
 import { cleanupLegacySessionStorage } from "../utils/cleanupLegacySessionStorage";
+import getDefaultRouteForRole from "../utils/getDefaultRouteForRole";
 import "../sass/components/header.scss";
 
 export default function Header() {
   const [isNavExpanded, setIsNavExpanded] = useState(true);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
+  const location = useLocation();
 
-  // Get user info from the Redux store
   const { userInfo } = useSelector((state) => state.auth);
+  const isTeacher = userInfo?.role === "teacher";
+  const defaultRoute = userInfo ? getDefaultRouteForRole(userInfo.role) : "/";
+  const guestAuthLink =
+    location.pathname === "/teacher/auth"
+      ? { to: "/", label: "Student Login" }
+      : { to: "/teacher/auth", label: "Teacher Login" };
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-
-  // Get the logout API mutation function
   const [logoutApiCall] = useLogoutMutation();
 
   const navBarExpandHandler = () => {
@@ -30,7 +35,6 @@ export default function Header() {
     setShowDropdown(!showDropdown);
   };
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -41,18 +45,13 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // --- LOGOUT HANDLER ---
   const logoutHandler = async () => {
     try {
       setShowDropdown(false);
-      // 1. Call the backend endpoint to clear the cookie
       await logoutApiCall().unwrap();
       cleanupLegacySessionStorage();
-      // 2. Dispatch the logout action to clear frontend auth state
       dispatch(logout());
-      // 3. Reset the API state to clear RTK Query cache
       dispatch(apiSlice.util.resetApiState());
-      // 4. Navigate the user to the login page
       navigate("/");
     } catch (err) {
       console.error(err);
@@ -63,7 +62,7 @@ export default function Header() {
     <nav id="navbarParent">
       <ul className={isNavExpanded ? "navbar" : "navbar expanded"}>
         <li className="navbar__item">
-          <Link to={userInfo ? "/home" : "/"} className="navbar__item__title">
+          <Link to={defaultRoute} className="navbar__item__title">
             Maths Wizard
           </Link>
           <div className="navbar__item__icon" onClick={navBarExpandHandler}>
@@ -72,6 +71,20 @@ export default function Header() {
         </li>
         {userInfo ? (
           <>
+            {isTeacher ? (
+              <li className={isNavExpanded ? "navbar__item navbar__item--nav" : "navbar__item navbar__item--nav expanded"}>
+                <Link to="/teacher/dashboard" className="navbar__item__link">
+                  Teacher Dashboard
+                </Link>
+              </li>
+            ) : (
+              <li className={isNavExpanded ? "navbar__item navbar__item--nav" : "navbar__item navbar__item--nav expanded"}>
+                <Link to="/home" className="navbar__item__link">
+                  Home
+                </Link>
+              </li>
+            )}
+
             <li className={isNavExpanded ? "navbar__item navbar__item--nav" : "navbar__item navbar__item--nav expanded"}>
               <Link to="/leaderboard" className="navbar__item__link">
                 Leaderboard
@@ -86,16 +99,16 @@ export default function Header() {
             {/* RIGHT MOST AVATAR DROPDOWN */}
             <li className="navbar__item navbar__item--avatar user-dropdown-container" ref={dropdownRef}>
               <div className="avatar-trigger" onClick={toggleDropdown}>
-                <span className="header-avatar">{userInfo.avatar || '🐱'}</span>
+                <span className="header-avatar">{userInfo.avatar || "🐱"}</span>
               </div>
-              
+
               {showDropdown && (
                 <div className="dropdown-menu">
                   <Link to="/profile" className="dropdown-item" onClick={() => setShowDropdown(false)}>
                     Profile
                   </Link>
                   <div className="dropdown-divider"></div>
-                  <a onClick={logoutHandler} className="dropdown-item" style={{ cursor: 'pointer' }}>
+                  <a onClick={logoutHandler} className="dropdown-item" style={{ cursor: "pointer" }}>
                     Logout
                   </a>
                 </div>
@@ -104,8 +117,8 @@ export default function Header() {
           </>
         ) : (
           <li className={isNavExpanded ? "navbar__item navbar__item--nav" : "navbar__item navbar__item--nav expanded"}>
-            <Link to="/" className="navbar__item__link">
-              Sign In
+            <Link to={guestAuthLink.to} className="navbar__item__link">
+              {guestAuthLink.label}
             </Link>
           </li>
         )}
