@@ -132,7 +132,10 @@ function getTotalInteractionCount(user) {
 
 function normalizeAdaptiveState(adaptiveState, fallback = {}) {
   const fallbackTimesPlayed = clampNonNegativeInteger(fallback.timesPlayed, 0);
-  const fallbackCorrectnessSum = clampNonNegativeInteger(fallback.correctnessSum, 0);
+  const fallbackCorrectnessSum = clampNonNegativeInteger(
+    fallback.correctnessSum,
+    0,
+  );
   const fallbackRecord = normalizeBooleanList(
     fallback.correctnessRecord,
     BANDIT_HISTORY_LIMIT,
@@ -143,18 +146,29 @@ function normalizeAdaptiveState(adaptiveState, fallback = {}) {
     fallbackTimesPlayed,
   );
   const safeCorrectnessSum = Math.min(
-    clampNonNegativeInteger(adaptiveState?.correctnessSum, fallbackCorrectnessSum),
+    clampNonNegativeInteger(
+      adaptiveState?.correctnessSum,
+      fallbackCorrectnessSum,
+    ),
     safeTimesPlayed,
   );
-  const estimateFallback = safeTimesPlayed > 0 ? safeCorrectnessSum / safeTimesPlayed : 0;
+  const estimateFallback =
+    safeTimesPlayed > 0 ? safeCorrectnessSum / safeTimesPlayed : 0;
 
   return {
     timesPlayed: safeTimesPlayed,
     correctnessSum: safeCorrectnessSum,
     estimate: clampUnitInterval(adaptiveState?.estimate, estimateFallback),
-    ucb: Number.isFinite(Number(adaptiveState?.ucb)) ? Number(adaptiveState.ucb) : 0,
-    lcb: Number.isFinite(Number(adaptiveState?.lcb)) ? Number(adaptiveState.lcb) : 0,
-    timeAdded: clampNonNegativeInteger(adaptiveState?.timeAdded, fallback.timeAdded || 0),
+    ucb: Number.isFinite(Number(adaptiveState?.ucb))
+      ? Number(adaptiveState.ucb)
+      : 0,
+    lcb: Number.isFinite(Number(adaptiveState?.lcb))
+      ? Number(adaptiveState.lcb)
+      : 0,
+    timeAdded: clampNonNegativeInteger(
+      adaptiveState?.timeAdded,
+      fallback.timeAdded || 0,
+    ),
     guessProbability: clampProbability(
       adaptiveState?.guessProbability,
       sampleBeta(BANDIT_PRIORS.guessAlpha, BANDIT_PRIORS.guessBeta),
@@ -166,12 +180,18 @@ function normalizeAdaptiveState(adaptiveState, fallback = {}) {
     changePointScore: Number.isFinite(Number(adaptiveState?.changePointScore))
       ? Number(adaptiveState.changePointScore)
       : 0,
-    changePointIndex: clampNonNegativeInteger(adaptiveState?.changePointIndex, 0),
+    changePointIndex: clampNonNegativeInteger(
+      adaptiveState?.changePointIndex,
+      0,
+    ),
     correctnessRecord: normalizeBooleanList(
       adaptiveState?.correctnessRecord,
       BANDIT_HISTORY_LIMIT,
     ).length
-      ? normalizeBooleanList(adaptiveState?.correctnessRecord, BANDIT_HISTORY_LIMIT)
+      ? normalizeBooleanList(
+          adaptiveState?.correctnessRecord,
+          BANDIT_HISTORY_LIMIT,
+        )
       : fallbackRecord,
     changePointLog: normalizeNumberList(
       adaptiveState?.changePointLog,
@@ -180,14 +200,21 @@ function normalizeAdaptiveState(adaptiveState, fallback = {}) {
   };
 }
 
-function ensureMasteryEntry(user, conceptId, { status = "locked", timeAdded = 0 } = {}) {
+function ensureMasteryEntry(
+  user,
+  conceptId,
+  { status = "locked", timeAdded = 0 } = {},
+) {
   const existingEntry = cloneMasteryEntry(user.mastery.get(conceptId));
   const attemptCount = clampNonNegativeInteger(existingEntry?.attemptCount, 0);
   const successCount = Math.min(
     clampNonNegativeInteger(existingEntry?.successCount, 0),
     attemptCount,
   );
-  const lastAttempts = normalizeBooleanList(existingEntry?.lastAttempts, WINDOW_SIZE);
+  const lastAttempts = normalizeBooleanList(
+    existingEntry?.lastAttempts,
+    WINDOW_SIZE,
+  );
 
   const normalizedEntry = {
     status: existingEntry?.status || status,
@@ -229,7 +256,9 @@ function buildConceptGraph(concepts) {
   }
 
   const rootIds = concepts
-    .filter((concept) => !concept.prerequisites || concept.prerequisites.length === 0)
+    .filter(
+      (concept) => !concept.prerequisites || concept.prerequisites.length === 0,
+    )
     .map((concept) => concept.id);
 
   return { conceptMap, childrenById, rootIds };
@@ -333,7 +362,9 @@ function normalizeFrontier(user, conceptMap, rootIds) {
 
 function arePrerequisitesMastered(user, concept) {
   return (concept.prerequisites || []).every((prerequisiteId) => {
-    const prerequisiteEntry = cloneMasteryEntry(user.mastery.get(prerequisiteId));
+    const prerequisiteEntry = cloneMasteryEntry(
+      user.mastery.get(prerequisiteId),
+    );
     return prerequisiteEntry?.status === "mastered";
   });
 }
@@ -363,7 +394,9 @@ async function unlockChildren(user, parentId, graph) {
     }
   }
 
-  user.zpdNodes = dedupeIds(user.zpdNodes.filter((conceptId) => conceptId !== parentId));
+  user.zpdNodes = dedupeIds(
+    user.zpdNodes.filter((conceptId) => conceptId !== parentId),
+  );
 }
 
 function klBernoulli(p, q) {
@@ -486,7 +519,8 @@ function getQuestionForConcept(concept, masteryEntry) {
     return null;
   }
 
-  const questionIndex = masteryEntry.adaptiveState.timesPlayed % concept.questions.length;
+  const questionIndex =
+    masteryEntry.adaptiveState.timesPlayed % concept.questions.length;
   return concept.questions[questionIndex];
 }
 
@@ -526,7 +560,10 @@ function updateAdaptiveState(adaptiveState, isCorrect) {
 }
 
 function hasMasteryChangePoint(adaptiveState) {
-  return adaptiveState.changePointScore >= Math.log(1 / CHANGE_POINT_FALSE_POSITIVE_RATE);
+  return (
+    adaptiveState.changePointScore >=
+    Math.log(1 / CHANGE_POINT_FALSE_POSITIVE_RATE)
+  );
 }
 
 async function getNextProblem(user) {
@@ -588,11 +625,15 @@ async function updateMastery(user, conceptId, isCorrect) {
     persistMasteryEntry(user, conceptId, masteryEntry);
     await unlockChildren(user, conceptId, graph);
   } else if (masteryEntry.status === "mastered") {
-    user.zpdNodes = dedupeIds((user.zpdNodes || []).filter((id) => id !== conceptId));
+    user.zpdNodes = dedupeIds(
+      (user.zpdNodes || []).filter((id) => id !== conceptId),
+    );
   }
 
   user.zpdNodes = dedupeIds(
-    (user.zpdNodes || []).filter((activeConceptId) => graph.conceptMap.has(activeConceptId)),
+    (user.zpdNodes || []).filter((activeConceptId) =>
+      graph.conceptMap.has(activeConceptId),
+    ),
   );
 
   return masteryEntry;

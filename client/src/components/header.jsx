@@ -69,44 +69,86 @@ export default function Header() {
         </li>
         {userInfo ? (
           <>
-            {isTeacher ? (
-              <li className={isNavExpanded ? "navbar__item navbar__item--nav" : "navbar__item navbar__item--nav expanded"}>
+            {/* {isTeacher ? (
+              <li
+                className={
+                  isNavExpanded
+                    ? "navbar__item navbar__item--nav"
+                    : "navbar__item navbar__item--nav expanded"
+                }
+              >
                 <Link to="/teacher/dashboard" className="navbar__item__link">
                   Teacher Dashboard
                 </Link>
               </li>
             ) : (
-              <li className={isNavExpanded ? "navbar__item navbar__item--nav" : "navbar__item navbar__item--nav expanded"}>
+              <li
+                className={
+                  isNavExpanded
+                    ? "navbar__item navbar__item--nav"
+                    : "navbar__item navbar__item--nav expanded"
+                }
+              >
                 <Link to="/home" className="navbar__item__link">
                   Home
                 </Link>
               </li>
+            )} */}
+            {isTeacher && (
+              <li
+                className={
+                  isNavExpanded
+                    ? "navbar__item navbar__item--nav"
+                    : "navbar__item navbar__item--nav expanded"
+                }
+              >
+                <Link to="/teacher/dashboard" className="navbar__item__link">
+                  Teacher Dashboard
+                </Link>
+              </li>
             )}
 
-            <li className={isNavExpanded ? "navbar__item navbar__item--nav" : "navbar__item navbar__item--nav expanded"}>
+            <li
+              className={
+                isNavExpanded
+                  ? "navbar__item navbar__item--nav"
+                  : "navbar__item navbar__item--nav expanded"
+              }
+            >
               <Link to="/leaderboard" className="navbar__item__link">
                 Leaderboard
               </Link>
             </li>
-            <li className={isNavExpanded ? "navbar__item navbar__item--nav" : "navbar__item navbar__item--nav expanded"}>
+            {/* <li className={isNavExpanded ? "navbar__item navbar__item--nav" : "navbar__item navbar__item--nav expanded"}>
               <Link to="/home" className="navbar__item__link">
                 Home
               </Link>
-            </li>
-            
+            </li> */}
+
             {/* RIGHT MOST AVATAR DROPDOWN */}
-            <li className="navbar__item navbar__item--avatar user-dropdown-container" ref={dropdownRef}>
+            <li
+              className="navbar__item navbar__item--avatar user-dropdown-container"
+              ref={dropdownRef}
+            >
               <div className="avatar-trigger" onClick={toggleDropdown}>
                 <span className="header-avatar">{userInfo.avatar || "🐱"}</span>
               </div>
 
               {showDropdown && (
                 <div className="dropdown-menu">
-                  <Link to="/profile" className="dropdown-item" onClick={() => setShowDropdown(false)}>
+                  <Link
+                    to="/profile"
+                    className="dropdown-item"
+                    onClick={() => setShowDropdown(false)}
+                  >
                     Profile
                   </Link>
                   <div className="dropdown-divider"></div>
-                  <a onClick={logoutHandler} className="dropdown-item" style={{ cursor: "pointer" }}>
+                  <a
+                    onClick={logoutHandler}
+                    className="dropdown-item"
+                    style={{ cursor: "pointer" }}
+                  >
                     Logout
                   </a>
                 </div>
@@ -114,7 +156,13 @@ export default function Header() {
             </li>
           </>
         ) : (
-          <li className={isNavExpanded ? "navbar__item navbar__item--nav" : "navbar__item navbar__item--nav expanded"}>
+          <li
+            className={
+              isNavExpanded
+                ? "navbar__item navbar__item--nav"
+                : "navbar__item navbar__item--nav expanded"
+            }
+          >
             <Link to={guestAuthLink.to} className="navbar__item__link">
               {guestAuthLink.label}
             </Link>

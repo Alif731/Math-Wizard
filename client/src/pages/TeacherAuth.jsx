@@ -2,7 +2,10 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { setCredentials } from "../store/slices/authSlice";
-import { useLoginMutation, useRegisterMutation } from "../store/slices/usersApiSlice";
+import {
+  useLoginMutation,
+  useRegisterMutation,
+} from "../store/slices/usersApiSlice";
 import { apiSlice } from "../store/slices/apiSlice";
 import getDefaultRouteForRole from "../utils/getDefaultRouteForRole";
 import PasswordField from "../components/PasswordField";
@@ -92,11 +95,24 @@ const TeacherAuth = () => {
       setError(err?.data?.message || err.error || "Teacher sign up failed");
     }
   };
+  const videoSrc = isLogin ? "/TG.mp4" : "/TG1.mp4";
 
   return (
     <div className="login__main">
+      <div className="login__img">
+        <video
+          key={videoSrc}
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="bg-video"
+        >
+          <source src={videoSrc} type="video/mp4" />
+        </video>
+      </div>
       <div className="login__container">
-        <p className="login__eyebrow">Maths Wizard</p>
+        {/* <p className="login__eyebrow">Maths Wizard</p> */}
         <h1 className="login__container__header">Teacher Portal</h1>
         <p className="login__subtitle">
           {isLogin
@@ -132,7 +148,10 @@ const TeacherAuth = () => {
         </div>
 
         <div className="login__container__form">
-          <form onSubmit={isLogin ? handleLogin : handleRegister} className="login-form">
+          <form
+            onSubmit={isLogin ? handleLogin : handleRegister}
+            className="login-form"
+          >
             {!isLogin && (
               <div className="input__group">
                 <input
@@ -192,7 +211,9 @@ const TeacherAuth = () => {
             </button>
 
             <p className="login__toggle" onClick={handleModeToggle}>
-              {isLogin ? "Need a teacher account? Sign Up" : "Already registered? Login"}
+              {isLogin
+                ? "Need a teacher account? Sign Up"
+                : "Already registered? Login"}
             </p>
           </form>
         </div>

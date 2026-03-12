@@ -273,25 +273,51 @@ const QuestionCard = ({ problem, onSubmit, setStreak }) => {
     }, 2600);
   };
 
+  // const [showHint, setShowHint] = useState(false);
+
+  // // 1. Check if they have seen the hint yet this session when the component loads
+  // useEffect(() => {
+  //   if (problem?.question?.type === "visual") {
+  //     const hasSeenHint = sessionStorage.getItem("visualHintSeen");
+  //     if (!hasSeenHint) {
+  //       setShowHint(true); // Show it if they haven't seen it!
+  //     }
+  //   }
+  // }, [problem]);
+
+  // // 2. The moment they start typing, hide the hint and save it to session storage
+  // useEffect(() => {
+  //   if (answer !== "" && showHint) {
+  //     setShowHint(false);
+  //     sessionStorage.setItem("visualHintSeen", "true"); // Locks it away for the rest of the session!
+  //   }
+  // }, [answer, showHint]);
   const [showHint, setShowHint] = useState(false);
 
-  // 1. Check if they have seen the hint yet this session when the component loads
   useEffect(() => {
     if (problem?.question?.type === "visual") {
-      const hasSeenHint = sessionStorage.getItem("visualHintSeen");
-      if (!hasSeenHint) {
-        setShowHint(true); // Show it if they haven't seen it!
+      let hintCount = 0;
+      const savedCount = sessionStorage.getItem("visualHintCount");
+      const lastSeenId = sessionStorage.getItem("lastHintProblemId"); // Tracks the specific question
+
+      if (savedCount) {
+        hintCount = parseInt(savedCount, 10);
+      }
+
+      // Safely grab the ID of the current problem
+      const currentProblemId = problem?.question?.id || problem?.question?._id;
+
+      if (hintCount < 2) {
+        setShowHint(true);
+
+        // Prevent React Strict Mode from double-counting the exact same question
+        if (lastSeenId !== String(currentProblemId)) {
+          sessionStorage.setItem("visualHintCount", String(hintCount + 1));
+          sessionStorage.setItem("lastHintProblemId", String(currentProblemId));
+        }
       }
     }
   }, [problem]);
-
-  // 2. The moment they start typing, hide the hint and save it to session storage
-  useEffect(() => {
-    if (answer !== "" && showHint) {
-      setShowHint(false);
-      sessionStorage.setItem("visualHintSeen", "true"); // Locks it away for the rest of the session!
-    }
-  }, [answer, showHint]);
 
   return (
     <div>
@@ -309,6 +335,7 @@ const QuestionCard = ({ problem, onSubmit, setStreak }) => {
           <div className="icons-items__container">
             <MatchTheFollowing
               key={problem.question.id}
+              id={problem.question.id || problem.question._id}
               leftItems={matchLeft}
               rightItems={matchRight}
               onComplete={handleMatchComplete}

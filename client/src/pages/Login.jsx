@@ -12,8 +12,12 @@ import getDefaultRouteForRole from "../utils/getDefaultRouteForRole";
 import PasswordField from "../components/PasswordField";
 import "../sass/page/loginPage.scss";
 
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api").replace(/\/+$/, "");
-const backendBaseUrl = apiBaseUrl.endsWith("/api") ? apiBaseUrl.slice(0, -4) : apiBaseUrl;
+const apiBaseUrl = (
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api"
+).replace(/\/+$/, "");
+const backendBaseUrl = apiBaseUrl.endsWith("/api")
+  ? apiBaseUrl.slice(0, -4)
+  : apiBaseUrl;
 const googleOAuthUrl = `${backendBaseUrl}/api/users/oauth/google`;
 
 const Login = () => {
@@ -90,7 +94,11 @@ const Login = () => {
     }
 
     try {
-      const res = await register({ username, password, role: "student" }).unwrap();
+      const res = await register({
+        username,
+        password,
+        role: "student",
+      }).unwrap();
       completeLogin(res);
     } catch (err) {
       setError(err?.data?.message || err.error || "Registration failed");
@@ -115,11 +123,24 @@ const Login = () => {
         ? ""
         : "Credentials not added";
 
+  const videoSrc = isLogin ? "/BG.mp4" : "/BG1.mp4";
   return (
     <div className="login__main">
+      <div className="login__img">
+        <video
+          key={videoSrc}
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="bg-video"
+        >
+          <source src={videoSrc} type="video/mp4" />
+        </video>
+      </div>
       <div className="login__container">
-        <p className="login__eyebrow">Maths Wizard</p>
-        <h1 className="login__container__header">Math Master</h1>
+        {/* <p className="login__eyebrow">Maths Wizard</p> */}
+        <h1 className="login__container__header">Maths Wizard</h1>
         <p className="login__subtitle">
           {isLogin
             ? "Welcome back. Ready for more math challenges?"
@@ -148,7 +169,10 @@ const Login = () => {
         </div>
 
         <div className="login__container__form">
-          <form onSubmit={isLogin ? handleLogin : handleRegister} className="login-form">
+          <form
+            onSubmit={isLogin ? handleLogin : handleRegister}
+            className="login-form"
+          >
             <div className="input__group">
               <input
                 className="login__container__name"
@@ -214,7 +238,9 @@ const Login = () => {
             </div>
 
             <p className="login__toggle" onClick={handleModeToggle}>
-              {isLogin ? "Don't have an account? Sign Up" : "Already have an account? Login"}
+              {isLogin
+                ? "Don't have an account? Sign Up"
+                : "Already have an account? Login"}
             </p>
           </form>
         </div>

@@ -48,7 +48,7 @@
 
   & a {
     font-weight: bold;
-    color: #e07a5f;
+    color: #0071e9;
     transition: all 0.7s;
   }
 
@@ -82,7 +82,7 @@
     display: flex;
     align-items: center;
     height: 100% !important;
-    
+
     @include ut.breakpoint(large) {
       margin: 0;
     }
@@ -142,7 +142,7 @@
     align-items: center;
     text-decoration: none;
   }
-  
+
   .header-avatar {
     font-size: 1.8rem;
     background: #f4f1de;
@@ -152,12 +152,12 @@
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    border: 3px solid #f2cc8f;
+    border: 3px solid #0071e9;
     transition: all 0.3s;
-    
+
     &:hover {
       transform: scale(1.1);
-      border-color: #e07a5f;
+      border-color: #0071e9;
     }
   }
 

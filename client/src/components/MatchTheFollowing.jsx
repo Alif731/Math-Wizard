@@ -21,7 +21,7 @@ const ICON_MAP = {
 const LINE_COLORS = ["#f63ba2", "#a855f7", "#f1bd68", "#14b8a6"];
 const DEFAULT_BORDER = "#e2e8f0"; // Standard gray border
 
-const MatchTheFollowing = ({ leftItems, rightItems, onComplete }) => {
+const MatchTheFollowing = ({ id, leftItems, rightItems, onComplete }) => {
   const containerRef = useRef(null);
   const [connections, setConnections] = useState([]);
   const [drawingLine, setDrawingLine] = useState(null);
@@ -340,19 +340,35 @@ const MatchTheFollowing = ({ leftItems, rightItems, onComplete }) => {
   // --- HINT STATE ---
   const [showHint, setShowHint] = useState(false);
 
-  // 1. Check if they have seen the matching hint this session
+  // 1. Check count when component loads
   useEffect(() => {
-    const hasSeenHint = sessionStorage.getItem("matchHintSeen");
-    if (!hasSeenHint) {
-      setShowHint(true);
+    let hintCount = 0;
+    const savedCount = sessionStorage.getItem("matchHintCount");
+    const lastSeenId = sessionStorage.getItem("lastMatchHintId");
+
+    if (savedCount) {
+      hintCount = parseInt(savedCount, 10);
     }
-  }, []);
+
+    // Safely grab the database ID of this specific problem
+    const currentProblemId = id || "fallback-id";
+
+    if (hintCount < 2) {
+      setShowHint(true);
+
+      // If the ID is different from the last one we saw, it is a NEW question!
+      // If it is the exact same ID (because they refreshed the page), we DO NOT count it again.
+      if (lastSeenId !== String(currentProblemId)) {
+        sessionStorage.setItem("matchHintCount", String(hintCount + 1));
+        sessionStorage.setItem("lastMatchHintId", String(currentProblemId));
+      }
+    }
+  }, [id]); // 🔥 React will now only re-run this if the actual database ID changes!
 
   // 2. Hide hint the millisecond they click a box or draw a line
   useEffect(() => {
     if ((drawingLine || connections.length > 0) && showHint) {
       setShowHint(false);
-      sessionStorage.setItem("matchHintSeen", "true");
     }
   }, [drawingLine, connections, showHint]);
 

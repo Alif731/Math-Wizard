@@ -6,7 +6,9 @@ const TeacherSignupCode = require("../models/TeacherSignupCode");
 const DEFAULT_TEACHER_SIGNUP_CODE = "TEACHER2026";
 
 const ensureTeacherSignupCode = async () => {
-  const existingCode = await TeacherSignupCode.findOne({ code: DEFAULT_TEACHER_SIGNUP_CODE });
+  const existingCode = await TeacherSignupCode.findOne({
+    code: DEFAULT_TEACHER_SIGNUP_CODE,
+  });
 
   if (!existingCode) {
     await TeacherSignupCode.create({
@@ -1430,16 +1432,19 @@ const seedData = async () => {
       mastery: {},
       // zpdNodes: ["foundation_signs"], // sign selection
       // zpdNodes: ["visual_addition"], // bar
-      zpdNodes: ["visual_icons"], // Match the following
-      // zpdNodes: ["add_single"], // normal
+      // zpdNodes: ["visual_icons"], // Match the following
+      zpdNodes: ["add_single"], // normal
     });
 
     // Initialize mastery for root
-    // testUser.mastery.set("foundation_signs", {// sign selection
-    // testUser.mastery.set("visual_addition", {// bar
-    testUser.mastery.set("visual_icons", {
-      // Match the following
-      // testUser.mastery.set("add_single", { // normal
+    // testUser.mastery.set("foundation_signs", {
+    // sign selection
+    // testUser.mastery.set("visual_addition", {
+    // bar
+    // testUser.mastery.set("visual_icons", {
+    // Match the following
+    testUser.mastery.set("add_single", {
+      // normal
       status: "unlocked",
       successCount: 0,
       attemptCount: 0,
