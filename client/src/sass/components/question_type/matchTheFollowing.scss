@@ -162,3 +162,77 @@
     opacity: 0.3;
   }
 }
+
+/* --- ICONS ITEMS STYLES --- */
+
+.icons-items__container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  margin: 2rem 0;
+  flex-wrap: wrap; /* Wraps nicely on small screens */
+}
+
+.icons-items__group-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.icons-items__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 3 icons per row */
+  gap: 8px;
+  background-color: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px;
+  min-width: 80px;
+  min-height: 80px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap; /* Fallback */
+}
+
+.icons-items__icon {
+  font-size: 1.8rem; /* Icon size */
+  color: #3b82f6; /* Default Blue */
+  display: flex;
+  animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
+
+  svg {
+    filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.1));
+  }
+}
+
+.icons-items__label {
+  margin-top: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.icons-items__operator {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #475569;
+
+  /* Position the operator between groups */
+  .icons-items__group-wrapper & {
+    position: absolute;
+    right: -25px;
+    top: 35%;
+  }
+}
+
+.icons-items__answer-box {
+  width: 90px;
+  /* Reuses visual input styles but constraints width */
+  .visual__input {
+    text-align: center;
+    padding: 0.5rem;
+  }
+}
