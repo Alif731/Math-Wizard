@@ -1430,18 +1430,18 @@ const seedData = async () => {
       password: "password123", // Pre-save hook will hash this
       role: "student",
       mastery: {},
-      zpdNodes: ["foundation_signs"], // sign selection
+      // zpdNodes: ["foundation_signs"], // sign selection
       // zpdNodes: ["visual_addition"], // bar
-      // zpdNodes: ["visual_icons"], // Match the following
+      zpdNodes: ["visual_icons"], // Match the following
       // zpdNodes: ["add_single"], // normal
     });
 
     // Initialize mastery for root
-    testUser.mastery.set("foundation_signs", {
-      // sign selection
-      // testUser.mastery.set("visual_addition", {
-      // bar
-      // testUser.mastery.set("visual_icons", {
+    // testUser.mastery.set("foundation_signs", {
+    // sign selection
+    // testUser.mastery.set("visual_addition", {
+    // bar
+    testUser.mastery.set("visual_icons", {
       // Match the following
       // testUser.mastery.set("add_single", {
       // normal

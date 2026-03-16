@@ -2,12 +2,13 @@
   min-height: 88vh;
   font-family: cursive;
   padding: 1rem;
-  max-width: 1200px;
+  max-width: 1500px;
   margin: 0 auto;
 
   .profile-layout {
     display: grid;
-    grid-template-columns: 1fr 350px;
+    // grid-template-columns: 1fr 350px;
+    grid-template-columns: 3fr 1fr;
     gap: 2rem;
     margin-top: 2rem;
 
@@ -35,6 +36,12 @@
     }
   }
 
+  .profile-settings-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    align-items: stretch;
+  }
   .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -85,15 +92,21 @@
       border-radius: 50%;
       margin-right: 12px;
 
-      &.correct { background: #81b29a; }
-      &.incorrect { background: #e07a5f; }
+      &.correct {
+        background: #81b29a;
+      }
+      &.incorrect {
+        background: #e07a5f;
+      }
     }
 
     .activity-text {
       flex-grow: 1;
       color: #3d405b;
       font-size: 1.1rem;
-      strong { color: #e07a5f; }
+      strong {
+        color: #e07a5f;
+      }
     }
 
     .activity-date {
@@ -113,7 +126,7 @@
 
     .avatar-option {
       font-size: 2.5rem;
-      padding: 0.5rem;
+      // padding: 0.5rem;
       cursor: pointer;
       text-align: center;
       border-radius: 12px;
@@ -198,8 +211,14 @@
     padding: 0.6rem;
     border-radius: 8px;
     font-weight: bold;
-    &.success { background: #f0fdf4; color: #16a34a; }
-    &.error { background: #fef2f2; color: #dc2626; }
+    &.success {
+      background: #f0fdf4;
+      color: #16a34a;
+    }
+    &.error {
+      background: #fef2f2;
+      color: #dc2626;
+    }
   }
 
   .sidebar-section {
@@ -211,4 +230,75 @@
       border-bottom: 5px solid #f2cc8f;
     }
   }
+}
+
+.player-badge-profile {
+  border-radius: 12px;
+  border-right: 5px solid #f2cc8f;
+  border-bottom: 5px solid #f2cc8f;
+
+  font-family: cursive;
+
+  background-color: #343463;
+  color: #ffffff;
+  padding: 10px;
+  border-radius: 9999px;
+  font-weight: bold;
+  font-size: 2rem;
+
+  // transition
+  display: flex;
+  align-items: center;
+  cursor: default;
+  transition: all 0.5s ease-in-out;
+  // flex: 1;
+  text-align: center;
+  // animation: tilt-shaking 1s ease-in-out infinite;
+
+  // &:hover {
+  //   background-color: #3d405b;
+  //   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); // Slight lift on hover
+  //   // animation: none;
+  //   color: white;
+  //   text-shadow: none;
+  //   cursor: pointer;
+  // }
+
+  // --- THE HOVER LOGIC ---
+  strong {
+    // 1. Hidden State (Default)
+    max-width: 0; // Takes up no width
+    opacity: 1; // Invisible
+    overflow: hidden; // Hides the text that overflows width 0
+    white-space: nowrap; // Keeps text on one line so it slides out
+    transition:
+      max-width 0.8s ease-in-out,
+      opacity 0.8s ease-in-out,
+      margin 0.8s ease;
+    margin-right: 0; // No gap when hidden
+    color: white; // perfect animation
+    text-shadow: none; // perfect animation
+  }
+
+  // 2. Visible State (On Parent Hover)
+  &:hover strong {
+    max-width: 1000px; // Expand wide enough to fit the text
+    opacity: 1; // Fade in
+    margin-right: 0.5rem; // Add a small gap between message and username
+    color: #f2e9e4;
+    text-shadow: none;
+  }
+}
+
+.game-header-profile {
+  // max-width: 1200px;
+  // margin: 0.5rem;
+  // font-size: 1rem;
+  margin: 1.5rem 0;
+  margin-right: 0.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap; // Wrap on small phones
+  gap: 1rem;
 }
