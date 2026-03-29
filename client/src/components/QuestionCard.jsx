@@ -111,6 +111,7 @@ const QuestionCard = ({ problem, onSubmit, setStreak }) => {
       problem.question.type === "direct";
     if (shouldAnimate) {
       if (isCorrect) {
+        setStreak((prev) => prev + 1); // 🔥 ADDED THIS
         playSuccessSound();
         // SUCCESS ANIMATION
         setIsSuccess(true);
@@ -118,6 +119,7 @@ const QuestionCard = ({ problem, onSubmit, setStreak }) => {
           onSubmit(userAnswer);
         }, 3000);
       } else {
+        setStreak(0); // 🔥 ADDED THIS
         playErrorSound();
         // ERROR ANIMATION
         setIsError(true);
@@ -126,7 +128,12 @@ const QuestionCard = ({ problem, onSubmit, setStreak }) => {
         }, 2600);
       }
     } else {
-      // If not visual, submit immediately without animation
+      // If it's a type without animation, still update the streak!
+      if (isCorrect) {
+        setStreak((prev) => prev + 1); // 🔥 ADDED THIS
+      } else {
+        setStreak(0); // 🔥 ADDED THIS
+      }
       onSubmit(userAnswer);
     }
   };

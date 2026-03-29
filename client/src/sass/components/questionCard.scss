@@ -1,4 +1,5 @@
-// --- Loading State ---
+@use "../util/breakpoint" as ut;
+
 .loadingstate {
   text-align: center;
   padding: 2rem;
@@ -14,14 +15,11 @@
   // background-color: #f9f9f9;
   padding-top: 0;
   border-radius: 1rem;
-  width: 1100px;
-  // box-shadow:
-  //   0 20px 25px -5px #7272c34d,
-  //   0 10px 10px -5px #7272c3b4;
-  // max-width: 56rem;
+  max-width: 1100px;
   font-family: cursive;
   border-bottom: 5px solid #81b29a;
   border-right: 5px solid #81b29a;
+  margin: auto;
   box-shadow:
     rgb(129 178 154 / 18%) 3px 3px 6px 0px inset,
     rgb(129 178 154 / 0%) -3px -3px 6px 1px inset;
@@ -36,7 +34,7 @@
   padding: 0.5rem;
   color: #3d405b;
   background-color: #81b29a25;
-  font-size: 2rem;
+  font-size: 1.8rem;
   border-radius: 10px;
 }
 
