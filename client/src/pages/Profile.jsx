@@ -83,17 +83,7 @@ export default function Profile() {
     }
   };
 
-  const { data: status } = useGetUserStatusQuery(username);
   return (
-<<<<<<< Updated upstream
-    <>
-      {/* --- RIGHT COLUMN: DASHBOARD --- */}
-      <aside className="sidebar-section">
-        <Dashboard status={status} />
-      </aside>
-      {/* </section> */}
-    </>
-=======
     <div className="profile-page">
       {/* <header className="teacher-dashboard__hero">
         <div className="player-badge-profile highlight2">
@@ -342,7 +332,6 @@ export default function Profile() {
         )}
       </main>
     </div>
->>>>>>> Stashed changes
   );
 }
 

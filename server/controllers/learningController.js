@@ -1,100 +1,72 @@
-const User = require("../models/User");
-const Concept = require("../models/Concept");
-const Attempt = require("../models/Attempt");
-const { getNextConcept, updateMastery } = require("../utils/learningEngine");
+const Concept = require('../models/Concept');
+const Attempt = require('../models/Attempt');
+const { getNextProblem, updateMastery } = require('../utils/learningEngine');
 
+/**
+ * Fetches the next problem for the user based on the KL-UCB learning engine.
+ */
 exports.getProblem = async (req, res) => {
   try {
-    const { username } = req.query;
-    if (!username) return res.status(400).json({ error: "Username required" });
-
-    const user = await User.findOne({ username });
-    if (!user) return res.status(404).json({ error: "User not found" });
-
-    const concept = await getNextConcept(user);
-
-    if (!concept) {
-      return res.json({
-        message: "No available problems. You might have mastered everything!",
-        complete: true,
-      });
+    const user = req.user;
+    const { concept, question } = await getNextProblem(user);
+    await user.save(); // Persist updated ZPD cache
+    
+    if (!concept || !question) {
+      return res.json({ message: 'Curriculum complete!', complete: true });
     }
-
-    // Select a question (Simple Random for now)
-    // In real app, avoid recently used questions
-    const question =
-      concept.questions[Math.floor(Math.random() * concept.questions.length)];
-
-    // Exclude correctAnswer from response
-    // const { correctAnswer, ...qData } = question.toObject();
-    const qData = question.toObject(); // include correct answer
 
     res.json({
       concept: { id: concept.id, title: concept.title },
-      question: { ...qData, id: question._id },
+      question: { ...question.toObject(), id: question._id },
       description: concept.description,
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Server error" });
+    console.error('getProblem error:', error);
+    res.status(500).json({ error: 'Server error' });
   }
 };
 
+/**
+ * Validates a user's answer, logs the attempt, and updates mastery.
+ */
 exports.submitAnswer = async (req, res) => {
   try {
-    const { username, conceptId, questionId, response } = req.body;
+    const { conceptId, questionId, response } = req.body;
+    const user = req.user;
+    
+    const { concept, question } = await Concept.findQuestion(conceptId, questionId);
 
-    const user = await User.findOne({ username });
-    const concept = await Concept.findOne({ id: conceptId });
+    if (!concept || !question) {
+      return res.status(404).json({ error: 'Concept or Question not found' });
+    }
 
-    if (!user || !concept) return res.status(404).json({ error: "Not found" });
+    const isCorrect = response.trim().toLowerCase() === question.correctAnswer.trim().toLowerCase();
 
-    const question = concept.questions.id(questionId);
-    if (!question) return res.status(404).json({ error: "Question not found" });
-
-    // Check answer (Case insensitive for simplicity)
-    const isCorrect =
-      response.trim().toLowerCase() ===
-      question.correctAnswer.trim().toLowerCase();
-
-    // Log Attempt
-    await Attempt.create({
-      user: user._id,
-      conceptId,
-      questionId,
-      isCorrect,
-      response,
-    });
-
-    // Update Mastery
+    await Attempt.create({ user: user._id, conceptId, questionId, isCorrect, response });
     await updateMastery(user, conceptId, isCorrect);
-    await user.save(); // Persist changes to user (mastery, zpd)
+    await user.save();
 
     res.json({
       isCorrect,
-      correctAnswer: question.correctAnswer, // Show answer after attempt
-      explanation: question.explanation || "Good job!",
+      correctAnswer: question.correctAnswer,
+      explanation: question.explanation || 'Good job!',
       mastery: user.mastery.get(conceptId),
-      zpdNodes: user.zpdNodes,
+      zpdNodes: user.zpdNodes
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Server error" });
+    console.error('submitAnswer error:', error);
+    res.status(500).json({ error: 'Server error' });
   }
 };
 
+/**
+ * Returns the current student's learning progress.
+ */
 exports.getUserStatus = async (req, res) => {
   try {
-    const { username } = req.query;
-    const user = await User.findOne({ username });
-    if (!user) return res.status(404).json({ error: "User not found" });
-
-    res.json({
-      username: user.username,
-      mastery: user.mastery,
-      zpdNodes: user.zpdNodes,
-    });
+    const { username, mastery, zpdNodes } = req.user;
+    res.json({ username, mastery, zpdNodes });
   } catch (error) {
-    res.status(500).json({ error: "Server error" });
+    res.status(500).json({ error: 'Server error' });
   }
 };

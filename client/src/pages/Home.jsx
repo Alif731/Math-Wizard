@@ -10,20 +10,28 @@ import {
 import QuestionCard from "../components/QuestionCard";
 import Dashboard from "../components/Dashboard";
 import "../sass/page/homePage.scss";
-
 const Home = () => {
-  const { userInfo } = useSelector((state) => state.auth); // 1. Initialize streak from sessionStorage (Lazy Initialization for performance)
+  const { userInfo } = useSelector((state) => state.auth);
+  const username = userInfo?.username;
   const [streak, setStreak] = useState(() => {
-    const savedStreak = sessionStorage.getItem("mathStreak");
+    if (!username) return 0;
+    const savedStreak = sessionStorage.getItem(`mathStreak:${username}`);
     return savedStreak ? Number(savedStreak) : 0;
   });
 
-  // 2. Automatically sync streak to sessionStorage whenever it changes
   useEffect(() => {
-    sessionStorage.setItem("mathStreak", streak);
-  }, [streak]);
-  // -----------------------------------------------------------
-  const username = userInfo?.username || "student1";
+    if (!username) {
+      setStreak(0);
+      return;
+    }
+    const savedStreak = sessionStorage.getItem(`mathStreak:${username}`);
+    setStreak(savedStreak ? Number(savedStreak) : 0);
+  }, [username]);
+
+  useEffect(() => {
+    if (!username) return;
+    sessionStorage.setItem(`mathStreak:${username}`, String(streak));
+  }, [streak, username]);
 
   // --- RTK QUERY HOOKS ---
   const {
@@ -31,9 +39,9 @@ const Home = () => {
     isLoading: loadingProblem,
     isError: errorProblem,
     refetch: refetchProblem,
-  } = useGetProblemQuery(username);
+  } = useGetProblemQuery(username, { skip: !username });
 
-  const { data: status } = useGetUserStatusQuery(username);
+  const { data: status } = useGetUserStatusQuery(username, { skip: !username });
   const [submitAnswer, { isLoading: isSubmitting }] = useSubmitAnswerMutation();
 
   // --- LOCAL STATE ---
@@ -44,8 +52,7 @@ const Home = () => {
     if (!problem?.question) return;
 
     try {
-      const result = await submitAnswer({
-        username,
+      await submitAnswer({
         conceptId: problem.concept.id,
         questionId: problem.question.id,
         response: answer,
@@ -66,9 +73,11 @@ const Home = () => {
 
   const isMastered = problem?.complete;
 
+  if (!username) return <div className="loading-state">Loading...</div>;
   if (!problem) return <div className="loading-state">Loading...</div>;
   return (
     <div className="home-page">
+      {/* --- ADDED BACK: GAME HEADER --- */}
       <header className="game-header">
         <div className="player-badge highlight2">
           <span className="highlight1">G</span>ood{" "}
@@ -79,26 +88,55 @@ const Home = () => {
           </strong>
         </div>
         {streak >= 1 && (
-          <>
-            <div className="streak__badge">
-              <span className="highlight1">S</span>treak:{" "}
-              <span className="highlight2">x</span>
-              {streak} <span class="top"></span>
-              <span class="right"></span>
-              <span class="bottom"></span>
-              <span class="left"></span>
-            </div>
-          </>
+          <div className="streak__badge">
+            <span className="highlight1">S</span>treak:{" "}
+            <span className="highlight2">x</span>
+            {streak} <span className="top"></span>
+            <span className="right"></span>
+            <span className="bottom"></span>
+            <span className="left"></span>
+          </div>
         )}
-
-        {/* <h1 className="card__header">{problem.concept.title}</h1> */}
       </header>
-      {/* Show description ONLY if the concept ID is foundation_signs or visual_icons */}
       {problem?.description && problem.concept.id === "foundation_signs" && (
         <h2 className="card__header__type">{problem.description}</h2>
       )}
-
       <main className="home-layout">
+        {/* --- LEFT COLUMN: GAME AREA --- */}
+        {/* <section className="game-section"> */}
+        {/* 1. FEEDBACK CARD */}
+        {/* {feedback ? (
+          <div
+            className={`feedback-card ${feedback.isCorrect ? "success" : "error"}`}
+          >
+            <div className="feedback-icon">
+              {feedback.isCorrect ? "🌟" : "❌"}
+            </div>
+            <h2 className="feedback-title">
+              {feedback.isCorrect ? "Correct" : "Wrong"}
+            </h2>
+            <p className="feedback-text">
+              {feedback.isCorrect
+                ? feedback.explanation
+                : `The correct answer was: ${feedback.correctAnswer}`}
+            </p>
+            <button onClick={handleNext} className="btn-next">
+              Next Question
+            </button>
+          </div>
+        ) : // 2. MASTERY MESSAGE */}
+        {/*
+        feedback && !feedback.isCorrect ? (
+          <div className="feedback-card error">
+             <div className="feedback-icon">❌</div>
+             <h2 className="feedback-title">Wrong</h2>
+             <p className="feedback-text">
+               {feedback.explanation || `Correct answer: ${feedback.correctAnswer}`}
+             </p>
+             <button onClick={handleNext} className="btn-next">Next</button>
+          </div>
+        ) : 
+         */}
         {isMastered ? (
           <div className="status-card master">
             You have mastered all available concepts!
@@ -116,9 +154,10 @@ const Home = () => {
           </div>
         ) : (
           // 5. QUESTION CARD
-          problem && (
+          problem &&
+          problem.question && (
             <QuestionCard
-              // key={problem._id}
+              key={problem.question.id}
               problem={problem}
               onSubmit={handleAnswerSubmit}
               disabled={isSubmitting}

@@ -33,7 +33,7 @@ const Leaderboard = () => {
     isLoading: isLeaderboardLoading,
     isError: isLeaderboardError,
     error: leaderboardError,
-  } = useGetLeaderboardQuery(20, { skip: !shouldFetchLeaderboard });
+  } = useGetLeaderboardQuery(50, { skip: !shouldFetchLeaderboard }); // show leaderboard for 50
 
   const toggleLeaderboard = async () => {
     if (!isTeacher || isToggling) return;

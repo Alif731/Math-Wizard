@@ -1,45 +1,29 @@
-import { useState, useEffect, useRef } from "react";
-import "../sass/components/questionCard.scss";
-// import DragDropQuestion from "./DragDropQuestion";
+import { useState, useEffect } from "react";
 import Confetti from "react-confetti";
-import MatchTheFollowing from "./MatchTheFollowing";
 
-import { PiArrowBendDoubleUpLeftBold } from "react-icons/pi";
+// Scss Components
+import "../sass/components/questionCard.scss";
+import "../sass/components/question_type/conceptualQuestion.scss";
+import "../sass/components/question_type/visualBarModel.scss";
+import "../sass/components/question_type/matchTheFollowing.scss";
+import "../sass/components/question_type/directInputQuestion.scss";
 
-// preload audio
+// Question Components
+// import DragDropQuestion from "./DragDropQuestion";
+import ConceptualQuestion from "./Question_Type/ConceptualQuestion";
+import VisualBarModel from "./Question_Type/VisualBarModel";
+import MatchTheFollowing from "./Question_Type/MatchTheFollowing";
+import DirectInputQuestion from "./Question_Type/DirectInputQuestion";
+
 const audioSuccess = new Audio("/success1.mp3");
 const audioFailure = new Audio("/failure.mp3");
 
 const QuestionCard = ({ problem, onSubmit, setStreak }) => {
-  // --- STREAK SYSTEM ---
-  // const [streak, setStreak] = useState(0);
-
-  // // Load the streak from browser memory when the component mounts
-  // useEffect(() => {
-  //   const savedStreak = sessionStorage.getItem("mathStreak");
-  //   if (savedStreak) setStreak(Number(savedStreak));
-  // }, []);
-
-  // // Helper function to update the streak
-  // const handleStreakUpdate = (isCorrect) => {
-  //   const newStreak = isCorrect ? streak + 1 : 0;
-  //   setStreak(newStreak);
-  //   sessionStorage.setItem("mathStreak", newStreak);
-  // };
-  // -----------------------------------------------------------
-  // Concatenate for foundational questions
-  const question = problem?.question;
-  let displayOperands = question?.operands || [];
-  const num1 = displayOperands[0];
-  const num2 = displayOperands[1];
-  const showFullEquation = num1 && num2;
-
   const [answer, setAnswer] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
   const [isError, setIsError] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
 
-  // Reset state when the problem changes
   useEffect(() => {
     setAnswer("");
     setIsSuccess(false);
@@ -48,20 +32,17 @@ const QuestionCard = ({ problem, onSubmit, setStreak }) => {
   }, [problem]);
 
   const playSuccessSound = () => {
-    audioSuccess.currentTime = 0; // Rewind to start (in case they click fast)
+    audioSuccess.currentTime = 0;
     audioSuccess.play().catch((e) => console.log("Audio blocked by browser"));
   };
 
   const playErrorSound = () => {
-    audioFailure.currentTime = 0; // Rewind to start (in case they click fast)
+    audioFailure.currentTime = 0;
     audioFailure.play().catch((e) => console.log("Audio blocked by browser"));
   };
 
-  // foundational
   const handleOptionClick = (option) => {
-    // Prevent clicking other buttons while animating
     if (isSuccess || isError) return;
-
     setSelectedOption(option);
 
     const rawCorrect = problem?.question?.correctAnswer || problem?.answer;
@@ -85,133 +66,72 @@ const QuestionCard = ({ problem, onSubmit, setStreak }) => {
     }
   };
 
-  // normal question
   const handleSubmit = (e) => {
     if (e && e.preventDefault) e.preventDefault();
-
-    // SAFETY: Check for empty input
     if (answer === "" || answer === null || answer === undefined) return;
 
-    // 2. SAFETY: Check if backend data exists (prevents crash)
     const rawCorrect = problem?.question?.correctAnswer;
     if (rawCorrect === undefined || rawCorrect === null) {
-      onSubmit(answer); // Submit blindly if data is missing
+      onSubmit(answer);
       return;
     }
 
-    // Convert both to Strings so "15" == 15
     const userAnswer = String(answer).trim();
     const dbAnswer = String(rawCorrect).trim();
     const isCorrect = userAnswer === dbAnswer;
 
-    // ANIMATION LOGIC
     const shouldAnimate =
       problem.question.type === "visual" ||
       problem.question.type === "icons_items" ||
       problem.question.type === "direct";
+
     if (shouldAnimate) {
       if (isCorrect) {
         setStreak((prev) => prev + 1); // 🔥 ADDED THIS
         playSuccessSound();
-        // SUCCESS ANIMATION
         setIsSuccess(true);
-        setTimeout(() => {
-          onSubmit(userAnswer);
-        }, 3000);
+        setTimeout(() => onSubmit(userAnswer), 3000);
       } else {
         setStreak(0); // 🔥 ADDED THIS
         playErrorSound();
-        // ERROR ANIMATION
         setIsError(true);
-        setTimeout(() => {
-          onSubmit(userAnswer);
-        }, 2600);
+        setTimeout(() => onSubmit(userAnswer), 2600);
       }
     } else {
-      // If it's a type without animation, still update the streak!
-      if (isCorrect) {
-        setStreak((prev) => prev + 1); // 🔥 ADDED THIS
-      } else {
-        setStreak(0); // 🔥 ADDED THIS
-      }
       onSubmit(userAnswer);
     }
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      handleSubmit(e);
+    if (e.key === "Enter") handleSubmit(e);
+  };
+
+  const handleMatchComplete = (isValid) => {
+    setAnswer("matched");
+    if (isValid) {
+      setStreak((prev) => prev + 1);
+      setIsSuccess(true);
+      playSuccessSound();
+      setTimeout(() => onSubmit("matched"), 2500);
+    } else {
+      setStreak(0);
+      setIsError(true);
+      playErrorSound();
+      setTimeout(() => onSubmit("wrong_answer"), 2600);
     }
   };
 
   if (!problem) return <div className="loading-state">Loading...</div>;
 
-  // Check if this is a "Multiple Choice" style question
   const questionType = problem.question.type;
-  const isConceptual = problem.question.type === "conceptual";
+  const isConceptual = questionType === "conceptual";
   const visualData = problem.question.visualData;
   const isIconsItems = questionType === "icons_items";
+  const isMatchTheFollowing =
+    isIconsItems &&
+    Array.isArray(visualData?.leftItems) &&
+    Array.isArray(visualData?.rightItems);
 
-  // Helper to determine bars container class based on state
-  const getInputClass = () => {
-    if (isSuccess) return "visual__input visual__input__success";
-    if (isError) return "visual__input visual__input__error";
-    return "visual__input";
-  };
-
-  // bar model dynamic answer width helper function
-  // Helper to dynamically scale the input width for Visual Bar Models
-  const getDynamicWidth = () => {
-    // 1. If not submitted yet, leave it at its default CSS width (return undefined)
-    if (!isSuccess && !isError) return undefined;
-
-    // 2. If correct, span the full 100% of the bar below it
-    if (isSuccess) return "100%";
-
-    // 3. If wrong, calculate how big their number is compared to the correct answer
-    const correctNum = Number(question?.correctAnswer);
-    const userNum = Number(answer);
-
-    if (!isNaN(correctNum) && !isNaN(userNum) && correctNum > 0) {
-      const percentage = (userNum / correctNum) * 100;
-      // Cap the width between 15% (so it doesn't shrink to nothing) and 100% (so it doesn't break the screen)
-      return `${Math.min(100, Math.max(15, percentage))}%`;
-    }
-
-    return "100%"; // Fallback
-  };
-
-  // Foundational Render
-  const conceptualButtons = [];
-  if (isConceptual && question?.options) {
-    for (let i = 0; i < question.options.length; i++) {
-      const option = question.options[i];
-      // Generate A, B, C, D dynamically based on loop index
-      const letter = String.fromCharCode(65 + i);
-
-      let btnClass = "card__options__btn";
-      if (selectedOption === option) {
-        if (isSuccess) btnClass += " card__options__btn__success";
-        if (isError) btnClass += " card__options__btn__error";
-      }
-
-      conceptualButtons.push(
-        <button
-          key={option}
-          className={btnClass}
-          onClick={() => handleOptionClick(option)}
-          disabled={isSuccess || isError}
-        >
-          <span className="sike">
-            <span className="sike__options">{letter}</span>
-            {showFullEquation ? `${num1} ${option} ${num2}` : option}
-          </span>
-        </button>,
-      );
-    }
-  }
-
-  // Fallback data for Match The Following if not in DB yet
   const matchLeft = visualData?.leftItems || [
     { id: "L1", content: "🐶🐶🐶 + 🐶🐶", matchId: "R1" },
     { id: "L2", content: "10 - 4", matchId: "R2" },
@@ -227,162 +147,58 @@ const QuestionCard = ({ problem, onSubmit, setStreak }) => {
     { id: "R5", content: "9" },
   ];
 
-  // Type 3 Play Sound and confetti
-  const timerRef = useRef(null);
-  const handleMatchComplete = (isValid) => {
-    // Fill the state so any empty-checks pass
-    setAnswer("matched");
-
-    if (isValid) {
-      setIsSuccess(true);
-      playSuccessSound();
-
-      // Confetti for 2.5s, then next question
-      setTimeout(() => {
-        onSubmit("matched");
-      }, 2500);
-    } else {
-      setIsError(true);
-      playErrorSound();
-
-      // Show red lines for 2.6s, then move to next question!
-      setTimeout(() => {
-        onSubmit("wrong_answer");
-      }, 2600);
-    }
-  };
-  const [showHint, setShowHint] = useState(false);
-
-  // 1. Check if they have seen the hint yet this session when the component loads
-  useEffect(() => {
-    if (problem?.question?.type === "visual") {
-      const hasSeenHint = sessionStorage.getItem("visualHintSeen");
-      if (!hasSeenHint) {
-        setShowHint(true); // Show it if they haven't seen it!
-      }
-    }
-  }, [problem]);
-
-  // 2. The moment they start typing, hide the hint and save it to session storage
-  useEffect(() => {
-    if (answer !== "" && showHint) {
-      setShowHint(false);
-      sessionStorage.setItem("visualHintSeen", "true"); // Locks it away for the rest of the session!
-    }
-  }, [answer, showHint]);
-
   return (
     <div>
       <div className="question__card">
-        {/* 🎉 CONFETTI EXPLOSION HERE */}
         {isSuccess && (
           <Confetti recycle={false} numberOfPieces={500} gravity={0.3} />
         )}
         <div className="question__text">
-          {" "}
           <span className="highlight3">Q,</span> {problem.question.text}
         </div>
-        {/* --- SECTION 3: Match The Following SECTION --- */}
-        {isIconsItems && problem.question.visualData && (
+
+        {isMatchTheFollowing && (
           <div className="icons-items__container">
             <MatchTheFollowing
               key={problem.question.id}
+              id={problem.question.id || problem.question._id}
               leftItems={matchLeft}
               rightItems={matchRight}
               onComplete={handleMatchComplete}
             />
           </div>
         )}
-        {/* ---------------------- SECTION 2: VISUAL BAR MODEL -------------------- */}
+
         {questionType === "visual" && visualData && (
-          <div className="visual__container">
-            {/* Top Bracket with INPUT instead of '?' */}
-            {visualData.showTotal && (
-              <div className="visual__bracket">
-                {showHint && !isSuccess && !isError && (
-                  // {!isSuccess && !isError && (
-                  <div className="visual__hint">
-                    <div className="visual__hint-text">Type here!</div>
-                    <div className="visual__hint-arrow">
-                      <PiArrowBendDoubleUpLeftBold />
-                    </div>
-                  </div>
-                )}
-                <input
-                  type="number"
-                  className={getInputClass()}
-                  value={answer}
-                  onChange={(e) =>
-                    !isSuccess && !isError && setAnswer(e.target.value)
-                  }
-                  onKeyDown={handleKeyDown}
-                  onBlur={handleSubmit}
-                  placeholder="?"
-                  autoComplete="off"
-                  readOnly={isSuccess || isError}
-                  // Dynamic Width Input
-                  style={{
-                    width: getDynamicWidth(),
-                  }}
-                />
-                <div className="visual__line">
-                  <span className="visual__line__span">|</span>
-                </div>
-              </div>
-            )}
-            {/* Bars */}
-            {/* <div className={`visual__bars ${isSuccess ? "visual__bars__success" : ""}`}> */}
-            <div className={`visual__bars`}>
-              {visualData.parts.map((part, index) => (
-                <div
-                  key={index}
-                  className="visual__segment"
-                  style={{
-                    backgroundColor: part.color,
-                    flex: part.value,
-                  }}
-                >
-                  <span className="visual__label">{part.label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+          <VisualBarModel
+            problem={problem}
+            answer={answer}
+            setAnswer={setAnswer}
+            isSuccess={isSuccess}
+            isError={isError}
+            handleKeyDown={handleKeyDown}
+            handleSubmit={handleSubmit}
+          />
         )}
-        {/* ---------------------- SECTION 1: Foundational MODEL -------------------- */}
+
         {isConceptual ? (
-          // 1. OPTION MODE (For Signs)
-          <div className="card__options">{conceptualButtons}</div>
+          <ConceptualQuestion
+            problem={problem}
+            selectedOption={selectedOption}
+            isSuccess={isSuccess}
+            isError={isError}
+            handleOptionClick={handleOptionClick}
+          />
         ) : (
-          // ---------------------- SECTION 4: Normal Questions--------------------
           <div>
             {!isConceptual && questionType !== "visual" && !isIconsItems && (
-              <form onSubmit={handleSubmit} className="answer__form">
-                <input
-                  type="number"
-                  value={answer}
-                  onChange={(e) => setAnswer(e.target.value)}
-                  placeholder="Type your answer here..."
-                  className={
-                    isSuccess
-                      ? "answer__input visual__input__success"
-                      : isError
-                        ? "answer__input visual__input__error"
-                        : "answer__input"
-                  }
-                  autoFocus
-                />
-                <button
-                  onClick={handleSubmit}
-                  className="submit__btn"
-                  disabled={isSuccess || isError}
-                >
-                  {isSuccess
-                    ? "Correct!"
-                    : isError
-                      ? "Wrong..."
-                      : "Submit Answer"}
-                </button>
-              </form>
+              <DirectInputQuestion
+                answer={answer}
+                setAnswer={setAnswer}
+                isSuccess={isSuccess}
+                isError={isError}
+                handleSubmit={handleSubmit}
+              />
             )}
           </div>
         )}
@@ -393,39 +209,441 @@ const QuestionCard = ({ problem, onSubmit, setStreak }) => {
 
 export default QuestionCard;
 
-//  {/* Loop through the groups (e.g., 4 Apples, then 3 Cars) */}
-//           {problem.question?.visualData.groups.map((group, index) => {
-//             // Find the correct icon component from our map
-//             const IconComponent = ICON_MAP[group.icon] || FaQuestionCircle;
+// import { useState, useEffect } from "react";
+// import "../sass/components/questionCard.scss";
+// // import DragDropQuestion from "./DragDropQuestion";
+// import Confetti from "react-confetti";
+// import MatchTheFollowing from "./Question_Type/MatchTheFollowing";
 
-//             return (
-//               <div key={index} className="icons-items__group-wrapper">
+// import { PiArrowBendDoubleUpLeftBold } from "react-icons/pi";
 
-//                 {/* The Grid of Icons dynamically */}
-//                 <div className="icons-items__grid">
-//                   {Array.from({ length: group.count }).map((_, i) => (
-//                     <span
-//                       key={i}
-//                       className="icons-items__icon"
-//                       style={{ animationDelay: `${i * 0.1}s` }}
-//                     >
-//                       <IconComponent />
-//                     </span>
-//                   ))}
-//                 </div>
+// // preload audio
+// const audioSuccess = new Audio("/success1.mp3");
+// const audioFailure = new Audio("/failure.mp3");
 
-//                 {/* Label under the icons (e.g. "4 Apples") */}
-//                 <span className="icons-items__label">{group.label}</span>
+// const QuestionCard = ({ problem, onSubmit, setStreak }) => {
+//   // Concatenate for foundational questions
+//   const question = problem?.question;
+//   let displayOperands = question?.operands || [];
+//   const num1 = displayOperands[0];
+//   const num2 = displayOperands[1];
+//   const showFullEquation = num1 && num2;
 
-//                 {/* Show Operator (like +) if it's not the last group */}
-//                 {index < problem.question.visualData.groups.length - 1 && (
-//                    <div className="icons-items__operator">
-//                      {problem.question.visualData.operator || "+"}
-//                    </div>
+//   const [answer, setAnswer] = useState("");
+//   const [isSuccess, setIsSuccess] = useState(false);
+//   const [isError, setIsError] = useState(false);
+//   const [selectedOption, setSelectedOption] = useState(null);
+
+//   // Reset state when the problem changes
+//   useEffect(() => {
+//     setAnswer("");
+//     setIsSuccess(false);
+//     setIsError(false);
+//     setSelectedOption(null);
+//   }, [problem]);
+
+//   const playSuccessSound = () => {
+//     audioSuccess.currentTime = 0; // Rewind to start (in case they click fast)
+//     audioSuccess.play().catch((e) => console.log("Audio blocked by browser"));
+//   };
+
+//   const playErrorSound = () => {
+//     audioFailure.currentTime = 0; // Rewind to start (in case they click fast)
+//     audioFailure.play().catch((e) => console.log("Audio blocked by browser"));
+//   };
+
+//   // foundational
+//   const handleOptionClick = (option) => {
+//     // Prevent clicking other buttons while animating
+//     if (isSuccess || isError) return;
+
+//     setSelectedOption(option);
+
+//     const rawCorrect = problem?.question?.correctAnswer || problem?.answer;
+//     if (rawCorrect === undefined || rawCorrect === null) {
+//       onSubmit(option);
+//       return;
+//     }
+
+//     const isCorrect = String(option).trim() === String(rawCorrect).trim();
+
+//     if (isCorrect) {
+//       setStreak((prev) => prev + 1);
+//       setIsSuccess(true);
+//       playSuccessSound();
+//       setTimeout(() => onSubmit(option), 3000);
+//     } else {
+//       setStreak(0);
+//       setIsError(true);
+//       playErrorSound();
+//       setTimeout(() => onSubmit(option), 2600);
+//     }
+//   };
+
+//   // normal question
+//   const handleSubmit = (e) => {
+//     if (e && e.preventDefault) e.preventDefault();
+
+//     // SAFETY: Check for empty input
+//     if (answer === "" || answer === null || answer === undefined) return;
+
+//     // 2. SAFETY: Check if backend data exists (prevents crash)
+//     const rawCorrect = problem?.question?.correctAnswer;
+//     if (rawCorrect === undefined || rawCorrect === null) {
+//       onSubmit(answer); // Submit blindly if data is missing
+//       return;
+//     }
+
+//     // Convert both to Strings so "15" == 15
+//     const userAnswer = String(answer).trim();
+//     const dbAnswer = String(rawCorrect).trim();
+//     const isCorrect = userAnswer === dbAnswer;
+
+//     // ANIMATION LOGIC
+//     const shouldAnimate =
+//       problem.question.type === "visual" ||
+//       problem.question.type === "icons_items" ||
+//       problem.question.type === "direct";
+//     if (shouldAnimate) {
+//       if (isCorrect) {
+//         playSuccessSound();
+//         // SUCCESS ANIMATION
+//         setIsSuccess(true);
+//         setTimeout(() => {
+//           onSubmit(userAnswer);
+//         }, 3000);
+//       } else {
+//         playErrorSound();
+//         // ERROR ANIMATION
+//         setIsError(true);
+//         setTimeout(() => {
+//           onSubmit(userAnswer);
+//         }, 2600);
+//       }
+//     } else {
+//       // If not visual, submit immediately without animation
+//       onSubmit(userAnswer);
+//     }
+//   };
+
+//   const handleKeyDown = (e) => {
+//     if (e.key === "Enter") {
+//       handleSubmit(e);
+//     }
+//   };
+
+//   if (!problem) return <div className="loading-state">Loading...</div>;
+
+//   // Check if this is a "Multiple Choice" style question
+//   const questionType = problem.question.type;
+//   const isConceptual = problem.question.type === "conceptual";
+//   const visualData = problem.question.visualData;
+//   const isIconsItems = questionType === "icons_items";
+//   const isMatchTheFollowing =
+//     isIconsItems &&
+//     Array.isArray(visualData?.leftItems) &&
+//     Array.isArray(visualData?.rightItems);
+//   const isIconDragDrop =
+//     isIconsItems &&
+//     Array.isArray(visualData?.groups) &&
+//     Array.isArray(visualData?.dragOptions);
+
+//   // Helper to determine bars container class based on state
+//   const getInputClass = () => {
+//     if (isSuccess) return "visual__input visual__input__success";
+//     if (isError) return "visual__input visual__input__error";
+//     return "visual__input";
+//   };
+
+//   // bar model dynamic answer width helper function
+//   // Helper to dynamically scale the input width for Visual Bar Models
+//   const getDynamicWidth = () => {
+//     // 1. If not submitted yet, leave it at its default CSS width (return undefined)
+//     if (!isSuccess && !isError) return undefined;
+
+//     // 2. If correct, span the full 100% of the bar below it
+//     if (isSuccess) return "100%";
+
+//     // 3. If wrong, calculate how big their number is compared to the correct answer
+//     const correctNum = Number(question?.correctAnswer);
+//     const userNum = Number(answer);
+
+//     if (!isNaN(correctNum) && !isNaN(userNum) && correctNum > 0) {
+//       const percentage = (userNum / correctNum) * 100;
+//       // Cap the width between 15% (so it doesn't shrink to nothing) and 100% (so it doesn't break the screen)
+//       return `${Math.min(100, Math.max(15, percentage))}%`;
+//     }
+
+//     return "100%"; // Fallback
+//   };
+
+//   // Foundational Render
+//   const conceptualButtons = [];
+//   if (isConceptual && question?.options) {
+//     for (let i = 0; i < question.options.length; i++) {
+//       const option = question.options[i];
+//       // Generate A, B, C, D dynamically based on loop index
+//       const letter = String.fromCharCode(65 + i);
+
+//       let btnClass = "card__options__btn";
+//       if (selectedOption === option) {
+//         if (isSuccess) btnClass += " card__options__btn__success";
+//         if (isError) btnClass += " card__options__btn__error";
+//       }
+
+//       conceptualButtons.push(
+//         <button
+//           key={option}
+//           className={btnClass}
+//           onClick={() => handleOptionClick(option)}
+//           disabled={isSuccess || isError}
+//         >
+//           <span className="sike">
+//             <span className="sike__options">{letter}</span>
+//             {showFullEquation ? `${num1} ${option} ${num2}` : option}
+//           </span>
+//         </button>,
+//       );
+//     }
+//   }
+
+//   // Fallback data for Match The Following if not in DB yet
+//   const matchLeft = visualData?.leftItems || [
+//     { id: "L1", content: "🐶🐶🐶 + 🐶🐶", matchId: "R1" },
+//     { id: "L2", content: "10 - 4", matchId: "R2" },
+//     { id: "L3", content: "⭐⭐ × ⭐⭐", matchId: "R3" },
+//     { id: "L4", content: "8 ÷ 2", matchId: "R4" },
+//   ];
+
+//   const matchRight = visualData?.rightItems || [
+//     { id: "R4", content: "4" },
+//     { id: "R1", content: "5" },
+//     { id: "R3", content: "4 Stars" },
+//     { id: "R2", content: "6" },
+//     { id: "R5", content: "9" },
+//   ];
+
+//   // Match-the-following flow
+//   const handleMatchComplete = (isValid) => {
+//     // Fill the state so any empty-checks pass
+//     setAnswer("matched");
+
+//     if (isValid) {
+//       setStreak((prev) => prev + 1);
+//       setIsSuccess(true);
+//       playSuccessSound();
+
+//       // Confetti for 2.5s, then next question
+//       setTimeout(() => {
+//         onSubmit("matched");
+//       }, 2500);
+//     } else {
+//       setStreak(0);
+//       setIsError(true);
+//       playErrorSound();
+
+//       // Show red lines for 2.6s, then move to next question!
+//       setTimeout(() => {
+//         onSubmit("wrong_answer");
+//       }, 2600);
+//     }
+//   };
+
+//   // Legacy icon drag-drop flow
+//   const handleDragDropCorrect = (value) => {
+//     setStreak((prev) => prev + 1);
+//     setIsSuccess(true);
+//     playSuccessSound();
+//     setTimeout(() => {
+//       onSubmit(value);
+//     }, 3000);
+//   };
+
+//   const handleDragDropWrong = (value) => {
+//     setStreak(0);
+//     setIsError(true);
+//     playErrorSound();
+//     setTimeout(() => {
+//       onSubmit(value);
+//     }, 2600);
+//   };
+
+//   // const [showHint, setShowHint] = useState(false);
+
+//   // // 1. Check if they have seen the hint yet this session when the component loads
+//   // useEffect(() => {
+//   //   if (problem?.question?.type === "visual") {
+//   //     const hasSeenHint = sessionStorage.getItem("visualHintSeen");
+//   //     if (!hasSeenHint) {
+//   //       setShowHint(true); // Show it if they haven't seen it!
+//   //     }
+//   //   }
+//   // }, [problem]);
+
+//   // // 2. The moment they start typing, hide the hint and save it to session storage
+//   // useEffect(() => {
+//   //   if (answer !== "" && showHint) {
+//   //     setShowHint(false);
+//   //     sessionStorage.setItem("visualHintSeen", "true"); // Locks it away for the rest of the session!
+//   //   }
+//   // }, [answer, showHint]);
+//   const [showHint, setShowHint] = useState(false);
+
+//   useEffect(() => {
+//     if (problem?.question?.type === "visual") {
+//       let hintCount = 0;
+//       const savedCount = sessionStorage.getItem("visualHintCount");
+//       const lastSeenId = sessionStorage.getItem("lastHintProblemId"); // Tracks the specific question
+
+//       if (savedCount) {
+//         hintCount = parseInt(savedCount, 10);
+//       }
+
+//       // Safely grab the ID of the current problem
+//       const currentProblemId = problem?.question?.id || problem?.question?._id;
+
+//       if (hintCount < 2) {
+//         setShowHint(true);
+
+//         // Prevent React Strict Mode from double-counting the exact same question
+//         if (lastSeenId !== String(currentProblemId)) {
+//           sessionStorage.setItem("visualHintCount", String(hintCount + 1));
+//           sessionStorage.setItem("lastHintProblemId", String(currentProblemId));
+//         }
+//       }
+//     }
+//   }, [problem]);
+
+//   return (
+//     <div>
+//       <div className="question__card">
+//         {/* 🎉 CONFETTI EXPLOSION HERE */}
+//         {isSuccess && (
+//           <Confetti recycle={false} numberOfPieces={500} gravity={0.3} />
+//         )}
+//         <div className="question__text">
+//           {" "}
+//           <span className="highlight3">Q,</span> {problem.question.text}
+//         </div>
+//         {/* --- SECTION 3: Match The Following SECTION --- */}
+//         {isMatchTheFollowing && (
+//           <div className="icons-items__container">
+//             <MatchTheFollowing
+//               key={problem.question.id}
+//               id={problem.question.id || problem.question._id}
+//               leftItems={matchLeft}
+//               rightItems={matchRight}
+//               onComplete={handleMatchComplete}
+//             />
+//           </div>
+//         )}
+//         {/* {isIconDragDrop && (
+//           <div className="icons-items__container">
+//             <DragDropQuestion
+//               options={visualData.dragOptions}
+//               correctAnswer={question.correctAnswer}
+//               iconName={visualData.groups?.[0]?.icon || "apple"}
+//               onCorrect={handleDragDropCorrect}
+//               onWrong={handleDragDropWrong}
+//             />
+//           </div>
+//         )} */}
+//         {/* ---------------------- SECTION 2: VISUAL BAR MODEL -------------------- */}
+//         {questionType === "visual" && visualData && (
+//           <div className="visual__container">
+//             {/* Top Bracket with INPUT instead of '?' */}
+//             {visualData.showTotal && (
+//               <div className="visual__bracket">
+//                 {showHint && !isSuccess && !isError && (
+//                   // {!isSuccess && !isError && (
+//                   <div className="visual__hint">
+//                     <div className="visual__hint-text">Type here!</div>
+//                     <div className="visual__hint-arrow">
+//                       <PiArrowBendDoubleUpLeftBold />
+//                     </div>
+//                   </div>
 //                 )}
+//                 <input
+//                   type="number"
+//                   className={getInputClass()}
+//                   value={answer}
+//                   onChange={(e) =>
+//                     !isSuccess && !isError && setAnswer(e.target.value)
+//                   }
+//                   onKeyDown={handleKeyDown}
+//                   onBlur={handleSubmit}
+//                   placeholder="?"
+//                   autoComplete="off"
+//                   readOnly={isSuccess || isError}
+//                   // Dynamic Width Input
+//                   style={{
+//                     width: getDynamicWidth(),
+//                   }}
+//                 />
+//                 <div className="visual__line">
+//                   <span className="visual__line__span">|</span>
+//                 </div>
 //               </div>
-//             );
-//           })}
+//             )}
+//             {/* Bars */}
+//             {/* <div className={`visual__bars ${isSuccess ? "visual__bars__success" : ""}`}> */}
+//             <div className={`visual__bars`}>
+//               {visualData.parts.map((part, index) => (
+//                 <div
+//                   key={index}
+//                   className="visual__segment"
+//                   style={{
+//                     backgroundColor: part.color,
+//                     flex: part.value,
+//                   }}
+//                 >
+//                   <span className="visual__label">{part.label}</span>
+//                 </div>
+//               ))}
+//             </div>
+//           </div>
+//         )}
+//         {/* ---------------------- SECTION 1: Foundational MODEL -------------------- */}
+//         {isConceptual ? (
+//           // 1. OPTION MODE (For Signs)
+//           <div className="card__options">{conceptualButtons}</div>
+//         ) : (
+//           // ---------------------- SECTION 4: Normal Questions--------------------
+//           <div>
+//             {!isConceptual && questionType !== "visual" && !isIconsItems && (
+//               <form onSubmit={handleSubmit} className="answer__form">
+//                 <input
+//                   type="number"
+//                   value={answer}
+//                   onChange={(e) => setAnswer(e.target.value)}
+//                   placeholder="Type your answer here..."
+//                   className={
+//                     isSuccess
+//                       ? "answer__input visual__input__success"
+//                       : isError
+//                         ? "answer__input visual__input__error"
+//                         : "answer__input"
+//                   }
+//                   autoFocus
+//                 />
+//                 <button
+//                   onClick={handleSubmit}
+//                   className="submit__btn"
+//                   disabled={isSuccess || isError}
+//                 >
+//                   {isSuccess
+//                     ? "Correct!"
+//                     : isError
+//                       ? "Wrong..."
+//                       : "Submit Answer"}
+//                 </button>
+//               </form>
+//             )}
+//           </div>
+//         )}
+//       </div>
+//     </div>
+//   );
+// };
 
-//           {/* Equals Sign */}
-//           <div className="icons-items__operator">=</div>
+// export default QuestionCard;

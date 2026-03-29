@@ -249,6 +249,9 @@
 
 .teacher-dashboard__tableWrapper {
   overflow-x: auto;
+  // scrollable table
+  max-height: 400px;
+  overflow-y: auto;
 }
 
 .teacher-dashboard__table {
@@ -310,7 +313,9 @@
     flex-direction: column;
   }
 }
-
+.empty-message {
+  text-align: center;
+}
 .dashboard-tabs {
   display: flex; // Keeps the tabs tightly grouped rather than stretching
   background: #ffffff;

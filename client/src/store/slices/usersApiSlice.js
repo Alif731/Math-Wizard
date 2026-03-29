@@ -10,6 +10,8 @@ export const usersApiSlice = apiSlice.injectEndpoints({
         method: "POST",
         body: data,
       }),
+      // When we login, refresh the profile and activity immediately
+      invalidatesTags: ["User", "Activity"],
     }),
     register: builder.mutation({
       query: (data) => ({
@@ -17,25 +19,22 @@ export const usersApiSlice = apiSlice.injectEndpoints({
         method: "POST",
         body: data,
       }),
+      invalidatesTags: ["User"],
     }),
     logout: builder.mutation({
       query: () => ({
         url: `${USERS_URL}/logout`,
         method: "POST",
       }),
+      // Clear the cache on logout so the next user doesn't see old data
+      invalidatesTags: ["User", "Activity"],
     }),
     getUserProfile: builder.query({
       query: () => ({
         url: `${USERS_URL}/profile`,
         method: "GET",
       }),
-      providesTags: ["User"],
-    }),
-    getOAuthProviders: builder.query({
-      query: () => ({
-        url: `${USERS_URL}/oauth/providers`,
-        method: "GET",
-      }),
+      providesTags: ["User"], // This query "subscribes" to the User tag
     }),
     updateUser: builder.mutation({
       query: (data) => ({
@@ -43,14 +42,22 @@ export const usersApiSlice = apiSlice.injectEndpoints({
         method: "PUT",
         body: data,
       }),
-      invalidatesTags: ["User", "Activity"], // Added 'Activity' here
+      // This is the "Magic" line: it tells RTK to re-fetch
+      // any query currently using these tags.
+      invalidatesTags: ["User", "Activity"],
     }),
     getRecentActivity: builder.query({
       query: () => ({
         url: `${USERS_URL}/recent-activity`,
         method: "GET",
       }),
-      providesTags: ["Activity"], // Added this line
+      providesTags: ["Activity"], // Subscribes to Activity tag
+    }),
+    getOAuthProviders: builder.query({
+      query: () => ({
+        url: `${USERS_URL}/oauth/providers`,
+        method: "GET",
+      }),
     }),
   }),
 });

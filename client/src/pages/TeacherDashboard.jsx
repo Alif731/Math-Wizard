@@ -46,15 +46,19 @@ const TeacherDashboard = () => {
     isLoading: isStatusLoading,
     isError: isStatusError,
     error: statusError,
-  } = useGetLeaderboardStatusQuery();
+  } = useGetLeaderboardStatusQuery(undefined, {
+    pollingInterval: 3000,
+  });
 
   // 4. Mutation - Toggle Leaderboard
   const [updateLeaderboardStatus, { isLoading: isToggling }] =
     useUpdateLeaderboardStatusMutation();
 
-  // 5. Data Fetching - Top 5 for Preview (Skips if status is loading)
   const { data: leaderboardData, isLoading: isLeaderboardLoading } =
-    useGetLeaderboardQuery(5, { skip: !statusData });
+    useGetLeaderboardQuery(5, {
+      skip: !statusData,
+      pollingInterval: 3000, // live refresh
+    });
 
   // --- Logic & Calculations ---
   const isEnabled = Boolean(statusData?.enabled);
@@ -196,7 +200,7 @@ const TeacherDashboard = () => {
           <section className="teacher-dashboard__panel">
             <div className="teacher-dashboard__panelHeader">
               <h2>
-                <Trophy size={20} /> Top Rankings
+                <Trophy size={20} /> Top Five Rankings
               </h2>
             </div>
             <div className="teacher-dashboard__tableWrapper">

@@ -402,11 +402,9 @@ const updateUserProfile = async (req, res) => {
   if (nextPassword) {
     if (user.password) {
       if (!currentPassword) {
-        res
-          .status(400)
-          .json({
-            message: "Please provide your current password to change it",
-          });
+        res.status(400).json({
+          message: "Please provide your current password to change it",
+        });
         return;
       }
 
@@ -424,24 +422,40 @@ const updateUserProfile = async (req, res) => {
   res.json(buildUserResponse(updatedUser));
 };
 
-// @desc    Get user recent activity
+// @desc    Get user recent activity (or all activity if teacher)
 // @route   GET /api/users/recent-activity
 // @access  Private
 const getUserRecentActivity = async (req, res) => {
-  let query = { user: req.user._id };
-
-  // If the logged-in user is a teacher, remove the filter so they see everyone's work
-  if (req.user.role === "teacher") {
-    query = {};
-  }
+  // 1. Logic: If teacher, find ALL student attempts. If student, find ONLY theirs.
+  const query = req.user.role === "teacher" ? {} : { user: req.user._id };
 
   const attempts = await Attempt.find(query)
-    .populate("user", "username") // CRITICAL: This pulls the student's name into the object
+    // 2. This part is CRITICAL: It reaches into the User collection
+    // to grab the student's name and avatar so the teacher knows who solved it.
+    .populate("user", "username avatar")
     .sort({ timestamp: -1 })
-    .limit(req.user.role === "teacher" ? 20 : 5); // Teachers get a longer list
+    .limit(req.user.role === "teacher" ? 50 : 5);
 
   res.json(attempts);
 };
+
+// // @desc    Get all student activity for Teacher Feed
+// // @route   GET /api/users/all-activity
+// // @access  Private/Teacher
+// const getAllRecentActivity = async (req, res) => {
+//   // 1. Check if the person asking is actually a teacher
+//   if (req.user && req.user.role === "teacher") {
+//     const attempts = await Attempt.find({}) // {} means "find everything"
+//       .populate("user", "username avatar") // This grabs the student's name/avatar too!
+//       .sort({ timestamp: -1 })
+//       .limit(10); // Teachers usually want a longer list (10 items)
+
+//     res.json(attempts);
+//   } else {
+//     res.status(403).json({ message: "Not authorized as a teacher" });
+//   }
+// };
+
 module.exports = {
   authUser,
   registerUser,
