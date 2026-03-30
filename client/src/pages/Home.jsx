@@ -1,4 +1,3 @@
-// Big O Analysis: O(1) - Rendering logic is constant time relative to data size.
 import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import {

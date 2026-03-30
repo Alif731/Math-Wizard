@@ -1,11 +1,14 @@
 import { useMemo } from "react";
 import { useSelector } from "react-redux";
 import { Crown, Settings, Eye, EyeOff, Medal } from "lucide-react";
+import UserAvatar from "../components/UserAvatar";
+
 import {
   useGetLeaderboardStatusQuery,
   useGetLeaderboardQuery,
   useUpdateLeaderboardStatusMutation,
 } from "../store/slices/leaderboardApiSlice";
+
 import "../sass/page/leaderboardPage.scss";
 
 const Leaderboard = () => {
@@ -128,19 +131,23 @@ const Leaderboard = () => {
                         >
                           <td className="rank-cell">
                             {entry.rank === 1 && (
-                              <Medal size={18} color="#fbbf24" />
+                              <Medal size={35} color="#fbbf24" />
                             )}
                             {entry.rank === 2 && (
-                              <Medal size={18} color="#94a3b8" />
+                              <Medal size={35} color="#94a3b8" />
                             )}
                             {entry.rank === 3 && (
-                              <Medal size={18} color="#f16e09" />
+                              <Medal size={35} color="#f16e09" />
                             )}
                             {entry.rank > 3 && `#${entry.rank}`}
                           </td>
                           <td className="student-cell">
                             <span className="avatar">
-                              {entry.avatar || "🐱"}
+                              <UserAvatar
+                                name={entry.avatarSeed}
+                                variant={entry.avatar}
+                                size={32}
+                              />
                             </span>
                             <span className="student-name">
                               {entry.username}

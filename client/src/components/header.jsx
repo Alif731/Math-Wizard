@@ -7,6 +7,7 @@ import { logout } from "../store/slices/authSlice";
 import { apiSlice } from "../store/slices/apiSlice";
 import getDefaultRouteForRole from "../utils/getDefaultRouteForRole";
 import "../sass/components/header.scss";
+import UserAvatar from "./UserAvatar";
 
 export default function Header() {
   const [isNavExpanded, setIsNavExpanded] = useState(true);
@@ -131,7 +132,11 @@ export default function Header() {
               ref={dropdownRef}
             >
               <div className="avatar-trigger" onClick={toggleDropdown}>
-                <span className="header-avatar">{userInfo.avatar || "🐱"}</span>
+                <UserAvatar
+                  name={userInfo.avatarSeed}
+                  variant={userInfo.avatar}
+                  size={50}
+                />
               </div>
 
               {showDropdown && (

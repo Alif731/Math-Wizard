@@ -15,6 +15,7 @@ import {
   Award, // For Leaderboard status
   SlidersHorizontal, // For Controls
 } from "lucide-react";
+import UserAvatar from "../components/UserAvatar";
 
 // API Slices
 import {
@@ -92,7 +93,6 @@ const TeacherDashboard = () => {
       );
     }
   };
-
   return (
     <div className="teacher-dashboard">
       <header className="teacher-dashboard__hero">
@@ -100,7 +100,11 @@ const TeacherDashboard = () => {
           <span className="highlight1">T</span>eacher{" "}
           <span className="highlight2">P</span>rofile: {displayUsername}
           <span className="avatar-preview" style={{ marginLeft: "10px" }}>
-            {userInfo?.avatar}
+            <UserAvatar
+              name={userInfo?.avatarSeed}
+              variant={userInfo?.avatar}
+              size={35}
+            />
           </span>
         </div>
         <Link to="/leaderboard" className="teacher-dashboard__secondaryAction">
@@ -219,9 +223,20 @@ const TeacherDashboard = () => {
                     <tr key={entry.userId}>
                       <td>#{entry.rank}</td>
                       <td className="teacher-dashboard__studentCell">
-                        <span className="teacher-dashboard__avatar">
-                          {entry.avatar || "🐱"}
-                        </span>
+                        <div
+                          className="teacher-dashboard__avatar-container"
+                          style={{
+                            marginRight: "12px",
+                            display: "inline-block",
+                            verticalAlign: "middle",
+                          }}
+                        >
+                          <UserAvatar
+                            name={entry.avatarSeed}
+                            variant={entry.avatar}
+                            size={32}
+                          />
+                        </div>
                         <span>{entry.username}</span>
                       </td>
                       <td>{entry.correctAttempts}</td>

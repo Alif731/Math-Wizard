@@ -13,7 +13,7 @@ const {
 const DEFAULT_ROLE = "student";
 const VALID_ROLES = ["student", "teacher"];
 const DEFAULT_ZPD_NODES = ["foundation_signs"];
-const DEFAULT_AVATAR = "🐱";
+const DEFAULT_AVATAR = "beam";
 const GOOGLE_STATE_COOKIE = "google_oauth_state";
 
 const buildUserResponse = (user) => ({
@@ -22,6 +22,7 @@ const buildUserResponse = (user) => ({
   role: user.role,
   zpdNodes: user.zpdNodes,
   avatar: user.avatar,
+  avatarSeed: user.avatarSeed,
   authProvider: user.authProvider,
   email: user.email || null,
   hasPassword: Boolean(user.password),
@@ -219,7 +220,7 @@ const registerUser = async (req, res) => {
     authProvider: "local",
     mastery: {},
     zpdNodes: isTeacherRegistration ? [] : DEFAULT_ZPD_NODES,
-    avatar: isTeacherRegistration ? "🧑‍🏫" : DEFAULT_AVATAR,
+    avatar: DEFAULT_AVATAR,
   });
 
   generateToken(res, user._id);
@@ -368,6 +369,62 @@ const getUserProfile = async (req, res) => {
 // @desc    Update user profile
 // @route   PUT /api/users/profile
 // @access  Private
+// const updateUserProfile = async (req, res) => {
+//   const user = await User.findById(req.user._id);
+
+//   if (!user) {
+//     res.status(404).json({ message: "User not found" });
+//     return;
+//   }
+
+//   const requestedUsername = String(req.body?.username || "").trim();
+//   const nextPassword = String(req.body?.password || "");
+//   const currentPassword = String(req.body?.currentPassword || "");
+//   const requestedAvatar = String(req.body?.avatar || "").trim();
+
+//   if (requestedUsername && requestedUsername !== user.username) {
+//     const existingUser = await User.findOne({
+//       username: requestedUsername,
+//       _id: { $ne: user._id },
+//     }).select("_id");
+
+//     if (existingUser) {
+//       res.status(400).json({ message: "Username is already taken" });
+//       return;
+//     }
+
+//     user.username = requestedUsername;
+//   }
+
+//   if (requestedAvatar) {
+//     user.avatar = requestedAvatar;
+//   }
+
+//   if (nextPassword) {
+//     if (user.password) {
+//       if (!currentPassword) {
+//         res.status(400).json({
+//           message: "Please provide your current password to change it",
+//         });
+//         return;
+//       }
+
+//       const isMatch = await user.matchPassword(currentPassword);
+//       if (!isMatch) {
+//         res.status(401).json({ message: "Invalid current password" });
+//         return;
+//       }
+//     }
+
+//     user.password = nextPassword;
+//   }
+
+//   const updatedUser = await user.save();
+//   res.json(buildUserResponse(updatedUser));
+// };
+// @desc    Update user profile
+// @route   PUT /api/users/profile
+// @access  Private
 const updateUserProfile = async (req, res) => {
   const user = await User.findById(req.user._id);
 
@@ -380,6 +437,7 @@ const updateUserProfile = async (req, res) => {
   const nextPassword = String(req.body?.password || "");
   const currentPassword = String(req.body?.currentPassword || "");
   const requestedAvatar = String(req.body?.avatar || "").trim();
+  const requestedAvatarSeed = String(req.body?.avatarSeed || "").trim(); // 1. Avatar don't change for existing user
 
   if (requestedUsername && requestedUsername !== user.username) {
     const existingUser = await User.findOne({
@@ -395,8 +453,14 @@ const updateUserProfile = async (req, res) => {
     user.username = requestedUsername;
   }
 
+  // Update the Style (beam, pixel, etc.)
   if (requestedAvatar) {
     user.avatar = requestedAvatar;
+  }
+
+  // 2. Update the Seed (the actual face pattern)
+  if (requestedAvatarSeed) {
+    user.avatarSeed = requestedAvatarSeed;
   }
 
   if (nextPassword) {
@@ -419,6 +483,7 @@ const updateUserProfile = async (req, res) => {
   }
 
   const updatedUser = await user.save();
+  // 3. buildUserResponse will now include the seed in the return JSON
   res.json(buildUserResponse(updatedUser));
 };
 
@@ -432,29 +497,12 @@ const getUserRecentActivity = async (req, res) => {
   const attempts = await Attempt.find(query)
     // 2. This part is CRITICAL: It reaches into the User collection
     // to grab the student's name and avatar so the teacher knows who solved it.
-    .populate("user", "username avatar")
+    .populate("user", "username avatar avatarSeed")
     .sort({ timestamp: -1 })
     .limit(req.user.role === "teacher" ? 50 : 5);
 
   res.json(attempts);
 };
-
-// // @desc    Get all student activity for Teacher Feed
-// // @route   GET /api/users/all-activity
-// // @access  Private/Teacher
-// const getAllRecentActivity = async (req, res) => {
-//   // 1. Check if the person asking is actually a teacher
-//   if (req.user && req.user.role === "teacher") {
-//     const attempts = await Attempt.find({}) // {} means "find everything"
-//       .populate("user", "username avatar") // This grabs the student's name/avatar too!
-//       .sort({ timestamp: -1 })
-//       .limit(10); // Teachers usually want a longer list (10 items)
-
-//     res.json(attempts);
-//   } else {
-//     res.status(403).json({ message: "Not authorized as a teacher" });
-//   }
-// };
 
 module.exports = {
   authUser,

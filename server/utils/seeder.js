@@ -1460,7 +1460,7 @@ const seedData = async () => {
       role: "teacher",
       mastery: {},
       zpdNodes: [],
-      avatar: "🧑‍🏫",
+      avatar: "beam",
     });
 
     await teacherUser.save();

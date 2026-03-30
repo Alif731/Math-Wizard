@@ -114,6 +114,7 @@ const getLeaderboard = async (req, res) => {
         userId: "$user._id",
         username: "$user.username",
         avatar: "$user.avatar",
+        avatarSeed: "$user.avatarSeed",
         correctAttempts: 1,
         totalAttempts: 1,
         accuracy: 1,
