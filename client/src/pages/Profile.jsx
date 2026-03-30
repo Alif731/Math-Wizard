@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 import "../sass/page/profilePage.scss";
 import { CheckCircle2, XCircle, Activity, BarChart3 } from "lucide-react";
 import UserAvatar, { AVATAR_VARIANTS } from "../components/UserAvatar";
+import { toast } from "react-toastify";
 
 export default function Profile() {
   const [username, setUsername] = useState("");
@@ -58,6 +59,7 @@ export default function Profile() {
       dispatch(setCredentials({ ...res }));
       setMessage("Profile updated successfully!");
       setTimeout(() => setMessage(null), 3000);
+      toast.success(`Profile updated successfully!`);
     } catch (err) {
       setMessage(err?.data?.message || err.error);
     }

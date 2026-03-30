@@ -62,3 +62,27 @@ input::-webkit-inner-spin-button {
 input[type="number"] {
   -moz-appearance: textfield;
 }
+/* --- Custom Toast Styling --- */
+:root {
+  --toastify-color-success: #4ade80; /* Bright Emerald Green */
+  --toastify-color-error: #ff5c5c; /* Soft Neon Red */
+  --toastify-color-warning: #f1bd68; /* The Orange from your Match game */
+  --toastify-font-family: "Inter", sans-serif;
+  --toastify-toast-bd-radius: 16px; /* Match your UI's roundness */
+}
+
+.Toastify__toast {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.Toastify__toast-body {
+  padding: 12px;
+}
+
+/* Make the progress bar a bit thinner and sleeker */
+.Toastify__progress-bar {
+  height: 4px;
+  filter: brightness(1.2);
+}

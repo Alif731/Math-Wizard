@@ -9,7 +9,10 @@ import {
 import { apiSlice } from "../store/slices/apiSlice";
 import getDefaultRouteForRole from "../utils/getDefaultRouteForRole";
 import PasswordField from "../components/PasswordField";
+
 import "../sass/page/loginPage.scss";
+
+import { toast } from "react-toastify";
 
 const TeacherAuth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -46,6 +49,8 @@ const TeacherAuth = () => {
   const completeLogin = (payload) => {
     dispatch(apiSlice.util.resetApiState());
     dispatch(setCredentials({ ...payload }));
+
+    toast.success(`Welcome to the Dashboard, ${payload.username}!`);
     navigate(getDefaultRouteForRole(payload?.role), { replace: true });
   };
 
@@ -91,6 +96,7 @@ const TeacherAuth = () => {
         teacherCode,
       }).unwrap();
       completeLogin(res);
+      toast.success("Teacher account created!");
     } catch (err) {
       setError(err?.data?.message || err.error || "Teacher sign up failed");
     }

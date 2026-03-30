@@ -1539,6 +1539,8 @@ const seedData = async () => {
     await TeacherSignupCode.deleteMany({});
     console.log("Database Wiped Clean");
 
+    await ensureTeacherSignupCode();
+
     await Concept.insertMany(conceptsData);
     console.log("Concepts Seeded");
 
@@ -1564,7 +1566,6 @@ const seedData = async () => {
         // foundation_signs: {
         //   status: "unlocked",
         //   successCount: 0,
-        //   streak: 0,
         //   attemptCount: 0,
         //   lastAttempts: [],
         // },
@@ -1572,7 +1573,6 @@ const seedData = async () => {
         visual_addition: {
           status: "unlocked",
           successCount: 0,
-          streak: 0,
           attemptCount: 0,
           lastAttempts: [],
         },
@@ -1580,7 +1580,6 @@ const seedData = async () => {
         // visual_icons: {
         //   status: "unlocked",
         //   successCount: 0,
-        //   streak: 0,
         //   attemptCount: 0,
         //   lastAttempts: [],
         // },
@@ -1588,7 +1587,6 @@ const seedData = async () => {
         // add_single: {
         //   status: "unlocked",
         //   successCount: 0,
-        //   streak: 0,
         //   attemptCount: 0,
         //   lastAttempts: [],
         // },
@@ -1613,8 +1611,6 @@ const seedData = async () => {
 
     await teacherUser.save();
     console.log("Teacher User Seeded Successfully");
-
-    // await ensureTeacherSignupCode();
   } catch (error) {
     console.error("Seeding Error:", error);
   }

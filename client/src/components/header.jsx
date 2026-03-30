@@ -8,6 +8,7 @@ import { apiSlice } from "../store/slices/apiSlice";
 import getDefaultRouteForRole from "../utils/getDefaultRouteForRole";
 import "../sass/components/header.scss";
 import UserAvatar from "./UserAvatar";
+import { toast } from "react-toastify";
 
 export default function Header() {
   const [isNavExpanded, setIsNavExpanded] = useState(true);
@@ -52,6 +53,7 @@ export default function Header() {
       dispatch(logout());
       dispatch(apiSlice.util.resetApiState());
       navigate("/");
+      toast.success("Logged out successfully.");
     } catch (err) {
       console.error(err);
     }

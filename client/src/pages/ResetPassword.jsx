@@ -3,6 +3,11 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { setCredentials } from "../store/slices/authSlice";
 import { useUpdateUserMutation } from "../store/slices/usersApiSlice";
+
+import PasswordField from "../components/PasswordField";
+import { toast } from "react-toastify";
+import { ArrowLeft } from "lucide-react";
+
 import "../sass/page/resetPassword.scss";
 
 const ResetPassword = () => {
@@ -11,6 +16,9 @@ const ResetPassword = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState(null);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const dispatch = useDispatch();
   const { userInfo } = useSelector((state) => state.auth);
@@ -28,7 +36,9 @@ const ResetPassword = () => {
     }
 
     if (password !== confirmPassword) {
-      setMessage("New passwords do not match");
+      const msg = "New passwords do not match";
+      setMessage(msg);
+      toast.error(msg);
       setIsSuccess(false);
       return;
     }
@@ -40,8 +50,15 @@ const ResetPassword = () => {
         password,
       }).unwrap();
       dispatch(setCredentials({ ...res }));
-      setMessage(hasPassword ? "Password reset successfully!" : "Password created successfully!");
+      const successMsg = hasPassword
+        ? "Password reset successfully!"
+        : "Password created successfully!";
+
+      setMessage(successMsg);
       setIsSuccess(true);
+      toast.success(successMsg); //
+
+      // 4. Cleanup
       setCurrentPassword("");
       setPassword("");
       setConfirmPassword("");
@@ -55,8 +72,16 @@ const ResetPassword = () => {
   return (
     <div className="reset-password__main">
       <div className="reset-password__container">
-        <p className="reset-password__eyebrow">Maths Wizard</p>
-        <h1 className="reset-password__header">{hasPassword ? "Reset Password" : "Create Password"}</h1>
+        <button
+          className="reset-password__back-icon"
+          onClick={() => navigate("/profile")}
+          title="Back to Profile"
+        >
+          <ArrowLeft size={50} />
+        </button>
+        <h1 className="reset-password__header">
+          {hasPassword ? "Reset Password" : "Create Password"}
+        </h1>
         <p className="reset-password__subtitle">
           {hasPassword
             ? "Please enter your current and new password below."
@@ -65,36 +90,43 @@ const ResetPassword = () => {
 
         <form onSubmit={submitHandler} className="reset-password-form">
           {hasPassword && (
-            <div className="input__group">
-              <input
-                type="password"
-                placeholder="Current Password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-              />
-            </div>
+            <PasswordField
+              placeholder="Current Password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              isVisible={showCurrent}
+              onPeekStart={() => setShowCurrent(true)}
+              onPeekEnd={() => setShowCurrent(false)}
+              autoComplete="current-password"
+            />
           )}
 
-          <div className="input__group">
-            <input
-              type="password"
-              placeholder={hasPassword ? "New Password" : "Create Password"}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
+          <PasswordField
+            placeholder={hasPassword ? "New Password" : "Create Password"}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            isVisible={showNew}
+            onPeekStart={() => setShowNew(true)}
+            onPeekEnd={() => setShowNew(false)}
+            autoComplete="new-password"
+          />
 
-          <div className="input__group">
-            <input
-              type="password"
-              placeholder={hasPassword ? "Confirm New Password" : "Confirm Password"}
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-            />
-          </div>
+          <PasswordField
+            placeholder={
+              hasPassword ? "Confirm New Password" : "Confirm Password"
+            }
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            isVisible={showConfirm}
+            onPeekStart={() => setShowConfirm(true)}
+            onPeekEnd={() => setShowConfirm(false)}
+            autoComplete="new-password"
+          />
 
           {message && (
-            <p className={`reset-password__message ${isSuccess ? "success" : "error"}`}>
+            <p
+              className={`reset-password__message ${isSuccess ? "success" : "error"}`}
+            >
               {message}
             </p>
           )}
@@ -104,12 +136,12 @@ const ResetPassword = () => {
             className="reset-password__btn"
             disabled={isLoading}
           >
-            {isLoading ? "Updating..." : hasPassword ? "Reset Password" : "Create Password"}
+            {isLoading
+              ? "Updating..."
+              : hasPassword
+                ? "Reset Password"
+                : "Create Password"}
           </button>
-
-          <p className="reset-password__back" onClick={() => navigate("/profile")}>
-            Back to Profile
-          </p>
         </form>
       </div>
     </div>

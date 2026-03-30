@@ -10,6 +10,8 @@ import {
 import { apiSlice } from "../store/slices/apiSlice";
 import getDefaultRouteForRole from "../utils/getDefaultRouteForRole";
 import PasswordField from "../components/PasswordField";
+import { toast } from "react-toastify";
+
 import "../sass/page/loginPage.scss";
 
 const apiBaseUrl = (
@@ -70,6 +72,8 @@ const Login = () => {
 
     dispatch(apiSlice.util.resetApiState());
     dispatch(setCredentials({ ...payload }));
+
+    toast.success(`Welcome back, ${payload.username}!`);
     navigate(getDefaultRouteForRole(payload?.role), { replace: true });
   };
 
@@ -108,6 +112,7 @@ const Login = () => {
         password,
         role: "student",
       }).unwrap();
+      toast.success("Account created successfully!");
       completeLogin(res);
     } catch (err) {
       setError(err?.data?.message || err.error || "Registration failed");

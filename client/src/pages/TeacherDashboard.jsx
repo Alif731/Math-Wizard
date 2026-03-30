@@ -30,6 +30,8 @@ import "../sass/page/teacherDashboardPage.scss";
 
 const TeacherDashboard = () => {
   const [activeTab, setActiveTab] = useState("performance"); // Tab state: 'activity' or 'rankings'
+  const [searchTerm, setSearchTerm] = useState(""); // filter student
+
   const [actionError, setActionError] = useState("");
 
   // 1. User & Role Context
@@ -50,6 +52,11 @@ const TeacherDashboard = () => {
   } = useGetLeaderboardStatusQuery(undefined, {
     pollingInterval: 3000,
   });
+
+  // --- Logic for Filtering Activity ---
+  const filteredActivity = recentActivity?.filter((activity) =>
+    activity.user?.username?.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
 
   // 4. Mutation - Toggle Leaderboard
   const [updateLeaderboardStatus, { isLoading: isToggling }] =
@@ -107,6 +114,7 @@ const TeacherDashboard = () => {
             />
           </span>
         </div>
+
         <Link to="/leaderboard" className="teacher-dashboard__secondaryAction">
           Open Full Leaderboard
         </Link>
@@ -259,15 +267,28 @@ const TeacherDashboard = () => {
               <div className="dot"></div>
               <h2>Live Activity Feed</h2>
             </div>
-            <p>Real-time updates as students solve problems.</p>
+            <div className="activity-filter-box">
+              <Users size={16} />
+              <input
+                type="text"
+                placeholder="Search student..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              {searchTerm && (
+                <button onClick={() => setSearchTerm("")} className="clear-btn">
+                  &times;
+                </button>
+              )}
+            </div>
           </div>
-
           {loadingActivity ? (
             <p className="loading-text">Synchronizing with classroom...</p>
           ) : (
             <div className="activity-list activity-list--full">
-              {recentActivity && recentActivity.length > 0 ? (
-                recentActivity.map((activity) => (
+              {/*Check filteredActivity instead of recentActivity */}
+              {filteredActivity && filteredActivity.length > 0 ? (
+                filteredActivity.map((activity) => (
                   <div
                     key={activity._id}
                     className={`activity-item ${activity.isCorrect ? "activity-item--correct" : "activity-item--incorrect"}`}
@@ -296,10 +317,18 @@ const TeacherDashboard = () => {
                   </div>
                 ))
               ) : (
-                <p className="empty-message">Waiting for student activity...</p>
+                /* 🔥 BETTER EMPTY STATE: Distinguish between "no data" and "no search results" */
+                <p className="empty-message">
+                  {searchTerm
+                    ? `No activity found for "${searchTerm}"`
+                    : "Waiting for student activity..."}
+                </p>
               )}
             </div>
           )}
+          <p style={{ textAlign: "end" }}>
+            Real-time updates as students solve problems.
+          </p>{" "}
         </section>
       )}
     </div>
