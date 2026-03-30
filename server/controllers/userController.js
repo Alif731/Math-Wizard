@@ -24,6 +24,7 @@ const buildUserResponse = (user) => ({
   avatar: user.avatar,
   avatarSeed: user.avatarSeed,
   authProvider: user.authProvider,
+  loginCount: user.loginCount,
   email: user.email || null,
   hasPassword: Boolean(user.password),
 });
@@ -155,6 +156,9 @@ const authUser = async (req, res) => {
       });
       return;
     }
+    // visual hint count
+    user.loginCount = (user.loginCount || 0) + 1;
+    await user.save();
 
     generateToken(res, user._id);
     res.status(200).json(buildUserResponse(user));
@@ -366,62 +370,6 @@ const getUserProfile = async (req, res) => {
   res.json(buildUserResponse(user));
 };
 
-// @desc    Update user profile
-// @route   PUT /api/users/profile
-// @access  Private
-// const updateUserProfile = async (req, res) => {
-//   const user = await User.findById(req.user._id);
-
-//   if (!user) {
-//     res.status(404).json({ message: "User not found" });
-//     return;
-//   }
-
-//   const requestedUsername = String(req.body?.username || "").trim();
-//   const nextPassword = String(req.body?.password || "");
-//   const currentPassword = String(req.body?.currentPassword || "");
-//   const requestedAvatar = String(req.body?.avatar || "").trim();
-
-//   if (requestedUsername && requestedUsername !== user.username) {
-//     const existingUser = await User.findOne({
-//       username: requestedUsername,
-//       _id: { $ne: user._id },
-//     }).select("_id");
-
-//     if (existingUser) {
-//       res.status(400).json({ message: "Username is already taken" });
-//       return;
-//     }
-
-//     user.username = requestedUsername;
-//   }
-
-//   if (requestedAvatar) {
-//     user.avatar = requestedAvatar;
-//   }
-
-//   if (nextPassword) {
-//     if (user.password) {
-//       if (!currentPassword) {
-//         res.status(400).json({
-//           message: "Please provide your current password to change it",
-//         });
-//         return;
-//       }
-
-//       const isMatch = await user.matchPassword(currentPassword);
-//       if (!isMatch) {
-//         res.status(401).json({ message: "Invalid current password" });
-//         return;
-//       }
-//     }
-
-//     user.password = nextPassword;
-//   }
-
-//   const updatedUser = await user.save();
-//   res.json(buildUserResponse(updatedUser));
-// };
 // @desc    Update user profile
 // @route   PUT /api/users/profile
 // @access  Private

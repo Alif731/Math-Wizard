@@ -1,7 +1,7 @@
 const Concept = require("../models/Concept");
 
 const WINDOW_SIZE = 10;
-const MASTERY_MIN_ATTEMPTS = 15;
+const MASTERY_MIN_ATTEMPTS = 3;
 const CHANGE_POINT_FALSE_POSITIVE_RATE = 0.0004;
 const BANDIT_PRIORS = Object.freeze({
   guessAlpha: 20,

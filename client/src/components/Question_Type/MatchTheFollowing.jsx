@@ -346,24 +346,28 @@ const MatchTheFollowing = ({ id, leftItems, rightItems, onComplete }) => {
     const savedCount = sessionStorage.getItem("matchHintCount");
     const lastSeenId = sessionStorage.getItem("lastMatchHintId");
 
+    // Grab the rule we set during login (Fallback to 1 just in case)
+    const maxHintsAllowed = parseInt(
+      sessionStorage.getItem("maxHintsAllowed") || "1",
+      10,
+    );
+
     if (savedCount) {
       hintCount = parseInt(savedCount, 10);
     }
 
-    // Safely grab the database ID of this specific problem
     const currentProblemId = id || "fallback-id";
 
-    if (hintCount < 2) {
+    // 🔥 Replace the hardcoded '2' with our dynamic variable!
+    if (hintCount < maxHintsAllowed) {
       setShowHint(true);
 
-      // If the ID is different from the last one we saw, it is a NEW question!
-      // If it is the exact same ID (because they refreshed the page), we DO NOT count it again.
       if (lastSeenId !== String(currentProblemId)) {
         sessionStorage.setItem("matchHintCount", String(hintCount + 1));
         sessionStorage.setItem("lastMatchHintId", String(currentProblemId));
       }
     }
-  }, [id]); // 🔥 React will now only re-run this if the actual database ID changes!
+  }, [id]);
 
   // 2. Hide hint the millisecond they click a box or draw a line
   useEffect(() => {

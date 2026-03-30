@@ -503,10 +503,69 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   border-radius: 100vmax;
 }
 
-// *,
-// ::before,
-// ::after {
-//   margin: 0;
-//   padding: 0;
-//   box-sizing: border-box;
-// }
+/* --------------------------Streak Animation ------------------------------*/
+// Correct
+@keyframes popBounce {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.25);
+    filter: brightness(1.2);
+  } /* Grows and gets slightly brighter */
+  70% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+.streak__badge {
+  /* ... your existing styles stay exactly the same ... */
+
+  /* Add this new modifier class right inside or below .streak__badge */
+  &.pop-active {
+    animation: popBounce 0.5s cubic-bezier(0.25, 1.5, 0.5, 1);
+  }
+}
+
+// Fail
+@keyframes shakeError {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20%,
+  60% {
+    transform: translateX(-6px);
+  }
+  40%,
+  80% {
+    transform: translateX(6px);
+  }
+}
+
+.streak__badge {
+  /* ... your existing code ... */
+
+  &.pop-active {
+    animation: popBounce 0.5s cubic-bezier(0.25, 1.5, 0.5, 1);
+  }
+
+  /* NEW: The failure state */
+  &.shake-active {
+    animation: shakeError 0.5s ease-in-out;
+    background-color: #b91c1c;
+    color: white;
+    border-color: #b91c1c;
+
+    /* Force the inner spans to turn white so they don't clash with the red background */
+    .highlight1,
+    .highlight2 {
+      color: white;
+      text-shadow: none;
+    }
+  }
+}

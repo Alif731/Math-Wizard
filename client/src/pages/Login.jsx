@@ -59,6 +59,15 @@ const Login = () => {
   };
 
   const completeLogin = (payload) => {
+    sessionStorage.removeItem("visualHintCount");
+    sessionStorage.removeItem("lastHintProblemId");
+    sessionStorage.removeItem("matchHintCount");
+    sessionStorage.removeItem("lastMatchHintId");
+
+    // THE NEW RULE: If it's their 1st login, give 2 hints. Otherwise, give 1.
+    const maxHints = payload?.loginCount <= 1 ? 2 : 1;
+    sessionStorage.setItem("maxHintsAllowed", maxHints);
+
     dispatch(apiSlice.util.resetApiState());
     dispatch(setCredentials({ ...payload }));
     navigate(getDefaultRouteForRole(payload?.role), { replace: true });
@@ -111,6 +120,15 @@ const Login = () => {
     if (!googleEnabled) {
       return;
     }
+
+    sessionStorage.removeItem("visualHintCount");
+    sessionStorage.removeItem("lastHintProblemId");
+    sessionStorage.removeItem("matchHintCount");
+    sessionStorage.removeItem("lastMatchHintId");
+
+    // THE NEW RULE: If it's their 1st login, give 2 hints. Otherwise, give 1.
+    const maxHints = payload?.loginCount <= 1 ? 2 : 1;
+    sessionStorage.setItem("maxHintsAllowed", maxHints);
 
     window.location.assign(googleOAuthUrl);
   };

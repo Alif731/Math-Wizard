@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 import {
   useGetProblemQuery,
@@ -7,31 +7,10 @@ import {
 } from "../store/slices/gameApiSlice";
 
 import QuestionCard from "../components/QuestionCard";
-import Dashboard from "../components/Dashboard";
 import "../sass/page/homePage.scss";
 const Home = () => {
   const { userInfo } = useSelector((state) => state.auth);
   const username = userInfo?.username;
-  const [streak, setStreak] = useState(() => {
-    if (!username) return 0;
-    const savedStreak = sessionStorage.getItem(`mathStreak:${username}`);
-    return savedStreak ? Number(savedStreak) : 0;
-  });
-
-  useEffect(() => {
-    if (!username) {
-      setStreak(0);
-      return;
-    }
-    const savedStreak = sessionStorage.getItem(`mathStreak:${username}`);
-    setStreak(savedStreak ? Number(savedStreak) : 0);
-  }, [username]);
-
-  useEffect(() => {
-    if (!username) return;
-    sessionStorage.setItem(`mathStreak:${username}`, String(streak));
-  }, [streak, username]);
-
   // --- RTK QUERY HOOKS ---
   const {
     data: problem,
@@ -43,8 +22,30 @@ const Home = () => {
   const { data: status } = useGetUserStatusQuery(username, { skip: !username });
   const [submitAnswer, { isLoading: isSubmitting }] = useSubmitAnswerMutation();
 
-  // --- LOCAL STATE ---
-  const [feedback, setFeedback] = useState(null);
+  // Streak Animation ----------------------------
+  const [isAnimatingSuccess, setIsAnimatingSuccess] = useState(false);
+  const [isAnimatingFailure, setIsAnimatingFailure] = useState(false);
+
+  const prevStreakRef = useRef(0);
+
+  useEffect(() => {
+    const currentStreak = status?.streak || 0;
+    const prevStreak = prevStreakRef.current;
+
+    // SCENARIO 1: Streak extended
+    if (currentStreak > prevStreak && currentStreak > 0) {
+      setIsAnimatingSuccess(true);
+      setTimeout(() => setIsAnimatingSuccess(false), 500);
+    }
+    // SCENARIO 2: Streak lost
+    else if (currentStreak === 0 && prevStreak > 0) {
+      setIsAnimatingFailure(true);
+      setTimeout(() => setIsAnimatingFailure(false), 600);
+    }
+
+    prevStreakRef.current = currentStreak;
+  }, [status?.streak]);
+  //  ---------------------------- End
 
   // --- HANDLERS ---
   const handleAnswerSubmit = async (answer) => {
@@ -58,18 +59,11 @@ const Home = () => {
       }).unwrap();
 
       // refetch questions
-      setFeedback(null);
       refetchProblem();
     } catch (err) {
       console.error("Failed to submit:", err);
     }
   };
-
-  const handleNext = () => {
-    setFeedback(null);
-    refetchProblem();
-  };
-
   const isMastered = problem?.complete;
 
   if (!username) return <div className="loading-state">Loading...</div>;
@@ -86,11 +80,13 @@ const Home = () => {
             . <span className="highlight1">L</span>et's Continue this Journey!
           </strong>
         </div>
-        {streak >= 1 && (
-          <div className="streak__badge">
+        {(status?.streak >= 1 || isAnimatingFailure) && (
+          <div
+            className={`streak__badge ${isAnimatingSuccess ? "pop-active" : ""} ${isAnimatingFailure ? "shake-active" : ""}`}
+          >
             <span className="highlight1">S</span>treak:{" "}
             <span className="highlight2">x</span>
-            {streak} <span className="top"></span>
+            {isAnimatingFailure ? 0 : status.streak}
             <span className="right"></span>
             <span className="bottom"></span>
             <span className="left"></span>
@@ -101,41 +97,6 @@ const Home = () => {
         <h2 className="card__header__type">{problem.description}</h2>
       )}
       <main className="home-layout">
-        {/* --- LEFT COLUMN: GAME AREA --- */}
-        {/* <section className="game-section"> */}
-        {/* 1. FEEDBACK CARD */}
-        {/* {feedback ? (
-          <div
-            className={`feedback-card ${feedback.isCorrect ? "success" : "error"}`}
-          >
-            <div className="feedback-icon">
-              {feedback.isCorrect ? "🌟" : "❌"}
-            </div>
-            <h2 className="feedback-title">
-              {feedback.isCorrect ? "Correct" : "Wrong"}
-            </h2>
-            <p className="feedback-text">
-              {feedback.isCorrect
-                ? feedback.explanation
-                : `The correct answer was: ${feedback.correctAnswer}`}
-            </p>
-            <button onClick={handleNext} className="btn-next">
-              Next Question
-            </button>
-          </div>
-        ) : // 2. MASTERY MESSAGE */}
-        {/*
-        feedback && !feedback.isCorrect ? (
-          <div className="feedback-card error">
-             <div className="feedback-icon">❌</div>
-             <h2 className="feedback-title">Wrong</h2>
-             <p className="feedback-text">
-               {feedback.explanation || `Correct answer: ${feedback.correctAnswer}`}
-             </p>
-             <button onClick={handleNext} className="btn-next">Next</button>
-          </div>
-        ) : 
-         */}
         {isMastered ? (
           <div className="status-card master">
             You have mastered all available concepts!
@@ -160,7 +121,6 @@ const Home = () => {
               problem={problem}
               onSubmit={handleAnswerSubmit}
               disabled={isSubmitting}
-              setStreak={setStreak}
             />
           )
         )}

@@ -76,6 +76,15 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: () => crypto.randomBytes(10).toString("hex"),
     },
+    streak: {
+      type: Number,
+      default: 0,
+    },
+    maxStreak: {
+      type: Number,
+      default: 0,
+    },
+    loginCount: { type: Number, default: 0 },
   },
   { timestamps: true },
 );

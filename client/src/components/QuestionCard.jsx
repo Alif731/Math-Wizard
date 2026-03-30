@@ -18,7 +18,7 @@ import DirectInputQuestion from "./Question_Type/DirectInputQuestion";
 const audioSuccess = new Audio("/success1.mp3");
 const audioFailure = new Audio("/failure.mp3");
 
-const QuestionCard = ({ problem, onSubmit, setStreak }) => {
+const QuestionCard = ({ problem, onSubmit }) => {
   const [answer, setAnswer] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
   const [isError, setIsError] = useState(false);
@@ -54,12 +54,12 @@ const QuestionCard = ({ problem, onSubmit, setStreak }) => {
     const isCorrect = String(option).trim() === String(rawCorrect).trim();
 
     if (isCorrect) {
-      setStreak((prev) => prev + 1);
+      // setStreak((prev) => prev + 1);
       setIsSuccess(true);
       playSuccessSound();
       setTimeout(() => onSubmit(option), 3000);
     } else {
-      setStreak(0);
+      // setStreak(0);
       setIsError(true);
       playErrorSound();
       setTimeout(() => onSubmit(option), 2600);
@@ -87,12 +87,12 @@ const QuestionCard = ({ problem, onSubmit, setStreak }) => {
 
     if (shouldAnimate) {
       if (isCorrect) {
-        setStreak((prev) => prev + 1); // 🔥 ADDED THIS
+        // setStreak((prev) => prev + 1); // 🔥 ADDED THIS
         playSuccessSound();
         setIsSuccess(true);
         setTimeout(() => onSubmit(userAnswer), 3000);
       } else {
-        setStreak(0); // 🔥 ADDED THIS
+        // setStreak(0); // 🔥 ADDED THIS
         playErrorSound();
         setIsError(true);
         setTimeout(() => onSubmit(userAnswer), 2600);
@@ -109,12 +109,12 @@ const QuestionCard = ({ problem, onSubmit, setStreak }) => {
   const handleMatchComplete = (isValid) => {
     setAnswer("matched");
     if (isValid) {
-      setStreak((prev) => prev + 1);
+      // setStreak((prev) => prev + 1);
       setIsSuccess(true);
       playSuccessSound();
       setTimeout(() => onSubmit("matched"), 2500);
     } else {
-      setStreak(0);
+      // setStreak(0);
       setIsError(true);
       playErrorSound();
       setTimeout(() => onSubmit("wrong_answer"), 2600);

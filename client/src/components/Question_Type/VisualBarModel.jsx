@@ -11,30 +11,56 @@ const VisualBarModel = ({
   handleSubmit,
 }) => {
   const visualData = problem?.question?.visualData;
-  const [showHint, setShowHint] = useState(false);
 
   // --- HINT STATE ---
+  const [showHint, setShowHint] = useState(false);
+  const [isHintFading, setIsHintFading] = useState(false); // hint animation state
   useEffect(() => {
+    // Only run this if it's actually a visual problem
     if (problem?.question?.type === "visual") {
       let hintCount = 0;
       const savedCount = sessionStorage.getItem("visualHintCount");
       const lastSeenId = sessionStorage.getItem("lastHintProblemId");
 
+      // Grab the rule we set during login (Fallback to 1 just in case)
+      const maxHintsAllowed = parseInt(
+        sessionStorage.getItem("maxHintsAllowed") || "1",
+        10,
+      );
+
       if (savedCount) {
         hintCount = parseInt(savedCount, 10);
       }
 
-      const currentProblemId = problem?.question?.id || problem?.question?._id;
+      // Safely grab the database ID of this specific problem
+      const currentProblemId =
+        problem?.question?.id || problem?.question?._id || "fallback-id";
 
-      if (hintCount < 2) {
+      //  Dynamically check against maxHintsAllowed!
+      if (hintCount < maxHintsAllowed) {
         setShowHint(true);
+
+        // Don't double-count if they refresh the page
         if (lastSeenId !== String(currentProblemId)) {
           sessionStorage.setItem("visualHintCount", String(hintCount + 1));
           sessionStorage.setItem("lastHintProblemId", String(currentProblemId));
         }
       }
     }
-  }, [problem]);
+  }, [problem]); // Re-run when the problem changes
+
+  // 2. Hide hint the millisecond they start typing
+  useEffect(() => {
+    if (answer !== "" && showHint && !isHintFading) {
+      // Step A: Trigger the fade-out CSS animation
+      setIsHintFading(true);
+
+      setTimeout(() => {
+        setShowHint(false);
+        setIsHintFading(false); // Reset for the next question
+      }, 700);
+    }
+  }, [answer, showHint, isHintFading]);
 
   const getInputClass = () => {
     if (isSuccess) return "visual__input visual__input__success";
@@ -81,7 +107,9 @@ const VisualBarModel = ({
       {visualData.showTotal && (
         <div className="visual__bracket">
           {showHint && !isSuccess && !isError && (
-            <div className="visual__hint">
+            <div
+              className={`visual__hint ${isHintFading ? "hint-fading-out" : ""}`}
+            >
               <div className="visual__hint-text">Type here!</div>
               <div className="visual__hint-arrow">
                 <PiArrowBendDoubleUpLeftBold />

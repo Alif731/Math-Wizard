@@ -12,12 +12,15 @@ export const AVATAR_VARIANTS = [
 // Reusable colors for your theme
 const PALETTES = {
   wizard: ["#6366f1", "#a855f7", "#ec4899", "#f59e0b", "#1e1b4b"],
-  cyber: ["#10b981", "#059669", "#34d399", "#064e3b", "#020617"],
-  ocean: ["#0ea5e9", "#38bdf8", "#7dd3fc", "#0c4a6e", "#f0f9ff"],
+  // cyber: ["#10b981", "#059669", "#34d399", "#064e3b", "#020617"],
   arcade: ["#ff0055", "#00ffcc", "#3300ff", "#ffff00", "#1a1a1a"],
-  sunset: ["#f43f5e", "#fb923c", "#fbbf24", "#e11d48", "#2e1065"],
+  nebula: ["#2d004b", "#5b0060", "#ac005d", "#e30052", "#ffffff"],
   forest: ["#365314", "#65a30d", "#bef264", "#ecfccb", "#064e3b"],
+  earthy: ["#78350f", "#166534", "#ca8a04", "#fef3c7", "#451a03"],
+  volt: ["#1d4ed8", "#e1ff00", "#312e81", "#14b8a6", "#0f172a"],
   candy: ["#ff71ce", "#01cdfe", "#05ffa1", "#b967ff", "#fffb96"],
+  flare: ["#ef4444", "#f97316", "#facc15", "#7f1d1d", "#fff7ed"],
+  titan: ["#0f172a", "#334155", "#64748b", "#94a3b8", "#f1f5f9"],
 };
 
 const UserAvatar = ({ name, variant, size = 40 }) => {

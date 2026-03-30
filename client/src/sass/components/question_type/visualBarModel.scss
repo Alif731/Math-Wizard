@@ -160,6 +160,9 @@
   pointer-events: none;
   animation: bounceHint 1.5s infinite;
   z-index: 10;
+  &.hint-fading-out {
+    animation: fadeOutUp 0.7s ease-out forwards;
+  }
 
   &-text {
     background-color: #e07a5f;
@@ -211,5 +214,16 @@
   }
   60% {
     transform: scale(0.9);
+  }
+}
+
+@keyframes fadeOutUp {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-15px); /* Floats up slightly as it fades */
   }
 }

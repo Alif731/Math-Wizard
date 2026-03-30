@@ -1397,63 +1397,210 @@ const conceptsData = [
 ];
 
 // --------------------------------------------------------- test -------------------------------------------------------
+// seedData.js
+
+// const seedData = async () => {
+//   try {
+//     const count = await Concept.countDocuments();
+//     if (count > 0) {
+//       const teacherExists = await User.findOne({ username: "teacher1" });
+//       if (!teacherExists) {
+//         await User.create({
+//           username: "teacher1",
+//           password: "password123",
+//           role: "teacher",
+//           mastery: {},
+//           zpdNodes: [],
+//           avatar: "beam",
+//           streak: 0,
+//         });
+//         console.log("Teacher User Seeded");
+//       }
+//       await ensureTeacherSignupCode();
+//       return;
+//     }
+
+//     await Concept.deleteMany({});
+//     await User.deleteMany({});
+//     await Attempt.deleteMany({});
+//     await TeacherSignupCode.deleteMany({});
+
+//     await Concept.insertMany(conceptsData);
+//     console.log("Concepts Seeded");
+
+//     const testUser = new User({
+//       username: "student1",
+//       password: "password123", // Pre-save hook will hash this
+//       role: "student",
+//       mastery: {},
+//       zpdNodes: ["foundation_signs"], // sign selection
+//       // zpdNodes: ["visual_addition"], // bar
+//       // zpdNodes: ["visual_icons"], // Match the following
+//       // zpdNodes: ["add_single"], // normal
+//     });
+
+//     // Initialize mastery for root
+//     testUser.mastery.set("foundation_signs", {
+//       // sign selection
+//       // testUser.mastery.set("visual_addition", {
+//       // bar
+//       // testUser.mastery.set("visual_icons", {
+//       // Match the following
+//       // testUser.mastery.set("add_single", {
+//       // normal
+//       status: "unlocked",
+//       successCount: 0,
+//       streak: 0,
+//       attemptCount: 0,
+//       lastAttempts: [],
+//     });
+
+//     await testUser.save();
+//     console.log("Test User Seeded");
+
+//     const teacherUser = new User({
+//       username: "teacher1",
+//       password: "password123",
+//       role: "teacher",
+//       mastery: {},
+//       zpdNodes: [],
+//       avatar: "beam",
+//     });
+
+//     await teacherUser.save();
+//     console.log("Teacher User Seeded");
+
+//     await ensureTeacherSignupCode();
+//   } catch (error) {
+//     console.error("Seeding Error:", error);
+//   }
+// };
+// module.exports = seedData;
+
+// const seedData = async () => {
+//   try {
+//     await Concept.deleteMany({});
+//     await User.deleteMany({});
+//     await Attempt.deleteMany({});
+//     await TeacherSignupCode.deleteMany({});
+//     console.log("Database Wiped Clean");
+
+//     await Concept.insertMany(conceptsData);
+
+//     // 2. This student1 will now be FRESH with a 0 streak
+//     const testUser = new User({
+//       username: "student1",
+//       password: "password123",
+//       role: "student",
+//       streak: 0, // This is what shows in your top right corner!
+//       zpdNodes: ["foundation_signs"],
+//       mastery: {
+//         foundation_signs: {
+//           status: "unlocked",
+//           successCount: 0,
+//           streak: 0,
+//           attemptCount: 0,
+//           lastAttempts: [],
+//         },
+//       },
+//     });
+
+//     await testUser.save();
+//     console.log("Test User Seeded with Streak: 0");
+//     console.log("Test User Seeded Successfully");
+
+//     // 3. CREATE TEACHER
+//     const teacherUser = new User({
+//       username: "teacher1",
+//       password: "password123",
+//       role: "teacher",
+//       mastery: {},
+//       zpdNodes: [],
+//       avatar: "beam",
+//       streak: 0,
+//     });
+
+//     await teacherUser.save();
+//     console.log("Teacher User Seeded Successfully");
+
+//     await ensureTeacherSignupCode();
+//   } catch (error) {
+//     console.error("Seeding Error:", error);
+//   }
+// };
+
+// module.exports = seedData;
+
 const seedData = async () => {
   try {
-    const count = await Concept.countDocuments();
-    if (count > 0) {
-      const teacherExists = await User.findOne({ username: "teacher1" });
-      if (!teacherExists) {
-        await User.create({
-          username: "teacher1",
-          password: "password123",
-          role: "teacher",
-          mastery: {},
-          zpdNodes: [],
-          avatar: "🧑‍🏫",
-        });
-        console.log("Teacher User Seeded");
-      }
-      await ensureTeacherSignupCode();
-      return;
-    }
-
     await Concept.deleteMany({});
     await User.deleteMany({});
     await Attempt.deleteMany({});
     await TeacherSignupCode.deleteMany({});
+    console.log("Database Wiped Clean");
 
     await Concept.insertMany(conceptsData);
     console.log("Concepts Seeded");
 
+    // =========================================================================
+    // 🧪 TESTING SWITCHBOARD: Uncomment the concept you want to test
+    // =========================================================================
+
     const testUser = new User({
       username: "student1",
-      password: "password123", // Pre-save hook will hash this
+      password: "password123",
       role: "student",
-      mastery: {},
-      zpdNodes: ["foundation_signs"], // sign selection
-      // zpdNodes: ["visual_addition"], // bar
-      // zpdNodes: ["visual_icons"], // Match the following
-      // zpdNodes: ["add_single"], // normal
-    });
+      streak: 0,
 
-    // Initialize mastery for root
-    testUser.mastery.set("foundation_signs", {
-      // sign selection
-      // testUser.mastery.set("visual_addition", {
-      // bar
-      // testUser.mastery.set("visual_icons", {
-      // Match the following
-      // testUser.mastery.set("add_single", {
-      // normal
-      status: "unlocked",
-      successCount: 0,
-      attemptCount: 0,
-      lastAttempts: [],
+      // --- 1. CHOOSE ACTIVE ZPD NODE ---
+      // zpdNodes: ["foundation_signs"], // Conceptual (Sign selection)
+      zpdNodes: ["visual_addition"], // Visual (Bar model)
+      // zpdNodes: ["visual_icons"], // Icons (Match the following)
+      // zpdNodes: ["add_single"],      // Direct Input (Normal math)
+
+      mastery: {
+        // --- 2. UNCOMMENT MATCHING MASTERY BLOCK ---
+        // // Conceptual (Sign selection)
+        // foundation_signs: {
+        //   status: "unlocked",
+        //   successCount: 0,
+        //   streak: 0,
+        //   attemptCount: 0,
+        //   lastAttempts: [],
+        // },
+        // Visual (Bar model)
+        visual_addition: {
+          status: "unlocked",
+          successCount: 0,
+          streak: 0,
+          attemptCount: 0,
+          lastAttempts: [],
+        },
+        // // Icons (Match the following)
+        // visual_icons: {
+        //   status: "unlocked",
+        //   successCount: 0,
+        //   streak: 0,
+        //   attemptCount: 0,
+        //   lastAttempts: [],
+        // },
+        // // Direct Input (Normal math)
+        // add_single: {
+        //   status: "unlocked",
+        //   successCount: 0,
+        //   streak: 0,
+        //   attemptCount: 0,
+        //   lastAttempts: [],
+        // },
+      },
     });
 
     await testUser.save();
-    console.log("Test User Seeded");
+    console.log("Test User (student1) Seeded Successfully");
 
+    // =========================================================================
+
+    // 3. CREATE TEACHER
     const teacherUser = new User({
       username: "teacher1",
       password: "password123",
@@ -1461,12 +1608,13 @@ const seedData = async () => {
       mastery: {},
       zpdNodes: [],
       avatar: "beam",
+      streak: 0,
     });
 
     await teacherUser.save();
-    console.log("Teacher User Seeded");
+    console.log("Teacher User Seeded Successfully");
 
-    await ensureTeacherSignupCode();
+    // await ensureTeacherSignupCode();
   } catch (error) {
     console.error("Seeding Error:", error);
   }
