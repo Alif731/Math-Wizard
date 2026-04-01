@@ -1,17 +1,17 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
-// import DiagnosticModal from "../components/DiagnosticModal";
+
 import {
   CheckCircle2,
-  XCircle,
+  HelpCircle,
   Trophy,
   Activity,
   Eye,
   EyeOff,
   BarChart3,
   AlertCircle,
-  Users, // For Students
+  Users,
   Calculator, // For Math Attempts
   Target, // For Accuracy
   Award, // For Leaderboard status
@@ -29,8 +29,12 @@ import {
 import { useGetClassroomStatsQuery } from "../store/slices/usersApiSlice";
 import { useGetRecentActivityQuery } from "../store/slices/usersApiSlice";
 
+import Heatmap from "../components/HeatMap";
+import StudentMasteryRoster from "../components/StudentMasteryRoster";
+
 // Styling
 import "../sass/page/teacherDashboardPage.scss";
+import "../sass/components/heatmap.scss";
 
 const TeacherDashboard = () => {
   const [activeTab, setActiveTab] = useState("performance"); // Tab state: 'activity' or 'rankings'
@@ -105,9 +109,6 @@ const TeacherDashboard = () => {
     }
   };
 
-  // Struggle Logic
-  const [selectedDiagnostic, setSelectedDiagnostic] = useState(null); // Modal State
-
   const { data: classroomData, isLoading: isLoadingStats } =
     useGetClassroomStatsQuery(undefined, {
       pollingInterval: 3000, //  Add this to sync every 3 seconds
@@ -116,14 +117,13 @@ const TeacherDashboard = () => {
   const strugglingAlerts = useMemo(() => {
     if (!classroomData) return [];
 
-    console.log("DEBUG: Full Classroom Data:", classroomData); // 🔍 Check this in F12 console
+    console.log("DEBUG: Full Classroom Data:", classroomData);
 
     const alerts = [];
     classroomData.forEach((student) => {
       student.nodes?.forEach((node) => {
-        console.log("DEBUG: Single Node Data:", node); // 🔍 Look at the keys here!
+        // console.log("DEBUG: Single Node Data:", node); //
 
-        // 🔥 This "Master Logic" checks every possible key name
         const actualId = node.nodeId || node.conceptId || node.id || node._id;
 
         const nodeTitle = actualId
@@ -304,13 +304,19 @@ const TeacherDashboard = () => {
           <section className="teacher-dashboard__panel alert-panel">
             <div className="panel-header">
               <h2>
-                <BarChart3 size={18} /> Priority Interventions
+                <BarChart3 size={18} /> Learning Alerts
               </h2>
+              <div className="info-tooltip">
+                <HelpCircle size={14} />
+                <span className="tooltip-text">
+                  Flags students who need help based on high attempts and low
+                  scores.
+                </span>
+              </div>
             </div>
 
             <div className="alert-list">
               {strugglingAlerts.length > 0 ? (
-                // 🔥 Changed 'alert' to 'entry' here
                 strugglingAlerts.map((entry) => {
                   const severity = entry.attempts > 8 ? "high" : "medium";
 
@@ -353,17 +359,6 @@ const TeacherDashboard = () => {
                             />
                           </div>
                         </div>
-                        {/* <button
-                          className="view-details-btn"
-                          onClick={() => setSelectedDiagnostic(entry)}
-                        >
-                          <BarChart3 size={14} />
-                        </button> */}
-                        {/* <DiagnosticModal
-                          isOpen={!!selectedDiagnostic}
-                          data={selectedDiagnostic}
-                          onClose={() => setSelectedDiagnostic(null)}
-                        /> */}
                       </div>
                     </div>
                   );
@@ -373,6 +368,8 @@ const TeacherDashboard = () => {
               )}
             </div>
           </section>
+          <Heatmap classroomData={classroomData} />
+          <StudentMasteryRoster classroomData={classroomData} />
         </div>
       )}
 
@@ -381,14 +378,14 @@ const TeacherDashboard = () => {
         <section className="teacher-dashboard__panel live-monitor-mode animate-fade-in">
           <div className="teacher-dashboard__panelHeader">
             <div className="live-indicator">
-              <div className="dot"></div>
-              <h2>Live Activity Feed</h2>
+              <div className="pulse-dot"></div> {/* Added a CSS pulse class */}
+              <h2>Real-Time Diagnostic Stream</h2>
             </div>
             <div className="activity-filter-box">
               <Users size={16} />
               <input
                 type="text"
-                placeholder="Search student..."
+                placeholder="Filter by student identifier..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -399,11 +396,11 @@ const TeacherDashboard = () => {
               )}
             </div>
           </div>
+
           {loadingActivity ? (
-            <p className="loading-text">Synchronizing with classroom...</p>
+            <p className="loading-text">Aggregating classroom telemetry...</p>
           ) : (
             <div className="activity-list activity-list--full">
-              {/*Check filteredActivity instead of recentActivity */}
               {filteredActivity && filteredActivity.length > 0 ? (
                 filteredActivity.map((activity) => (
                   <div
@@ -414,21 +411,26 @@ const TeacherDashboard = () => {
                       {activity.isCorrect ? (
                         <CheckCircle2 size={20} className="icon-success" />
                       ) : (
-                        <XCircle size={20} className="icon-error" />
+                        <AlertCircle size={20} className="icon-error" />
                       )}
                     </div>
                     <div className="activity-details">
                       <span className="activity-text">
                         <strong className="student-name">
-                          {activity.user?.username || "Student"}:{" "}
-                        </strong>
-                        Solved{" "}
-                        <strong>
+                          {activity.user?.username || "Student"} is
+                        </strong>{" "}
+                        {activity.isCorrect
+                          ? "improving in "
+                          : "struggling with "}
+                        <strong className="concept-highlight">
                           {activity.conceptId?.replace(/_/g, " ")}
                         </strong>
                       </span>
                       <span className="activity-date">
-                        {new Date(activity.timestamp).toLocaleTimeString()}
+                        {new Date(activity.timestamp).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </span>
                     </div>
                   </div>
@@ -436,15 +438,15 @@ const TeacherDashboard = () => {
               ) : (
                 <p className="empty-message">
                   {searchTerm
-                    ? `No activity found for "${searchTerm}"`
-                    : "Waiting for student activity..."}
+                    ? `No diagnostic records for "${searchTerm}"`
+                    : "Awaiting student engagement data..."}
                 </p>
               )}
             </div>
           )}
-          <p style={{ textAlign: "end" }}>
-            Real-time updates as students solve problems.
-          </p>{" "}
+          <p className="feed-footer">
+            <Activity size={12} /> Real-time updates as students solve problems.
+          </p>
         </section>
       )}
     </div>

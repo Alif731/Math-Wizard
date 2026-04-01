@@ -148,7 +148,7 @@
 // --- TABLE LAYOUT ---
 .table-panel {
   padding: 0; // Remove padding so table hits the edges
-  overflow: hidden;
+  overflow: scroll;
 
   .panel-header {
     padding: 1.5rem 1.5rem 0;

@@ -14,6 +14,10 @@ exports.getClassroomStats = async (req, res) => {
       return {
         id: student._id,
         username: student.username,
+
+        // 2. Avatar data
+        avatar: student.avatar || "beam",
+        avatarSeed: student.avatarSeed || student.username,
         totalAttempts: masteryEntries.reduce(
           (acc, [id, data]) => acc + data.attemptCount,
           0,
@@ -23,10 +27,11 @@ exports.getClassroomStats = async (req, res) => {
         ).length,
 
         nodes: masteryEntries.map(([id, data]) => ({
-          nodeId: id, // 🔥 This captures "foundation_signs" correctly!
+          nodeId: id, // Captures "foundation_signs" correctly!
           status: data.status,
           score: data.adaptiveState?.changePointScore || 0,
           attempts: data.attemptCount || 0,
+          correct: data.successCount || 0,
           slip: data.adaptiveState?.slipProbability || 0,
           estimate: data.adaptiveState?.estimate || 0,
         })),

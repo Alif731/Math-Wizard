@@ -98,7 +98,7 @@
 
 // export default ProgressBar;
 
-import "../sass/components/ProgressBar.scss";
+import "../sass/page/ProgressBar.scss";
 import { Lock, PlayCircle, Sparkles, Loader2 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { useSelector } from "react-redux";
@@ -229,7 +229,7 @@ const ProgressBar = () => {
                           ))}
                         </div>
                         <span className="attempts">
-                          Evidence: {node.attemptCount} / 5
+                          Status: {node.attemptCount} / 5
                         </span>
                       </div>
                     </div>

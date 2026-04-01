@@ -1,3 +1,5 @@
+@use "../util/breakpoint" as ut;
+
 .profile-page {
   min-height: 88vh;
   font-family: cursive;
@@ -287,18 +289,14 @@
   align-items: center;
   cursor: default;
   transition: all 0.5s ease-in-out;
-  // flex: 1;
   text-align: center;
-  // animation: tilt-shaking 1s ease-in-out infinite;
 
-  // &:hover {
-  //   background-color: #3d405b;
-  //   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); // Slight lift on hover
-  //   // animation: none;
-  //   color: white;
-  //   text-shadow: none;
-  //   cursor: pointer;
-  // }
+  @include ut.breakpoint(medium) {
+    font-size: 1.2rem;
+  }
+  @include ut.breakpoint(small) {
+    font-size: 0.6rem;
+  }
 
   // --- THE HOVER LOGIC ---
   strong {
