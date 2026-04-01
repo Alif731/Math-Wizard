@@ -18,6 +18,7 @@ export default function Header() {
 
   const { userInfo } = useSelector((state) => state.auth);
   const isTeacher = userInfo?.role === "teacher";
+  const isStudent = userInfo?.role === "student";
   const defaultRoute = userInfo ? getDefaultRouteForRole(userInfo.role) : "/";
   const guestAuthLink =
     location.pathname === "/teacher/auth"
@@ -111,6 +112,22 @@ export default function Header() {
               </li>
             )}
 
+            {/* Student Progress Map Link  */}
+            {isStudent && (
+              <li
+                className={
+                  isNavExpanded
+                    ? "navbar__item navbar__item--nav"
+                    : "navbar__item navbar__item--nav expanded"
+                }
+              >
+                <Link to="/progress" className="navbar__item__link">
+                  My Progress
+                </Link>
+              </li>
+            )}
+
+            {/* Shared LeaderBoard */}
             <li
               className={
                 isNavExpanded

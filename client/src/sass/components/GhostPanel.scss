@@ -1,0 +1,120 @@
+.ghost-debug-panel {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 270px;
+  background: rgba(10, 10, 15, 0.96);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  border-radius: 12px;
+  padding: 14px;
+  color: #fff;
+  font-family: "Fira Code", monospace;
+  z-index: 9999;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+
+  .ghost-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #a855f7;
+    font-weight: 800;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+    svg {
+      color: #a855f7;
+    }
+  }
+
+  .ghost-divider {
+    border: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    margin: 8px 0;
+  }
+
+  .ghost-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px; // Tighter spacing
+    min-height: 1.2rem; // Prevents rows from collapsing
+
+    label {
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 0.65rem;
+      white-space: nowrap;
+    }
+
+    span {
+      font-size: 0.7rem;
+      font-weight: 600;
+      &.mastered {
+        color: #4ade80;
+        text-shadow: 0 0 5px rgba(74, 222, 128, 0.5);
+      }
+    }
+
+    .node-name {
+      color: #f1bd68;
+    }
+  }
+
+  .status-pill {
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 0.55rem;
+    font-weight: 900;
+    &.unlocked {
+      background: rgba(168, 85, 247, 0.2);
+      color: #a855f7;
+    }
+    &.ready {
+      background: #4ade80;
+      color: #064e3b;
+      box-shadow: 0 0 10px #4ade80;
+    }
+  }
+
+  .ghost-progress-bar {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    margin: 8px 0;
+    overflow: hidden;
+    .fill {
+      height: 100%;
+      transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  }
+
+  .mini-labels {
+    font-size: 0.6rem;
+    color: rgba(255, 255, 255, 0.3);
+    border-top: 1px dashed rgba(255, 255, 255, 0.1);
+    padding-top: 6px;
+    margin-top: 6px;
+
+    &.history-section {
+      justify-content: space-between;
+    }
+
+    .history-dots {
+      display: flex;
+      gap: 3px;
+      .dot {
+        font-size: 11px;
+        line-height: 1;
+        &.green {
+          color: #4ade80;
+        }
+        &.red {
+          color: #f87171;
+        }
+      }
+    }
+  }
+}

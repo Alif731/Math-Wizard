@@ -265,6 +265,76 @@
   }
 }
 
+//
+.leaderboard__empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 30px;
+  margin: 20px auto;
+  max-width: 600px;
+
+  .icon-wrapper {
+    background: rgba(85, 174, 247, 0.1);
+    color: #0071e9;
+    padding: 25px;
+    border-radius: 50%;
+    margin-bottom: 25px;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  h2 {
+    color: #e7623e;
+    font-size: 1.8rem;
+    margin-bottom: 12px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  p {
+    color: #718096;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    margin-bottom: 32px;
+    max-width: 400px;
+  }
+
+  .leaderboard-action-btn {
+    background: linear-gradient(90deg, #0071e9, #0071e9);
+    color: white;
+    padding: 14px 32px;
+    border-radius: 14px;
+    text-decoration: none;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+    &:hover {
+      transform: translateY(-2px) scale(1.05);
+      box-shadow: 0 5px 20px rgba(34, 103, 206, 0.5);
+    }
+  }
+}
+
+// Hover animation for the trophy
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
 // --- EMPTY STATE ---
 .empty-state {
   text-align: center;

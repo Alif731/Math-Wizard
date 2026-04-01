@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
+// import DiagnosticModal from "../components/DiagnosticModal";
 import {
   CheckCircle2,
   XCircle,
@@ -9,6 +10,7 @@ import {
   Eye,
   EyeOff,
   BarChart3,
+  AlertCircle,
   Users, // For Students
   Calculator, // For Math Attempts
   Target, // For Accuracy
@@ -23,6 +25,8 @@ import {
   useGetLeaderboardStatusQuery,
   useUpdateLeaderboardStatusMutation,
 } from "../store/slices/leaderboardApiSlice";
+
+import { useGetClassroomStatsQuery } from "../store/slices/usersApiSlice";
 import { useGetRecentActivityQuery } from "../store/slices/usersApiSlice";
 
 // Styling
@@ -100,6 +104,46 @@ const TeacherDashboard = () => {
       );
     }
   };
+
+  // Struggle Logic
+  const [selectedDiagnostic, setSelectedDiagnostic] = useState(null); // Modal State
+
+  const { data: classroomData, isLoading: isLoadingStats } =
+    useGetClassroomStatsQuery(undefined, {
+      pollingInterval: 3000, //  Add this to sync every 3 seconds
+    });
+
+  const strugglingAlerts = useMemo(() => {
+    if (!classroomData) return [];
+
+    console.log("DEBUG: Full Classroom Data:", classroomData); // 🔍 Check this in F12 console
+
+    const alerts = [];
+    classroomData.forEach((student) => {
+      student.nodes?.forEach((node) => {
+        console.log("DEBUG: Single Node Data:", node); // 🔍 Look at the keys here!
+
+        // 🔥 This "Master Logic" checks every possible key name
+        const actualId = node.nodeId || node.conceptId || node.id || node._id;
+
+        const nodeTitle = actualId
+          ? actualId.replace(/_/g, " ")
+          : "Unknown Node";
+
+        if (node.attempts > 5 && node.score < 4.0) {
+          alerts.push({
+            id: `${student.id}-${actualId || Math.random()}`,
+            name: student.username,
+            node: nodeTitle,
+            attempts: node.attempts,
+            score: Number(node.score).toFixed(2),
+          });
+        }
+      });
+    });
+    return alerts;
+  }, [classroomData]);
+
   return (
     <div className="teacher-dashboard">
       <header className="teacher-dashboard__hero">
@@ -256,6 +300,79 @@ const TeacherDashboard = () => {
               </table>
             </div>
           </section>
+
+          <section className="teacher-dashboard__panel alert-panel">
+            <div className="panel-header">
+              <h2>
+                <BarChart3 size={18} /> Priority Interventions
+              </h2>
+            </div>
+
+            <div className="alert-list">
+              {strugglingAlerts.length > 0 ? (
+                // 🔥 Changed 'alert' to 'entry' here
+                strugglingAlerts.map((entry) => {
+                  const severity = entry.attempts > 8 ? "high" : "medium";
+
+                  return (
+                    <div
+                      key={entry.id}
+                      className={`intervention-card ${severity}`}
+                    >
+                      <div className="card-left">
+                        <div className="student-profile">
+                          <span className="student-name">
+                            {entry.name} {""}
+                          </span>
+                          <span className="intervention-reason">
+                            Struggle Area: <i>{entry.node}</i>
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="card-middle">
+                        <div className="stat-pill">
+                          <label>Attempts</label>
+                          <strong>{entry.attempts}</strong>
+                        </div>
+                        <div className="stat-pill">
+                          <label>AI Confidence</label>
+                          <strong className="score-low">{entry.score}</strong>
+                        </div>
+                      </div>
+
+                      <div className="card-right">
+                        <div className="gap-analysis">
+                          <label>Mastery Gap</label>
+                          <div className="mini-track">
+                            <div
+                              className="mini-fill"
+                              style={{
+                                width: `${Math.max((entry.score / 7.82) * 100, 2)}%`,
+                              }}
+                            />
+                          </div>
+                        </div>
+                        {/* <button
+                          className="view-details-btn"
+                          onClick={() => setSelectedDiagnostic(entry)}
+                        >
+                          <BarChart3 size={14} />
+                        </button> */}
+                        {/* <DiagnosticModal
+                          isOpen={!!selectedDiagnostic}
+                          data={selectedDiagnostic}
+                          onClose={() => setSelectedDiagnostic(null)}
+                        /> */}
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="no-alerts"> All students are on track!</div>
+              )}
+            </div>
+          </section>
         </div>
       )}
 
@@ -317,7 +434,6 @@ const TeacherDashboard = () => {
                   </div>
                 ))
               ) : (
-                /* 🔥 BETTER EMPTY STATE: Distinguish between "no data" and "no search results" */
                 <p className="empty-message">
                   {searchTerm
                     ? `No activity found for "${searchTerm}"`
@@ -336,301 +452,3 @@ const TeacherDashboard = () => {
 };
 
 export default TeacherDashboard;
-
-// import { useState } from "react";
-// import { Link } from "react-router-dom";
-// import { useSelector } from "react-redux";
-// import {
-//   useGetLeaderboardQuery,
-//   useGetLeaderboardStatusQuery,
-//   useUpdateLeaderboardStatusMutation,
-// } from "../store/slices/leaderboardApiSlice";
-// import "../sass/page/teacherDashboardPage.scss";
-// import { CheckCircle2, XCircle } from "lucide-react";
-// import { useGetRecentActivityQuery } from "../store/slices/usersApiSlice";
-
-// const TeacherDashboard = () => {
-//   const { userInfo } = useSelector((state) => state.auth);
-//   const [actionError, setActionError] = useState("");
-//   const [activeTab, setActiveTab] = useState("activity");
-
-//   const userRole = userInfo?.role;
-//   const isTeacher = userRole === "teacher";
-//   const displayUsername = userInfo?.username || "User";
-
-//   // Activity Feed Hook (Polls every 3s for live updates)
-//   const { data: recentActivity, isLoading: loadingActivity } =
-//     useGetRecentActivityQuery(undefined, { pollingInterval: 3000 });
-
-//   const {
-//     data: statusData,
-//     isLoading: isStatusLoading,
-//     isError: isStatusError,
-//     error: statusError,
-//   } = useGetLeaderboardStatusQuery();
-
-//   const [updateLeaderboardStatus, { isLoading: isToggling }] =
-//     useUpdateLeaderboardStatusMutation();
-
-//   const {
-//     data: leaderboardData,
-//     isLoading: isLeaderboardLoading,
-//     isError: isLeaderboardError,
-//     error: leaderboardError,
-//   } = useGetLeaderboardQuery(5, { skip: !statusData });
-
-//   // Calculations for stats
-//   const entries = leaderboardData?.entries || [];
-//   const totalAttempts = entries.reduce(
-//     (sum, entry) => sum + entry.totalAttempts,
-//     0,
-//   );
-//   const totalCorrect = entries.reduce(
-//     (sum, entry) => sum + entry.correctAttempts,
-//     0,
-//   );
-//   const averageAccuracy = entries.length
-//     ? Number(
-//         (
-//           entries.reduce((sum, entry) => sum + entry.accuracy, 0) /
-//           entries.length
-//         ).toFixed(1),
-//       )
-//     : 0;
-
-//   const toggleLeaderboard = async () => {
-//     if (isToggling) return;
-//     setActionError("");
-//     try {
-//       await updateLeaderboardStatus(!isEnabled).unwrap();
-//     } catch (error) {
-//       setActionError(
-//         error?.data?.message || "Failed to update leaderboard status",
-//       );
-//     }
-//   };
-
-//   const isEnabled = Boolean(statusData?.enabled);
-
-//   return (
-//     <div className="teacher-dashboard">
-//       <header className="teacher-dashboard__hero">
-//         <div className="player-badge-profile highlight2">
-//           {isTeacher ? (
-//             <>
-//               <span className="highlight1">T</span>eacher{" "}
-//             </>
-//           ) : (
-//             <>
-//               <span className="highlight1">S</span>tudent{" "}
-//             </>
-//           )}
-//           <span className="highlight2">P</span>rofile: {displayUsername}
-//         </div>
-
-//         <Link to="/leaderboard" className="teacher-dashboard__secondaryAction">
-//           Open Leaderboard
-//         </Link>
-//       </header>
-
-//       {isStatusLoading ? (
-//         <section className="teacher-dashboard__panel">
-//           Loading classroom controls...
-//         </section>
-//       ) : isStatusError ? (
-//         <section className="teacher-dashboard__panel teacher-dashboard__panel--error">
-//           {statusError?.data?.message || "Failed to load teacher dashboard"}
-//         </section>
-//       ) : (
-//         <>
-//           {/* STATS GRID */}
-//           <section className="teacher-dashboard__grid">
-//             <article className="teacher-dashboard__stat">
-//               <span>Leaderboard</span>
-//               <strong>{isEnabled ? "Enabled" : "Disabled"}</strong>
-//               <small>
-//                 {isEnabled
-//                   ? "Students can view rankings"
-//                   : "Visible only to teachers"}
-//               </small>
-//             </article>
-
-//             <article className="teacher-dashboard__stat">
-//               <span>Students Ranked</span>
-//               <strong>{entries.length}</strong>
-//               <small>Students with recorded attempts</small>
-//             </article>
-
-//             <article className="teacher-dashboard__stat">
-//               <span>Total Attempts</span>
-//               <strong>{totalAttempts}</strong>
-//               <small>Across the previewed leaderboard</small>
-//             </article>
-
-//             <article className="teacher-dashboard__stat">
-//               <span>Average Accuracy</span>
-//               <strong>{averageAccuracy}%</strong>
-//               <small>Based on current ranked students</small>
-//             </article>
-//           </section>
-
-//           {/* CLASSROOM CONTROLS */}
-//           <section className="teacher-dashboard__panel teacher-dashboard__panel--split">
-//             <div>
-//               <h2>Classroom controls</h2>
-//               <p>
-//                 {isEnabled
-//                   ? "The leaderboard is live."
-//                   : "The leaderboard is hidden."}
-//               </p>
-//               {actionError && (
-//                 <p className="teacher-dashboard__inlineError">{actionError}</p>
-//               )}
-//             </div>
-
-//             <button
-//               type="button"
-//               className="teacher-dashboard__action"
-//               onClick={toggleLeaderboard}
-//               disabled={isToggling}
-//             >
-//               {isToggling
-//                 ? "Updating..."
-//                 : isEnabled
-//                   ? "Disable Leaderboard"
-//                   : "Enable Leaderboard"}
-//             </button>
-//           </section>
-//           {/* NEW: TAB NAVIGATION */}
-//           <div className="dashboard-tabs">
-//             <button
-//               className={`tab-btn ${activeTab === "activity" ? "active" : ""}`}
-//               onClick={() => setActiveTab("activity")}
-//             >
-//               Live Activity
-//             </button>
-//             <button
-//               className={`tab-btn ${activeTab === "rankings" ? "active" : ""}`}
-//               onClick={() => setActiveTab("rankings")}
-//             >
-//               Top Rankings
-//             </button>
-//           </div>
-//           {/* TOP STUDENTS TABLE */}
-//           {isLeaderboardLoading ? (
-//             <section className="teacher-dashboard__panel">
-//               Loading top students...
-//             </section>
-//           ) : (
-//             <section className="teacher-dashboard__panel">
-//               <div className="teacher-dashboard__panelHeader">
-//                 <h2>Top students</h2>
-//                 <Link
-//                   to="/leaderboard"
-//                   className="teacher-dashboard__inlineLink"
-//                 >
-//                   View full leaderboard
-//                 </Link>
-//               </div>
-
-//               {entries.length ? (
-//                 <div className="teacher-dashboard__tableWrapper">
-//                   <table className="teacher-dashboard__table">
-// <thead>
-//   <tr>
-//     <th>Rank</th>
-//     <th>Student</th>
-//     <th>Correct</th>
-//     <th>Attempts</th>
-//     <th>Accuracy</th>
-//   </tr>
-// </thead>
-// <tbody>
-//   {entries.map((entry) => (
-//     <tr key={entry.userId}>
-//       <td>#{entry.rank}</td>
-//       <td className="teacher-dashboard__studentCell">
-//         <span className="teacher-dashboard__avatar">
-//           {entry.avatar || "🐱"}
-//         </span>
-//         <span>{entry.username}</span>
-//       </td>
-//       <td>{entry.correctAttempts}</td>
-//       <td>{entry.totalAttempts}</td>
-//       <td>{entry.accuracy}%</td>
-//     </tr>
-//   ))}
-//                     </tbody>
-//                   </table>
-//                 </div>
-//               ) : (
-//                 <p className="teacher-dashboard__empty">
-//                   No student attempts yet.
-//                 </p>
-//               )}
-//             </section>
-//           )}
-
-//           {/* NEW: ALL STUDENT ACTIVITY SECTION */}
-//           <section className="teacher-dashboard__panel">
-//             <div className="teacher-dashboard__panelHeader">
-//               <h2>All Student Activity</h2>
-//               <p>Real-time updates from your classroom.</p>
-//             </div>
-
-//             {loadingActivity ? (
-//               <p className="loading-text">Loading activity...</p>
-//             ) : (
-//               <div
-//                 className="activity-list"
-//                 style={{ maxHeight: "300px", overflowY: "auto" }}
-//               >
-//                 {recentActivity && recentActivity.length > 0 ? (
-//                   recentActivity.map((activity) => (
-//                     <div
-//                       key={activity._id}
-//                       className={`activity-item ${activity.isCorrect ? "activity-item--correct" : "activity-item--incorrect"}`}
-//                     >
-//                       <div className="activity-icon-container">
-//                         {activity.isCorrect ? (
-//                           <CheckCircle2 size={20} className="icon-success" />
-//                         ) : (
-//                           <XCircle size={20} className="icon-error" />
-//                         )}
-//                       </div>
-
-//                       <div className="activity-details">
-//                         <span className="activity-text">
-//                           <strong className="student-name">
-//                             {activity.user?.username ||
-//                               activity.username ||
-//                               "Student"}
-//                             :{" "}
-//                           </strong>
-//                           Solved{" "}
-//                           <strong>
-//                             {activity.conceptId?.replace(/_/g, " ")}
-//                           </strong>{" "}
-//                           problem
-//                         </span>
-//                         <span className="activity-date">
-//                           {new Date(activity.timestamp).toLocaleDateString()}
-//                         </span>
-//                       </div>
-//                     </div>
-//                   ))
-//                 ) : (
-//                   <p className="empty-message">
-//                     No student attempts recorded yet.
-//                   </p>
-//                 )}
-//               </div>
-//             )}
-//           </section>
-//         </>
-//       )}
-//     </div>
-//   );
-// };
-
-// export default TeacherDashboard;

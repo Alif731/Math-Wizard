@@ -12,6 +12,7 @@ import TeacherDashboard from "./pages/TeacherDashboard.jsx";
 import TeacherAuth from "./pages/TeacherAuth.jsx";
 import PrivateRoute from "./components/PrivateRoute.jsx";
 import RoleRoute from "./components/RoleRoute.jsx";
+import ProgressBar from "./pages/ProgressBar.jsx";
 
 import store from "./store/store.js";
 import { Provider } from "react-redux";
@@ -36,11 +37,11 @@ const route = createBrowserRouter(
         <Route path="/home" element={<Home />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/progress" element={<ProgressBar />} />
       </Route>
 
       <Route path="" element={<RoleRoute allowedRoles={["student"]} />}>
         <Route path="/home" element={<Home />} />
-        <Route path="/level" element={<Navigate to="/home" replace />} />
       </Route>
 
       <Route path="" element={<RoleRoute allowedRoles={["teacher"]} />}>

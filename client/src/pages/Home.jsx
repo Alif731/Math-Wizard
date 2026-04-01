@@ -68,6 +68,7 @@ const Home = () => {
 
   if (!username) return <div className="loading-state">Loading...</div>;
   if (!problem) return <div className="loading-state">Loading...</div>;
+
   return (
     <div className="home-page">
       {/* --- ADDED BACK: GAME HEADER --- */}

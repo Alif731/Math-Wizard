@@ -1555,27 +1555,27 @@ const seedData = async () => {
       streak: 0,
 
       // --- 1. CHOOSE ACTIVE ZPD NODE ---
-      // zpdNodes: ["foundation_signs"], // Conceptual (Sign selection)
-      zpdNodes: ["visual_addition"], // Visual (Bar model)
+      zpdNodes: ["foundation_signs"], // Conceptual (Sign selection)
+      // zpdNodes: ["visual_addition"], // Visual (Bar model)
       // zpdNodes: ["visual_icons"], // Icons (Match the following)
       // zpdNodes: ["add_single"],      // Direct Input (Normal math)
 
       mastery: {
         // --- 2. UNCOMMENT MATCHING MASTERY BLOCK ---
-        // // Conceptual (Sign selection)
-        // foundation_signs: {
-        //   status: "unlocked",
-        //   successCount: 0,
-        //   attemptCount: 0,
-        //   lastAttempts: [],
-        // },
-        // Visual (Bar model)
-        visual_addition: {
+        // Conceptual (Sign selection)
+        foundation_signs: {
           status: "unlocked",
           successCount: 0,
           attemptCount: 0,
           lastAttempts: [],
         },
+        // // Visual (Bar model)
+        // visual_addition: {
+        //   status: "unlocked",
+        //   successCount: 0,
+        //   attemptCount: 0,
+        //   lastAttempts: [],
+        // },
         // // Icons (Match the following)
         // visual_icons: {
         //   status: "unlocked",

@@ -59,6 +59,15 @@ export const usersApiSlice = apiSlice.injectEndpoints({
         method: "GET",
       }),
     }),
+    // Add this to your endpoints
+    getClassroomStats: builder.query({
+      query: () => ({
+        url: "/teacher/stats",
+        method: "GET",
+      }),
+      // 🔥 Added this so we can "force" a refresh if a teacher sends a nudge
+      providesTags: ["ClassStats"],
+    }),
   }),
 });
 
@@ -69,6 +78,7 @@ export const {
   useGetUserProfileQuery,
   useLazyGetUserProfileQuery,
   useGetOAuthProvidersQuery,
+  useGetClassroomStatsQuery,
   useUpdateUserMutation,
   useGetRecentActivityQuery,
 } = usersApiSlice;

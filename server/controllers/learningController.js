@@ -15,10 +15,22 @@ exports.getProblem = async (req, res) => {
       return res.json({ message: "Curriculum complete!", complete: true });
     }
 
+    // for ghost panel
+    const masteryEntry = user.mastery.get(concept.id);
+    const rawAdaptiveState = masteryEntry.adaptiveState.toObject
+      ? masteryEntry.adaptiveState.toObject()
+      : masteryEntry.adaptiveState;
     res.json({
       concept: { id: concept.id, title: concept.title },
       question: { ...question.toObject(), id: question._id },
       description: concept.description,
+      //  ghost panel stats
+      adaptiveState: {
+        ...rawAdaptiveState, //  Now the score, G, S, and UCB will actually spread!
+        status: masteryEntry.status,
+        attemptCount: masteryEntry.attemptCount,
+        successCount: masteryEntry.successCount,
+      },
     });
   } catch (error) {
     console.error("getProblem error:", error);
@@ -58,7 +70,6 @@ exports.submitAnswer = async (req, res) => {
     } else {
       user.streak = 0; // Reset global streak on any wrong answer
     }
-    // --- THE SECRET SAUCE ENDS HERE ---
 
     await Attempt.create({
       user: user._id,
@@ -71,12 +82,15 @@ exports.submitAnswer = async (req, res) => {
 
     await user.save(); // This now saves the NEW streak to MongoDB
 
+    const updatedEntry = user.mastery.get(conceptId); // ghost panel
+
     res.json({
       isCorrect,
       correctAnswer: question.correctAnswer,
       explanation: question.explanation || "Good job!",
       streak: user.streak, // Send new streak back to frontend
       mastery: user.mastery.get(conceptId),
+      adaptiveState: updatedEntry?.adaptiveState || {},
       zpdNodes: user.zpdNodes,
     });
   } catch (error) {

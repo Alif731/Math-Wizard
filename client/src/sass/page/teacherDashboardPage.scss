@@ -517,3 +517,203 @@
     background: #94a3b8; // Slightly darker grey on hover
   }
 }
+
+// alert
+
+.alert-panel {
+  background: transparent;
+  padding: 1.1rem;
+  margin-top: 2rem;
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1.5rem;
+    padding-left: 5px;
+
+    h2 {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #81b29a;
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin: 0;
+
+      svg {
+        color: #81b29a; // Red icon for "Alert"
+      }
+    }
+  }
+}
+
+.intervention-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #374151;
+  padding: 16px 24px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+
+  // Hover Effect
+  &:hover {
+    transform: translateY(-2px);
+    background: #252539;
+    border-color: rgba(139, 92, 246, 0.3);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  }
+
+  // Severity Borders
+  &.high {
+    border-left: 5px solid #ef4444;
+  } // Critical red
+  &.medium {
+    border-left: 5px solid #f59e0b;
+  } // Warning orange
+
+  // --- LEFT: Student Identity ---
+  .card-left {
+    flex: 1.5;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    .student-name {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #f8fafc;
+      letter-spacing: 0.3px;
+    }
+
+    .intervention-reason {
+      font-size: 0.85rem;
+      color: #94a3b8;
+
+      i {
+        color: #fbbf24; // Golden color for the concept name
+        font-style: normal;
+        font-weight: 600;
+        text-transform: capitalize;
+      }
+    }
+  }
+
+  // --- MIDDLE: Bayesian Stats ---
+  .card-middle {
+    flex: 1.5;
+    display: flex;
+    justify-content: center;
+    gap: 48px; // Space between Attempts and Score
+
+    .stat-pill {
+      text-align: center;
+
+      label {
+        display: block;
+        font-size: 0.65rem;
+        color: #8f8f91;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 4px;
+      }
+
+      strong {
+        font-size: 1.2rem;
+        font-family: "Lexend", sans-serif;
+        color: #f1f5f9;
+
+        &.score-low {
+          color: #f87171; // Alert Red for 0.00 scores
+          text-shadow: 0 0 10px rgba(248, 113, 113, 0.2);
+        }
+      }
+    }
+  }
+
+  // --- RIGHT: Mastery Visuals ---
+  .card-right {
+    flex: 1.5;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 24px;
+
+    .gap-analysis {
+      width: 140px;
+
+      label {
+        display: block;
+        font-size: 0.65rem;
+        color: #8f8f91;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+        text-align: right;
+      }
+
+      .mini-track {
+        width: 100%;
+        height: 8px;
+        background: #0f172a; // Deep hollow track
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        overflow: hidden;
+        position: relative;
+
+        .mini-fill {
+          height: 100%;
+          background: linear-gradient(
+            90deg,
+            #0071e9,
+            #d946ef
+          ); // Purple to Pink gradient
+          border-radius: 10px;
+          box-shadow: 0 0 12px rgba(124, 58, 237, 0.5);
+          transition: width 0.6s ease-in-out;
+        }
+      }
+    }
+
+    // --- Action Button (The Icon Fix) ---
+    .view-details-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #a78bfa;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+
+      &:hover {
+        background: #7c3aed;
+        color: white;
+        border-color: #7c3aed;
+        transform: scale(1.1);
+        box-shadow: 0 0 15px rgba(124, 58, 237, 0.4);
+      }
+
+      svg {
+        stroke-width: 2.5;
+      }
+    }
+  }
+}
+
+// Empty State Styling
+.no-alerts {
+  // padding: 3rem;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: #94a3b8;
+  font-style: italic;
+}

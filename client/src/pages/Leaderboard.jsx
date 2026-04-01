@@ -1,5 +1,7 @@
 import { useMemo } from "react";
 import { useSelector } from "react-redux";
+import { Link } from "react-router-dom";
+
 import { Crown, Settings, Eye, EyeOff, Medal } from "lucide-react";
 import UserAvatar from "../components/UserAvatar";
 
@@ -14,6 +16,7 @@ import "../sass/page/leaderboardPage.scss";
 const Leaderboard = () => {
   const { userInfo } = useSelector((state) => state.auth);
   const isTeacher = userInfo?.role === "teacher";
+  const isStudent = userInfo?.role === "student";
 
   const {
     data: statusData,
@@ -166,8 +169,20 @@ const Leaderboard = () => {
                   </table>
                 </div>
               ) : (
-                <div className="empty-state">
-                  <p>No attempts yet. Start solving problems to appear here!</p>
+                <div className="leaderboard__empty-state animate-fade-in">
+                  <p>
+                    {isStudent
+                      ? "Your journey to the top begins here."
+                      : "No scores have been recorded yet."}
+                  </p>
+
+                  {/* Dynamic Link */}
+                  <Link
+                    to={isStudent ? "/home" : "/teacher/dashboard"}
+                    className="leaderboard-action-btn"
+                  >
+                    {isStudent ? "Start Journey" : "Classroom Insight"}
+                  </Link>
                 </div>
               )}
             </section>
