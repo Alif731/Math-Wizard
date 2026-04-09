@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { setCredentials } from "../store/slices/authSlice";
+import { logout, setCredentials } from "../store/slices/authSlice";
 import {
+  useLazyGetUserProfileQuery,
   useLoginMutation,
   useRegisterMutation,
 } from "../store/slices/usersApiSlice";
@@ -23,18 +24,53 @@ const TeacherAuth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
+  const [isCheckingStoredSession, setIsCheckingStoredSession] = useState(false);
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [login, { isLoading: isLoginLoading }] = useLoginMutation();
   const [register, { isLoading: isRegisterLoading }] = useRegisterMutation();
+  const [getUserProfile] = useLazyGetUserProfileQuery();
   const { userInfo } = useSelector((state) => state.auth);
 
   useEffect(() => {
-    if (userInfo) {
-      navigate(getDefaultRouteForRole(userInfo.role), { replace: true });
-    }
-  }, [navigate, userInfo]);
+    let isActive = true;
+
+    const validateStoredSession = async () => {
+      if (!userInfo) {
+        setIsCheckingStoredSession(false);
+        return;
+      }
+
+      setIsCheckingStoredSession(true);
+
+      try {
+        const profile = await getUserProfile().unwrap();
+
+        if (!isActive) {
+          return;
+        }
+
+        dispatch(setCredentials({ ...profile }));
+        navigate(getDefaultRouteForRole(profile.role), { replace: true });
+      } catch (_error) {
+        if (!isActive) {
+          return;
+        }
+
+        dispatch(logout());
+        dispatch(apiSlice.util.resetApiState());
+        setError("");
+        setIsCheckingStoredSession(false);
+      }
+    };
+
+    validateStoredSession();
+
+    return () => {
+      isActive = false;
+    };
+  }, [dispatch, getUserProfile, navigate, userInfo]);
 
   const handleModeToggle = () => {
     setIsLogin((prev) => !prev);
@@ -118,7 +154,7 @@ const TeacherAuth = () => {
         </video>
       </div>
       <div className="login__container">
-        {/* <p className="login__eyebrow">Maths Wizard</p> */}
+        {/* <p className="login__eyebrow">WordSolve</p> */}
         <h1 className="login__container__header">Teacher Portal</h1>
         <p className="login__subtitle">
           {isLogin
@@ -207,10 +243,14 @@ const TeacherAuth = () => {
             <button
               type="submit"
               className="loginMain__btn"
-              disabled={isLoginLoading || isRegisterLoading}
+              disabled={
+                isCheckingStoredSession || isLoginLoading || isRegisterLoading
+              }
             >
-              {isLoginLoading || isRegisterLoading
-                ? "Loading..."
+              {isCheckingStoredSession
+                ? "Checking session..."
+                : isLoginLoading || isRegisterLoading
+                  ? "Loading..."
                 : isLogin
                   ? "Teacher Login"
                   : "Teacher Sign Up"}

@@ -21,7 +21,7 @@ async function verify() {
     password: 'password123',
     role: 'student',
     mastery: {},
-    zpdNodes: ['foundation_signs'],
+    zpdNodes: ['single_add'],
   });
   console.log('Initial ZPD:', user.zpdNodes);
 
@@ -29,68 +29,56 @@ async function verify() {
   let firstProblem = await getNextProblem(user);
   await user.save();
   console.log('First chosen concept:', firstProblem.concept.id);
-  assert.equal(firstProblem.concept.id, 'foundation_signs');
+  assert.equal(firstProblem.concept.id, 'single_add');
 
-  await updateMastery(user, 'foundation_signs', true);
+  await updateMastery(user, 'single_add', true);
   await user.save();
   user = await User.findById(user._id);
 
   let secondProblem = await getNextProblem(user);
   await user.save();
   assert.notEqual(String(secondProblem.question._id), String(firstProblem.question._id));
-  console.log('Question sequencing verified for foundation_signs.');
+  console.log('Question sequencing verified for single_add.');
 
-  // 5. Simulate Mastery of 'foundation_signs' (Root)
-  console.log('Simulating 15 correct attempts for foundation_signs...');
-  for (let i = 0; i < 14; i++) {
-    await updateMastery(user, 'foundation_signs', true);
+  const orderedConcepts = [
+    'single_add',
+    'single_sub',
+    'multi_add',
+    'multi_sub',
+    'missing_part_equations',
+    'equations_from_bar_models',
+    'schema_combine',
+    'schema_change',
+    'schema_compare',
+  ];
+
+  for (let index = 0; index < orderedConcepts.length - 1; index++) {
+    const currentConceptId = orderedConcepts[index];
+    const nextConceptId = orderedConcepts[index + 1];
+
+    console.log(`Simulating mastery for ${currentConceptId}...`);
+    const existingAttempts = currentConceptId === 'single_add' ? 1 : 0;
+    const requiredAttempts = 15 - existingAttempts;
+
+    for (let i = 0; i < requiredAttempts; i++) {
+      await updateMastery(user, currentConceptId, true);
+    }
+
+    await user.save();
+    user = await User.findById(user._id);
+
+    const masteredEntry = user.mastery.get(currentConceptId);
+    console.log(`Mastery Status (${currentConceptId}):`, masteredEntry?.status);
+    assert.equal(masteredEntry?.status, 'mastered');
+
+    const unlockedEntry = user.mastery.get(nextConceptId);
+    console.log(`Mastery Status (${nextConceptId}):`, unlockedEntry ? unlockedEntry.status : 'undefined');
+    assert.equal(unlockedEntry?.status, 'unlocked');
   }
+
+  const finalProblem = await getNextProblem(user);
   await user.save();
-  user = await User.findById(user._id);
-  
-  // Check Mastery
-  let m = user.mastery.get('foundation_signs');
-  console.log('Mastery Status (foundation_signs):', m.status);
-  assert.equal(m.status, 'mastered');
-
-  // Check Unlock of 'visual_addition'
-  const visualAdd = user.mastery.get('visual_addition');
-  console.log('Mastery Status (visual_addition):', visualAdd ? visualAdd.status : 'undefined');
-  assert.equal(visualAdd?.status, 'unlocked');
-
-  // 6. Simulate Mastery of 'visual_addition'
-  console.log('Simulating 15 correct attempts for visual_addition...');
-  for (let i = 0; i < 15; i++) {
-    await updateMastery(user, 'visual_addition', true);
-  }
-  await user.save();
-  user = await User.findById(user._id);
-
-  m = user.mastery.get('visual_addition');
-  console.log('Mastery Status (visual_addition):', m.status);
-  assert.equal(m.status, 'mastered');
-
-  // Check Unlock of both child nodes from the same frontier
-  const addSingle = user.mastery.get('add_single');
-  const visualIcons = user.mastery.get('visual_icons');
-  console.log('Mastery Status (add_single):', addSingle ? addSingle.status : 'undefined');
-  console.log('Mastery Status (visual_icons):', visualIcons ? visualIcons.status : 'undefined');
-  assert.equal(addSingle?.status, 'unlocked');
-  assert.equal(visualIcons?.status, 'unlocked');
-
-  const servedConcepts = new Set();
-  const thirdProblem = await getNextProblem(user);
-  await user.save();
-  servedConcepts.add(thirdProblem.concept.id);
-
-  await updateMastery(user, thirdProblem.concept.id, true);
-  await user.save();
-  user = await User.findById(user._id);
-
-  const fourthProblem = await getNextProblem(user);
-  await user.save();
-  servedConcepts.add(fourthProblem.concept.id);
-  assert.deepEqual([...servedConcepts].sort(), ['add_single', 'visual_icons'].sort());
+  assert.equal(finalProblem.concept.id, 'schema_compare');
 
   console.log('SUCCESS: KL-UCB sequencing, change-point mastery, and graph progression verified.');
   process.exit(0);

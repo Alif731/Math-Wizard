@@ -1,8 +1,9 @@
 const Concept = require("../models/Concept");
 
 const WINDOW_SIZE = 10;
-const MASTERY_MIN_ATTEMPTS = 5;
-const CHANGE_POINT_FALSE_POSITIVE_RATE = 0.0004;
+const MASTERY_MIN_ATTEMPTS = 2;
+const MASTERY_SCORE_THRESHOLD = 2;
+const CHANGE_POINT_FALSE_POSITIVE_RATE = Math.exp(-MASTERY_SCORE_THRESHOLD);
 const BANDIT_PRIORS = Object.freeze({
   guessAlpha: 20,
   guessBeta: 160,
@@ -560,10 +561,7 @@ function updateAdaptiveState(adaptiveState, isCorrect) {
 }
 
 function hasMasteryChangePoint(adaptiveState) {
-  return (
-    adaptiveState.changePointScore >=
-    Math.log(1 / CHANGE_POINT_FALSE_POSITIVE_RATE)
-  );
+  return adaptiveState.changePointScore >= MASTERY_SCORE_THRESHOLD;
 }
 
 async function getNextProblem(user) {

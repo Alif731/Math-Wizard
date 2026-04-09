@@ -4,11 +4,14 @@
   "description": "This implementation guide provides a step-by-step roadmap for building the **Personalized Web-Based Learning System**, integrating the **MERN stack**, **KL-UCB algorithm**, and a **Prerequisite-Based Concept Graph**.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "server": "npm run server --prefix server",
+    "server": "nodemon --watch server server/index.js",
     "client": "npm run dev --prefix client",
     "dev": "concurrently \"npm run server\" \"npm run client\""
   },
+  "workspaces": [
+    "client",
+    "server"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Alif731/Personalized-web-based-learning-app-for-teaching-math-word-problems.git"

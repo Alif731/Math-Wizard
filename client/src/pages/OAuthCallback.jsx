@@ -54,7 +54,7 @@ const OAuthCallback = () => {
   return (
     <div className="login__main">
       <div className="login__container login__container--compact">
-        <p className="login__eyebrow">Maths Wizard</p>
+        <p className="login__eyebrow">WordSolve</p>
         <h1 className="login__container__header">Google Sign-In</h1>
         <p className="login__subtitle">{message}</p>
         {showBackButton && (

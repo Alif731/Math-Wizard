@@ -3,6 +3,7 @@ const User = require("../models/User");
 const Attempt = require("../models/Attempt");
 const TeacherSignupCode = require("../models/TeacherSignupCode");
 const generateToken = require("../utils/generateToken");
+const { clearTokenCookie } = require("../utils/generateToken");
 const {
   buildGoogleAuthorizationUrl,
   exchangeGoogleCodeForTokens,
@@ -12,7 +13,7 @@ const {
 
 const DEFAULT_ROLE = "student";
 const VALID_ROLES = ["student", "teacher"];
-const DEFAULT_ZPD_NODES = ["foundation_signs"];
+const DEFAULT_ZPD_NODES = ["single_add"];
 const DEFAULT_AVATAR = "beam";
 const GOOGLE_STATE_COOKIE = "google_oauth_state";
 
@@ -236,12 +237,7 @@ const registerUser = async (req, res) => {
 // @access  Public
 const logoutUser = (req, res) => {
   clearGoogleStateCookie(res);
-  res.cookie("jwt", "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV !== "development",
-    sameSite: "strict",
-    expires: new Date(0),
-  });
+  clearTokenCookie(res);
   res.status(200).json({ message: "Logged out successfully" });
 };
 

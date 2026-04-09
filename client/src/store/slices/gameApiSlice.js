@@ -20,8 +20,7 @@ export const gameApiSlice = apiSlice.injectEndpoints({
         method: "POST",
         body: payload,
       }),
-      // Magic: Refresh UserStatus AND Problem when an answer is submitted
-      invalidatesTags: ["Leaderboard", "UserStatus", "Activity", "Problem"],
+      invalidatesTags: ["Leaderboard", "UserStatus", "Activity"],
     }),
   }),
   overrideExisting: false, // Prevent errors in hot-reloading

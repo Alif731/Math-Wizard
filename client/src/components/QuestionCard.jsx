@@ -1,33 +1,45 @@
 import { useState, useEffect } from "react";
 import Confetti from "react-confetti";
-import { Activity } from "lucide-react";
 
-// Scss Components
 import "../sass/components/questionCard.scss";
 import "../sass/components/question_type/conceptualQuestion.scss";
 import "../sass/components/question_type/visualBarModel.scss";
 import "../sass/components/question_type/matchTheFollowing.scss";
 import "../sass/components/question_type/directInputQuestion.scss";
+import "../sass/components/question_type/schemaQuestion.scss";
 
-// Question Components
-// import DragDropQuestion from "./DragDropQuestion";
 import GhostPanel from "./GhostPanel.jsx";
 import ConceptualQuestion from "./Question_Type/ConceptualQuestion";
 import VisualBarModel from "./Question_Type/VisualBarModel";
 import MatchTheFollowing from "./Question_Type/MatchTheFollowing";
 import DirectInputQuestion from "./Question_Type/DirectInputQuestion";
+import SchemaQuestion from "./Question_Type/SchemaQuestion";
+import {
+  buildSubmissionResponse,
+  createInitialResponse,
+  isQuestionResponseReady,
+} from "../utils/questionValidation";
 
 const audioSuccess = new Audio("/success1.mp3");
 const audioFailure = new Audio("/failure.mp3");
 
-const QuestionCard = ({ problem, onSubmit }) => {
-  const [answer, setAnswer] = useState("");
+const QuestionCard = ({
+  problem,
+  onSubmit,
+  onNext,
+  disabled,
+}) => {
+  const [answer, setAnswer] = useState(() =>
+    createInitialResponse(problem?.question),
+  );
+  const [feedback, setFeedback] = useState(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isError, setIsError] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
 
   useEffect(() => {
-    setAnswer("");
+    setAnswer(createInitialResponse(problem?.question));
+    setFeedback(null);
     setIsSuccess(false);
     setIsError(false);
     setSelectedOption(null);
@@ -35,91 +47,96 @@ const QuestionCard = ({ problem, onSubmit }) => {
 
   const playSuccessSound = () => {
     audioSuccess.currentTime = 0;
-    audioSuccess.play().catch((e) => console.log("Audio blocked by browser"));
+    audioSuccess.play().catch(() => {});
   };
 
   const playErrorSound = () => {
     audioFailure.currentTime = 0;
-    audioFailure.play().catch((e) => console.log("Audio blocked by browser"));
+    audioFailure.play().catch(() => {});
   };
 
-  const handleOptionClick = (option) => {
-    if (isSuccess || isError) return;
+  const queueNextProblem = () => {
+    window.setTimeout(() => onNext?.(), 1400);
+  };
+
+  const applyFeedback = (result) => {
+    setFeedback(result);
+    setIsSuccess(Boolean(result?.isCorrect));
+    setIsError(Boolean(result) && !result.isCorrect);
+
+    if (result?.isCorrect) {
+      playSuccessSound();
+    } else {
+      playErrorSound();
+    }
+  };
+
+  const submitStructuredResponse = async (overrideResponse) => {
+    if (!problem?.question || feedback || disabled) return;
+
+    const isSyntheticEvent =
+      overrideResponse &&
+      typeof overrideResponse === "object" &&
+      "preventDefault" in overrideResponse;
+
+    const responseToSubmit =
+      isSyntheticEvent || overrideResponse === undefined
+        ? buildSubmissionResponse(problem.question, answer)
+        : overrideResponse;
+
+    if (!isQuestionResponseReady(problem.question, answer)) return;
+
+    try {
+      const result = await onSubmit(responseToSubmit);
+      applyFeedback(result);
+      queueNextProblem();
+    } catch (error) {
+      console.error("Failed to submit:", error);
+    }
+  };
+
+  const handleOptionClick = async (option) => {
+    if (feedback || disabled) return;
     setSelectedOption(option);
 
-    const rawCorrect = problem?.question?.correctAnswer || problem?.answer;
-    if (rawCorrect === undefined || rawCorrect === null) {
-      onSubmit(option);
-      return;
-    }
-
-    const isCorrect = String(option).trim() === String(rawCorrect).trim();
-
-    if (isCorrect) {
-      // setStreak((prev) => prev + 1);
-      setIsSuccess(true);
-      playSuccessSound();
-      setTimeout(() => onSubmit(option), 3000);
-    } else {
-      // setStreak(0);
-      setIsError(true);
-      playErrorSound();
-      setTimeout(() => onSubmit(option), 2600);
+    try {
+      const result = await onSubmit(option);
+      applyFeedback(result);
+      queueNextProblem();
+    } catch (error) {
+      console.error("Failed to submit:", error);
     }
   };
 
-  const handleSubmit = (e) => {
-    if (e && e.preventDefault) e.preventDefault();
-    if (answer === "" || answer === null || answer === undefined) return;
+  const handleDirectSubmit = async (event) => {
+    if (event?.preventDefault) event.preventDefault();
+    if (!problem?.question || feedback || disabled) return;
 
-    const rawCorrect = problem?.question?.correctAnswer;
-    if (rawCorrect === undefined || rawCorrect === null) {
-      onSubmit(answer);
-      return;
-    }
+    const textAnswer =
+      typeof answer === "string"
+        ? answer
+        : answer?.textAnswer || answer?.slots?.answer || "";
 
-    const userAnswer = String(answer).trim();
-    const dbAnswer = String(rawCorrect).trim();
-    const isCorrect = userAnswer === dbAnswer;
+    if (!String(textAnswer || "").trim()) return;
 
-    const shouldAnimate =
-      problem.question.type === "visual" ||
-      problem.question.type === "icons_items" ||
-      problem.question.type === "direct";
-
-    if (shouldAnimate) {
-      if (isCorrect) {
-        // setStreak((prev) => prev + 1); // 🔥 ADDED THIS
-        playSuccessSound();
-        setIsSuccess(true);
-        setTimeout(() => onSubmit(userAnswer), 3000);
-      } else {
-        // setStreak(0); // 🔥 ADDED THIS
-        playErrorSound();
-        setIsError(true);
-        setTimeout(() => onSubmit(userAnswer), 2600);
-      }
-    } else {
-      onSubmit(userAnswer);
+    try {
+      const result = await onSubmit(textAnswer);
+      applyFeedback(result);
+      queueNextProblem();
+    } catch (error) {
+      console.error("Failed to submit:", error);
     }
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") handleSubmit(e);
-  };
+  const handleMatchComplete = async (isValid) => {
+    if (feedback || disabled) return;
 
-  const handleMatchComplete = (isValid) => {
-    setAnswer("matched");
-    if (isValid) {
-      // setStreak((prev) => prev + 1);
-      setIsSuccess(true);
-      playSuccessSound();
-      setTimeout(() => onSubmit("matched"), 2500);
-    } else {
-      // setStreak(0);
-      setIsError(true);
-      playErrorSound();
-      setTimeout(() => onSubmit("wrong_answer"), 2600);
+    try {
+      const result = await onSubmit(isValid ? "matched" : "wrong_answer");
+      applyFeedback(result);
+      queueNextProblem();
+    } catch (error) {
+      console.error("Failed to submit:", error);
     }
   };
 
@@ -129,88 +146,107 @@ const QuestionCard = ({ problem, onSubmit }) => {
   const isConceptual = questionType === "conceptual";
   const visualData = problem.question.visualData;
   const isIconsItems = questionType === "icons_items";
+  const isWorksheetDriven = [
+    "practice",
+    "equations",
+    "bar_to_equation",
+    "schema_bar_model",
+    "schema_equation",
+    "schema_solve",
+  ].includes(problem?.question?.moduleStage);
+  const showTelemetry = Boolean(problem?.adaptiveState) && import.meta.env.DEV;
   const isMatchTheFollowing =
     isIconsItems &&
     Array.isArray(visualData?.leftItems) &&
     Array.isArray(visualData?.rightItems);
 
-  const matchLeft = visualData?.leftItems || [
-    { id: "L1", content: "🐶🐶🐶 + 🐶🐶", matchId: "R1" },
-    { id: "L2", content: "10 - 4", matchId: "R2" },
-    { id: "L3", content: "⭐⭐ × ⭐⭐", matchId: "R3" },
-    { id: "L4", content: "8 ÷ 2", matchId: "R4" },
-  ];
-
-  const matchRight = visualData?.rightItems || [
-    { id: "R4", content: "4" },
-    { id: "R1", content: "5" },
-    { id: "R3", content: "4 Stars" },
-    { id: "R2", content: "6" },
-    { id: "R5", content: "9" },
-  ];
+  const matchLeft = visualData?.leftItems || [];
+  const matchRight = visualData?.rightItems || [];
 
   return (
-    <div>
-      {/* THE GHOST PANEL (Only visible in dev mode) */}
-      <GhostPanel
-        adaptiveData={problem?.adaptiveState}
-        conceptId={problem?.concept?.id}
-      />
-      {/* This renders the actual question (Conceptual, Bar Model, etc.) */}
-      <div className="question__card">
-        {isSuccess && (
-          <Confetti recycle={false} numberOfPieces={500} gravity={0.3} />
-        )}
-        <div className="question__text">
-          <span className="highlight3">Q,</span> {problem.question.text}
-        </div>
+    <div className="question-shell">
+      <div className="question-shell__main">
+        <div className="question__card">
+          {isSuccess && (
+            <Confetti recycle={false} numberOfPieces={300} gravity={0.22} />
+          )}
 
-        {isMatchTheFollowing && (
-          <div className="icons-items__container">
-            <MatchTheFollowing
-              key={problem.question.id}
-              id={problem.question.id || problem.question._id}
-              leftItems={matchLeft}
-              rightItems={matchRight}
-              onComplete={handleMatchComplete}
+          {isWorksheetDriven ? (
+            <SchemaQuestion
+              question={problem.question}
+              response={answer}
+              setResponse={setAnswer}
+              feedback={feedback}
+              onCheck={submitStructuredResponse}
+              onNext={onNext}
+              isSubmitting={disabled}
             />
-          </div>
-        )}
+          ) : (
+            <>
+              <div className="question__text">
+                <span className="highlight3">Q,</span> {problem.question.text}
+              </div>
 
-        {questionType === "visual" && visualData && (
-          <VisualBarModel
-            problem={problem}
-            answer={answer}
-            setAnswer={setAnswer}
-            isSuccess={isSuccess}
-            isError={isError}
-            handleKeyDown={handleKeyDown}
-            handleSubmit={handleSubmit}
-          />
-        )}
+              {isMatchTheFollowing && (
+                <div className="icons-items__container">
+                  <MatchTheFollowing
+                    key={problem.question.id}
+                    id={problem.question.id || problem.question._id}
+                    leftItems={matchLeft}
+                    rightItems={matchRight}
+                    onComplete={handleMatchComplete}
+                  />
+                </div>
+              )}
 
-        {isConceptual ? (
-          <ConceptualQuestion
-            problem={problem}
-            selectedOption={selectedOption}
-            isSuccess={isSuccess}
-            isError={isError}
-            handleOptionClick={handleOptionClick}
-          />
-        ) : (
-          <div>
-            {!isConceptual && questionType !== "visual" && !isIconsItems && (
-              <DirectInputQuestion
-                answer={answer}
-                setAnswer={setAnswer}
-                isSuccess={isSuccess}
-                isError={isError}
-                handleSubmit={handleSubmit}
-              />
-            )}
-          </div>
-        )}
+              {questionType === "visual" && visualData && (
+                <VisualBarModel
+                  problem={problem}
+                  answer={answer}
+                  setAnswer={setAnswer}
+                  isSuccess={isSuccess}
+                  isError={isError}
+                  handleKeyDown={(event) => {
+                    if (event.key === "Enter") handleDirectSubmit(event);
+                  }}
+                  handleSubmit={handleDirectSubmit}
+                />
+              )}
+
+              {isConceptual ? (
+                <ConceptualQuestion
+                  problem={problem}
+                  selectedOption={selectedOption}
+                  isSuccess={isSuccess}
+                  isError={isError}
+                  handleOptionClick={handleOptionClick}
+                />
+              ) : (
+                <div>
+                  {!isConceptual && questionType !== "visual" && !isIconsItems && (
+                    <DirectInputQuestion
+                      answer={answer}
+                      setAnswer={setAnswer}
+                      isSuccess={isSuccess}
+                      isError={isError}
+                      handleSubmit={handleDirectSubmit}
+                    />
+                  )}
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
+
+      {showTelemetry && (
+        <aside className="question-shell__telemetry">
+          <GhostPanel
+            adaptiveData={problem?.adaptiveState}
+            conceptId={problem?.concept?.id}
+          />
+        </aside>
+      )}
     </div>
   );
 };

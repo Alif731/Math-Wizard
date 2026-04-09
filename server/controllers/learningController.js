@@ -1,6 +1,10 @@
 const Concept = require("../models/Concept");
 const Attempt = require("../models/Attempt");
 const { getNextProblem, updateMastery } = require("../utils/learningEngine");
+const {
+  serializeResponse,
+  validateQuestionResponse,
+} = require("../utils/schemaQuestionUtils");
 
 /**
  * Fetches the next problem for the user based on the KL-UCB learning engine.
@@ -55,9 +59,7 @@ exports.submitAnswer = async (req, res) => {
       return res.status(404).json({ error: "Concept or Question not found" });
     }
 
-    const isCorrect =
-      response.trim().toLowerCase() ===
-      question.correctAnswer.trim().toLowerCase();
+    const isCorrect = validateQuestionResponse(question.toObject(), response);
 
     // --- THE SECRET SAUCE STARTS HERE ---
     if (isCorrect) {
@@ -76,7 +78,7 @@ exports.submitAnswer = async (req, res) => {
       conceptId,
       questionId,
       isCorrect,
-      response,
+      response: typeof response === "string" ? response : serializeResponse(response),
     });
     await updateMastery(user, conceptId, isCorrect);
 

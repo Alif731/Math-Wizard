@@ -4,7 +4,8 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const connectDB = require("./config/db");
 
-dotenv.config();
+const path = require("path");
+dotenv.config({ path: path.resolve(__dirname, ".env") });
 
 const isProduction = process.env.NODE_ENV === "production";
 const weakSecrets = new Set([

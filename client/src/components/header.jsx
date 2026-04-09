@@ -65,7 +65,7 @@ export default function Header() {
       <ul className={isNavExpanded ? "navbar" : "navbar expanded"}>
         <li className="navbar__item">
           <Link to={defaultRoute} className="navbar__item__title">
-            Maths Wizard
+            WordSolve
           </Link>
           <div className="navbar__item__icon" onClick={navBarExpandHandler}>
             <IoMenuSharp />

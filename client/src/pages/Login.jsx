@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { setCredentials } from "../store/slices/authSlice";
+import { logout, setCredentials } from "../store/slices/authSlice";
 import {
   useGetOAuthProvidersQuery,
+  useLazyGetUserProfileQuery,
   useLoginMutation,
   useRegisterMutation,
 } from "../store/slices/usersApiSlice";
@@ -30,12 +31,14 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
+  const [isCheckingStoredSession, setIsCheckingStoredSession] = useState(false);
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const [login, { isLoading: isLoginLoading }] = useLoginMutation();
   const [register, { isLoading: isRegisterLoading }] = useRegisterMutation();
+  const [getUserProfile] = useLazyGetUserProfileQuery();
   const {
     data: oauthProviders,
     isLoading: isOAuthProvidersLoading,
@@ -46,10 +49,43 @@ const Login = () => {
   const googleEnabled = Boolean(oauthProviders?.google);
 
   useEffect(() => {
-    if (userInfo) {
-      navigate(getDefaultRouteForRole(userInfo.role), { replace: true });
-    }
-  }, [navigate, userInfo]);
+    let isActive = true;
+
+    const validateStoredSession = async () => {
+      if (!userInfo) {
+        setIsCheckingStoredSession(false);
+        return;
+      }
+
+      setIsCheckingStoredSession(true);
+
+      try {
+        const profile = await getUserProfile().unwrap();
+
+        if (!isActive) {
+          return;
+        }
+
+        dispatch(setCredentials({ ...profile }));
+        navigate(getDefaultRouteForRole(profile.role), { replace: true });
+      } catch (_error) {
+        if (!isActive) {
+          return;
+        }
+
+        dispatch(logout());
+        dispatch(apiSlice.util.resetApiState());
+        setError("");
+        setIsCheckingStoredSession(false);
+      }
+    };
+
+    validateStoredSession();
+
+    return () => {
+      isActive = false;
+    };
+  }, [dispatch, getUserProfile, navigate, userInfo]);
 
   const handleModeToggle = () => {
     setIsLogin((prev) => !prev);
@@ -131,10 +167,6 @@ const Login = () => {
     sessionStorage.removeItem("matchHintCount");
     sessionStorage.removeItem("lastMatchHintId");
 
-    // THE NEW RULE: If it's their 1st login, give 2 hints. Otherwise, give 1.
-    const maxHints = payload?.loginCount <= 1 ? 2 : 1;
-    sessionStorage.setItem("maxHintsAllowed", maxHints);
-
     window.location.assign(googleOAuthUrl);
   };
 
@@ -162,8 +194,8 @@ const Login = () => {
         </video>
       </div>
       <div className="login__container">
-        {/* <p className="login__eyebrow">Maths Wizard</p> */}
-        <h1 className="login__container__header">Maths Wizard</h1>
+        {/* <p className="login__eyebrow">WordSolve</p> */}
+        <h1 className="login__container__header">WordSolve</h1>
         <p className="login__subtitle">
           {isLogin
             ? "Welcome back. Ready for more math challenges?"
@@ -233,10 +265,14 @@ const Login = () => {
             <button
               type="submit"
               className="loginMain__btn"
-              disabled={isLoginLoading || isRegisterLoading}
+              disabled={
+                isCheckingStoredSession || isLoginLoading || isRegisterLoading
+              }
             >
-              {isLoginLoading || isRegisterLoading
-                ? "Loading..."
+              {isCheckingStoredSession
+                ? "Checking session..."
+                : isLoginLoading || isRegisterLoading
+                  ? "Loading..."
                 : isLogin
                   ? "Login"
                   : "Sign Up"}

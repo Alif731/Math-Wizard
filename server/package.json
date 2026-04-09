@@ -5,8 +5,11 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "server": "nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "node index.js",
+    "server": "node index.js",
+    "test": "node verify.js && node verifySchemaQuestions.js",
+    "verify:curriculum": "node verify.js",
+    "verify:schema": "node verifySchemaQuestions.js"
   },
   "keywords": [],
   "author": "",

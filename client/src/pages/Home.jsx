@@ -52,51 +52,56 @@ const Home = () => {
     if (!problem?.question) return;
 
     try {
-      await submitAnswer({
+      return await submitAnswer({
         conceptId: problem.concept.id,
         questionId: problem.question.id,
         response: answer,
       }).unwrap();
-
-      // refetch questions
-      refetchProblem();
     } catch (err) {
       console.error("Failed to submit:", err);
+      throw err;
     }
   };
+  const handleNextProblem = () => {
+    refetchProblem();
+  };
   const isMastered = problem?.complete;
+  const practiceSummary = {
+    correct: problem?.adaptiveState?.successCount || 0,
+    attempted: problem?.adaptiveState?.attemptCount || 0,
+    streak: isAnimatingFailure ? 0 : status?.streak || 0,
+  };
 
   if (!username) return <div className="loading-state">Loading...</div>;
   if (!problem) return <div className="loading-state">Loading...</div>;
 
   return (
     <div className="home-page">
-      {/* --- ADDED BACK: GAME HEADER --- */}
       <header className="game-header">
-        <div className="player-badge highlight2">
-          <span className="highlight1">G</span>ood{" "}
-          <span className="highlight2">M</span>orning {username}
-          <strong style={{ marginLeft: "0.4rem" }}>
-            {" "}
-            . <span className="highlight1">L</span>et's Continue this Journey!
-          </strong>
-        </div>
-        {(status?.streak >= 1 || isAnimatingFailure) && (
-          <div
-            className={`streak__badge ${isAnimatingSuccess ? "pop-active" : ""} ${isAnimatingFailure ? "shake-active" : ""}`}
-          >
-            <span className="highlight1">S</span>treak:{" "}
-            <span className="highlight2">x</span>
-            {isAnimatingFailure ? 0 : status.streak}
-            <span className="right"></span>
-            <span className="bottom"></span>
-            <span className="left"></span>
+        <div className="player-badge">
+          <span className="player-badge__eyebrow">Today&apos;s practice</span>
+          <div className="player-badge__copy">
+            <strong>Good morning, {username}</strong>
+            <small>Warm up, solve, and keep your streak moving.</small>
           </div>
-        )}
+        </div>
+        <div
+          className={`practice-summary ${isAnimatingSuccess ? "pop-active" : ""} ${isAnimatingFailure ? "shake-active" : ""}`}
+        >
+          <div className="practice-summary__stat">
+            <span className="practice-summary__label">correct</span>
+            <strong>{practiceSummary.correct}</strong>
+          </div>
+          <div className="practice-summary__stat">
+            <span className="practice-summary__label">attempted</span>
+            <strong>{practiceSummary.attempted}</strong>
+          </div>
+          <div className="practice-summary__stat practice-summary__stat--accent">
+            <span className="practice-summary__label">streak</span>
+            <strong>x{practiceSummary.streak}</strong>
+          </div>
+        </div>
       </header>
-      {problem?.description && problem.concept.id === "foundation_signs" && (
-        <h2 className="card__header__type">{problem.description}</h2>
-      )}
       <main className="home-layout">
         {isMastered ? (
           <div className="status-card master">
@@ -121,6 +126,7 @@ const Home = () => {
               key={problem.question.id}
               problem={problem}
               onSubmit={handleAnswerSubmit}
+              onNext={handleNextProblem}
               disabled={isSubmitting}
             />
           )
