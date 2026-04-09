@@ -591,7 +591,10 @@ const CompareGuidedAnswerModel = ({ question }) => {
     spec?.difference?.magnitude,
     spec?.bigger?.magnitude,
   );
-  const guideWidth = percentages.first;
+  // Percent tracks sum to exactly 100% so row width matches the top bar; minmax(0,…) avoids grid blowout.
+  const col1 = Number(percentages.first.toFixed(4));
+  const col2 = Number((100 - col1).toFixed(4));
+  const gridTracks = `minmax(0, ${col1}%) minmax(0, ${col2}%)`;
 
   return (
     <div className="bar-model bar-model--compare-guided">
@@ -604,19 +607,14 @@ const CompareGuidedAnswerModel = ({ question }) => {
           className="bar-box--wide"
         />
       </div>
-      <div className="bar-model__compare-guided-row">
-        <div
-          className="compare-guided__measure"
-          style={{ width: `${guideWidth}%` }}
-          aria-hidden="true"
-        />
-        <div
-          className="compare-guided__gap"
-          style={{ flex: `0 0 ${percentages.first}%` }}
-        >
+      <div
+        className="bar-model__compare-guided-row"
+        style={{ gridTemplateColumns: gridTracks }}
+      >
+        <div className="compare-guided__unknown-column">
+          <div className="compare-guided__measure" aria-hidden="true" />
           <div className="compare-guided__unknown">
-            <strong>?</strong>
-            <span>{getBarLabel(spec.smaller, spec)}</span>
+            <strong className="compare-guided__mark">?</strong>
           </div>
         </div>
         <BarBox
@@ -625,7 +623,6 @@ const CompareGuidedAnswerModel = ({ question }) => {
           value={getGuidedCompareValue(question, "difference", spec?.difference?.value)}
           active={false}
           className="bar-box--segment compare-guided__difference"
-          style={{ flex: `0 0 ${percentages.second}%` }}
         />
       </div>
     </div>
