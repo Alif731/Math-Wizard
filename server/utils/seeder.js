@@ -25,6 +25,10 @@ const ensureTeacherSignupCode = async () => {
   }
 };
 
+// ------------------------------------------  Prerequisite Question ----------------------------------
+// a, Standard Arithmetic ( Direct Arithmetic calculation)
+// b, Algebraic Thinking ( Fill the missing par)
+
 const createPracticeQuestion = ({
   concept,
   promptTitle,
@@ -121,6 +125,8 @@ const createMissingPartQuestion = ({
   });
 };
 
+// --------------------- Module 1 --------------------------------
+
 const createEquationFromBarQuestion = ({
   concept,
   text,
@@ -216,7 +222,8 @@ const createEquationFromBarQuestion = ({
     barModelSpec: createBarModelSpec({
       schemaKind,
       unknownSlot:
-        Object.entries(barValues).find(([, value]) => value === "?")?.[0] || null,
+        Object.entries(barValues).find(([, value]) => value === "?")?.[0] ||
+        null,
       values: barValues,
       scaleValues,
       labels,
@@ -258,6 +265,105 @@ const createEquationFromBarQuestion = ({
   });
 };
 
+// --------------------- Module 2 --------------------------------
+
+// const createSchemaRecognitionQuestion = ({
+//   concept,
+//   text,
+//   schemaKind,
+//   values,
+//   labels,
+//   roleLabels = labels,
+//   valueLabels = {},
+//   displayValues,
+//   validationSlots,
+//   alternateSlots = values,
+//   unknownSlot,
+//   difficulty,
+// }) =>
+//   createQuestionEnvelope({
+//     text,
+//     concept,
+//     type: "bar_model_builder",
+//     difficulty,
+//     correctAnswer: "bar-model-complete",
+//     schemaKind,
+//     interactionMode: "bar_model_builder",
+//     moduleStage: "word_to_bar", // <--- THIS is what hides the 3 tabs!
+//     promptTitle: "build the bar model",
+//     inputMode: "keypad_bar_model",
+//     helperText: "Tap a box to fill in the bar model. Use ? for the unknown.",
+//     unknownSlot,
+//     barModelSpec: createBarModelSpec({
+//       schemaKind,
+//       unknownSlot,
+//       values: displayValues,
+//       scaleValues: values,
+//       labels,
+//       roleLabels,
+//       valueLabels,
+//       editableKeys: Object.keys(validationSlots),
+//     }),
+//     validation: {
+//       slots: Object.fromEntries(
+//         Object.entries(validationSlots).map(([key, value]) => [
+//           key,
+//           String(value),
+//         ]),
+//       ),
+//       alternateSlots: Object.fromEntries(
+//         Object.entries(alternateSlots).map(([key, value]) => [
+//           key,
+//           String(value),
+//         ]),
+//       ),
+//     },
+//   });
+const createSchemaRecognitionQuestion = ({
+  concept,
+  text,
+  schemaKind,
+  values,
+  labels,
+  roleLabels = labels,
+  displayValues,
+  validationSlots,
+  alternateSlots = values,
+  unknownSlot,
+  difficulty,
+}) =>
+  createQuestionEnvelope({
+    text,
+    concept,
+    type: "bar_model_builder",
+    difficulty,
+    correctAnswer: "bar-model-complete",
+    schemaKind,
+    interactionMode: "bar_model_builder",
+    moduleStage: "word_to_bar", // Critical: This hides the stage tabs
+    promptTitle: "build the bar model",
+    inputMode: "keypad_bar_model",
+    helperText: "Tap a box to fill in the bar model. Use ? for the unknown.",
+    unknownSlot,
+    barModelSpec: createBarModelSpec({
+      schemaKind,
+      unknownSlot,
+      values: displayValues,
+      scaleValues: values,
+      labels,
+      roleLabels,
+      editableKeys: Object.keys(validationSlots),
+    }),
+    validation: {
+      slots: Object.fromEntries(
+        Object.entries(validationSlots).map(([k, v]) => [k, String(v)]),
+      ),
+      alternateSlots: Object.fromEntries(
+        Object.entries(alternateSlots).map(([k, v]) => [k, String(v)]),
+      ),
+    },
+  });
+// --------------------- Module 3 --------------------------------
 const createSchemaBarQuestion = ({
   concept,
   text,
@@ -357,19 +463,34 @@ const createSchemaEquationQuestion = ({
       left: {
         key: "leftTerm",
         label: labels.left,
-        role: schemaKind === "compare" ? "smaller" : schemaKind === "change" ? "start" : "partA",
+        role:
+          schemaKind === "compare"
+            ? "smaller"
+            : schemaKind === "change"
+              ? "start"
+              : "partA",
         value: equationValues.leftTerm,
       },
       right: {
         key: "rightTerm",
         label: labels.right,
-        role: schemaKind === "compare" ? "difference" : schemaKind === "change" ? "change" : "partB",
+        role:
+          schemaKind === "compare"
+            ? "difference"
+            : schemaKind === "change"
+              ? "change"
+              : "partB",
         value: equationValues.rightTerm,
       },
       result: {
         key: "result",
         label: labels.result,
-        role: schemaKind === "compare" ? "bigger" : schemaKind === "change" ? "end" : "total",
+        role:
+          schemaKind === "compare"
+            ? "bigger"
+            : schemaKind === "change"
+              ? "end"
+              : "total",
         value: equationValues.result,
       },
       editableKeys: ["leftTerm", "rightTerm", "result"],
@@ -477,6 +598,7 @@ const createSchemaSolveQuestion = ({
   });
 
 const conceptsData = [
+  // ---------------------------a, Standard Arithmetic (Prerequisite)--------------------
   {
     id: "single_add",
     title: "Single +",
@@ -669,6 +791,7 @@ const conceptsData = [
       }),
     ],
   },
+  // --------------------------- b, Algebraic Thinking  (Prerequisite)--------------------
   {
     id: "missing_part_equations",
     title: "Missing Number",
@@ -719,6 +842,7 @@ const conceptsData = [
       }),
     ],
   },
+  // ------------------------------ Module 1 ----------------------------
   {
     id: "equations_from_bar_models",
     title: "Bar to Equation",
@@ -854,11 +978,45 @@ const conceptsData = [
       }),
     ],
   },
+  // ----------------------------------------- Module 2 -----------------------------------------
+  {
+    id: "recognize_combine",
+    title: "Word to Bar",
+    description: "Read the story and build the bar model.",
+    prerequisites: ["equations_from_bar_models"], // Links back to Module 1
+    questions: [
+      createSchemaRecognitionQuestion({
+        concept: "recognize_combine",
+        text: "Mia has 6 red and 4 blue marbles. How many altogether?",
+        schemaKind: "combine",
+        values: { partA: 6, partB: 4, total: 10 },
+        labels: { total: "total", partA: "red", partB: "blue" },
+        displayValues: { partA: "?", partB: "?", total: "?" },
+        validationSlots: { total: "?", partA: "6", partB: "4" },
+        alternateSlots: { total: "10", partA: "6", partB: "4" },
+        unknownSlot: "total",
+        difficulty: 2,
+      }),
+      createSchemaRecognitionQuestion({
+        concept: "recognize_combine",
+        text: "Jorge had $52. Then he earned $16 babysitting. How much money does Jorge have now?",
+        schemaKind: "combine",
+        values: { partA: 52, partB: 16, total: 68 },
+        labels: { total: "total", partA: "start", partB: "earned" },
+        displayValues: { partA: "?", partB: "?", total: "?" },
+        validationSlots: { total: "?", partA: "52", partB: "16" },
+        alternateSlots: { total: "68", partA: "52", partB: "16" },
+        unknownSlot: "total",
+        difficulty: 2,
+      }),
+    ],
+  },
+  // ----------------------------------------- Module 3 -----------------------------------------
   {
     id: "schema_combine",
     title: "Combine",
     description: "Build the bar model, write the equation, and solve.",
-    prerequisites: ["equations_from_bar_models"],
+    prerequisites: ["recognize_combine"],
     questions: [
       createSchemaBarQuestion({
         concept: "schema_combine",
@@ -1058,27 +1216,91 @@ const conceptsData = [
   },
 ];
 
+// const seedData = async () => {
+//   try {
+//     await Concept.deleteMany({});
+//     await User.deleteMany({});
+//     await Attempt.deleteMany({});
+//     await TeacherSignupCode.deleteMany({});
+//     console.log("Database Wiped Clean");
+
+//     await ensureTeacherSignupCode();
+
+//     await Concept.insertMany(conceptsData);
+//     console.log("Concepts Seeded");
+
+//     const testUser = new User({
+//       username: "student1",
+//       password: "password123",
+//       role: "student",
+//       streak: 0,
+//       zpdNodes: ["single_add"],
+//       mastery: {
+//         single_add: {
+//           status: "unlocked",
+//           successCount: 0,
+//           attemptCount: 0,
+//           lastAttempts: [],
+//         },
+//       },
+//     });
+
+//     await testUser.save();
+//     console.log("Test User (student1) Seeded Successfully");
+
+//     const teacherUser = new User({
+//       username: "teacher1",
+//       password: "password123",
+//       role: "teacher",
+//       mastery: {},
+//       zpdNodes: [],
+//       avatar: "beam",
+//       streak: 0,
+//     });
+
+//     await teacherUser.save();
+//     console.log("Teacher User Seeded Successfully");
+//   } catch (error) {
+//     console.error("Seeding Error:", error);
+//   }
+// };
+
 const seedData = async () => {
   try {
+    // 1. Clean the database
     await Concept.deleteMany({});
     await User.deleteMany({});
     await Attempt.deleteMany({});
     await TeacherSignupCode.deleteMany({});
-    console.log("Database Wiped Clean");
+    console.log("-----------------------------------------");
+    console.log("🧹 DATABASE WIPED FOR TESTING");
 
     await ensureTeacherSignupCode();
-
     await Concept.insertMany(conceptsData);
-    console.log("Concepts Seeded");
 
+    // 2. THE TESTING SWITCH
+    // Change this variable to the ID you want to test right now:
+    // "single_add"                -> Phase 1: Basic Math
+    // "missing_part_equations"    -> Phase 1: Algebraic Bridge
+    // "equations_from_bar_models" -> Module 1: Bar to Equation
+    // "recognize_combine"         -> Module 2: Word to Bar (Standalone)
+    // "schema_combine"            -> Module 3: Full 3-Tab Solve
+
+    const testStage = "schema_combine"; // <--- CHANGE THIS TO JUMP
+
+    // 3. Create the test user with ONLY that stage active
     const testUser = new User({
       username: "student1",
       password: "password123",
       role: "student",
-      streak: 0,
-      zpdNodes: ["single_add"],
+      streak: 5,
+      avatar: "beam",
+
+      // Forces this specific node to be the ONLY one the student sees
+      zpdNodes: [testStage],
+
       mastery: {
-        single_add: {
+        [testStage]: {
           status: "unlocked",
           successCount: 0,
           attemptCount: 0,
@@ -1088,20 +1310,23 @@ const seedData = async () => {
     });
 
     await testUser.save();
-    console.log("Test User (student1) Seeded Successfully");
+    console.log(
+      `🚀 TEST READY: 'student1' is jumped directly to [${testStage}]`,
+    );
 
+    // 4. Create Teacher
     const teacherUser = new User({
       username: "teacher1",
       password: "password123",
       role: "teacher",
       mastery: {},
       zpdNodes: [],
-      avatar: "beam",
+      avatar: "pixel",
       streak: 0,
     });
-
     await teacherUser.save();
-    console.log("Teacher User Seeded Successfully");
+    console.log("👨‍🏫 Teacher account created.");
+    console.log("-----------------------------------------");
   } catch (error) {
     console.error("Seeding Error:", error);
   }

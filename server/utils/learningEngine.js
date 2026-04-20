@@ -1,8 +1,8 @@
 const Concept = require("../models/Concept");
 
-const WINDOW_SIZE = 10;
-const MASTERY_MIN_ATTEMPTS = 2;
-const MASTERY_SCORE_THRESHOLD = 2;
+const WINDOW_SIZE = 5;
+const MASTERY_MIN_ATTEMPTS = 3;
+const MASTERY_SCORE_THRESHOLD = 3;
 const CHANGE_POINT_FALSE_POSITIVE_RATE = Math.exp(-MASTERY_SCORE_THRESHOLD);
 const BANDIT_PRIORS = Object.freeze({
   guessAlpha: 20,
