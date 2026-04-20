@@ -8,9 +8,11 @@ import {
 
 import QuestionCard from "../components/QuestionCard";
 import "../sass/page/homePage.scss";
+
 const Home = () => {
   const { userInfo } = useSelector((state) => state.auth);
   const username = userInfo?.username;
+
   // --- RTK QUERY HOOKS ---
   const {
     data: problem,
@@ -62,10 +64,15 @@ const Home = () => {
       throw err;
     }
   };
+
   const handleNextProblem = () => {
     refetchProblem();
   };
+
   const isMastered = problem?.complete;
+
+  // --- STATS SUMMARY ---
+  // Restored this so correct and attempted actually work!
   const practiceSummary = {
     correct: problem?.adaptiveState?.successCount || 0,
     attempted: problem?.adaptiveState?.attemptCount || 0,
@@ -78,30 +85,29 @@ const Home = () => {
   return (
     <div className="home-page">
       <header className="game-header">
-        <div className="player-badge">
-          <span className="player-badge__eyebrow">Today&apos;s practice</span>
-          <div className="player-badge__copy">
-            <strong>Good morning, {username}</strong>
-            <small>Warm up, solve, and keep your streak moving.</small>
-          </div>
+        <div className="player-badge highlight2">
+          <span className="highlight1">G</span>
+          <span style={{ marginRight: "6px" }}>ood</span>
+          <span className="highlight2"> M</span>orning {username}
+          <strong style={{ marginLeft: "0.4rem" }}>
+            {" "}
+            . <span className="highlight1">L</span>et's Continue this Journey!
+          </strong>
         </div>
-        <div
-          className={`practice-summary ${isAnimatingSuccess ? "pop-active" : ""} ${isAnimatingFailure ? "shake-active" : ""}`}
-        >
-          <div className="practice-summary__stat">
-            <span className="practice-summary__label">correct</span>
-            <strong>{practiceSummary.correct}</strong>
+        {(practiceSummary.streak >= 1 || isAnimatingFailure) && (
+          <div
+            className={`streak__badge ${isAnimatingSuccess ? "pop-active" : ""} ${isAnimatingFailure ? "shake-active" : ""}`}
+          >
+            <span className="highlight1">S</span>treak:{" "}
+            <span className="highlight2">x</span>
+            {practiceSummary.streak}
+            <span className="right"></span>
+            <span className="bottom"></span>
+            <span className="left"></span>
           </div>
-          <div className="practice-summary__stat">
-            <span className="practice-summary__label">attempted</span>
-            <strong>{practiceSummary.attempted}</strong>
-          </div>
-          <div className="practice-summary__stat practice-summary__stat--accent">
-            <span className="practice-summary__label">streak</span>
-            <strong>x{practiceSummary.streak}</strong>
-          </div>
-        </div>
+        )}
       </header>
+
       <main className="home-layout">
         {isMastered ? (
           <div className="status-card master">
@@ -128,6 +134,7 @@ const Home = () => {
               onSubmit={handleAnswerSubmit}
               onNext={handleNextProblem}
               disabled={isSubmitting}
+              practiceSummary={practiceSummary}
             />
           )
         )}
