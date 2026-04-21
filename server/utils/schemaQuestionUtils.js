@@ -33,6 +33,7 @@ const MODULE_STAGES = Object.freeze([
   "schema_bar_model",
   "schema_equation",
   "schema_solve",
+  "word_to_bar",
 ]);
 
 const INPUT_MODES = Object.freeze([
@@ -71,7 +72,9 @@ const stableSerialize = (value) => {
   }
 
   if (Array.isArray(value)) {
-    return JSON.stringify(value.map((item) => JSON.parse(stableSerialize(item))));
+    return JSON.stringify(
+      value.map((item) => JSON.parse(stableSerialize(item))),
+    );
   }
 
   const sorted = {};
@@ -164,7 +167,9 @@ const compareSlotMap = (
       return true;
     }
 
-    return expectedValue === "?" && alternateValue && actualValue === alternateValue;
+    return (
+      expectedValue === "?" && alternateValue && actualValue === alternateValue
+    );
   });
 
 const validateDirectAnswer = (question, response) => {
@@ -180,7 +185,8 @@ const validateDirectAnswer = (question, response) => {
 
 const validateEquationBuilder = (question, response) => {
   const expectedSlots =
-    question?.validation?.slots || getEditableSlotValues(question?.equationSpec);
+    question?.validation?.slots ||
+    getEditableSlotValues(question?.equationSpec);
   const alternateSlots = question?.validation?.alternateSlots || {};
   const actualSlots = response?.slots || {};
 
@@ -515,7 +521,8 @@ const createBarModelSpec = ({
       bracket: barDecorations.showBracket
         ? {
             label: barDecorations.bracketLabel || "?",
-            targetKey: unknownSlot === "difference" ? "difference" : unknownSlot,
+            targetKey:
+              unknownSlot === "difference" ? "difference" : unknownSlot,
           }
         : null,
     };

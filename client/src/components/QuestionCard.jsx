@@ -13,7 +13,7 @@ import ConceptualQuestion from "./Question_Type/ConceptualQuestion";
 import VisualBarModel from "./Question_Type/VisualBarModel";
 import MatchTheFollowing from "./Question_Type/MatchTheFollowing";
 import DirectInputQuestion from "./Question_Type/DirectInputQuestion";
-import SchemaQuestion from "./Question_Type/SchemaQuestion";
+import SchemaQuestion from "./Question_Type/Phase2/SchemaQuestion.jsx";
 import {
   buildSubmissionResponse,
   createInitialResponse,
@@ -28,6 +28,8 @@ const QuestionCard = ({
   onSubmit,
   onNext,
   disabled,
+  // FIX: Added a default empty object so it doesn't crash if omitted by Homepage!
+  practiceSummary = { correct: 0, attempted: 0 },
 }) => {
   const [answer, setAnswer] = useState(() =>
     createInitialResponse(problem?.question),
@@ -56,7 +58,7 @@ const QuestionCard = ({
   };
 
   const queueNextProblem = () => {
-    window.setTimeout(() => onNext?.(), 1400);
+    window.setTimeout(() => onNext?.(), 3000);
   };
 
   const applyFeedback = (result) => {
@@ -96,20 +98,31 @@ const QuestionCard = ({
   };
 
   const handleOptionClick = async (option) => {
-    if (feedback || disabled) return;
+    if (isSuccess || isError) return;
     setSelectedOption(option);
 
-    try {
-      const result = await onSubmit(option);
-      applyFeedback(result);
-      queueNextProblem();
-    } catch (error) {
-      console.error("Failed to submit:", error);
+    const rawCorrect = problem?.question?.correctAnswer || problem?.answer;
+    if (rawCorrect === undefined || rawCorrect === null) {
+      onSubmit(option);
+      return;
+    }
+
+    const isCorrect = String(option).trim() === String(rawCorrect).trim();
+
+    if (isCorrect) {
+      setIsSuccess(true);
+      playSuccessSound();
+      setTimeout(() => onSubmit(option), 3000);
+    } else {
+      setIsError(true);
+      playErrorSound();
+      setTimeout(() => onSubmit(option), 2600);
     }
   };
 
   const handleDirectSubmit = async (event) => {
     if (event?.preventDefault) event.preventDefault();
+
     if (!problem?.question || feedback || disabled) return;
 
     const textAnswer =
@@ -121,12 +134,82 @@ const QuestionCard = ({
 
     try {
       const result = await onSubmit(textAnswer);
+
       applyFeedback(result);
+
       queueNextProblem();
     } catch (error) {
       console.error("Failed to submit:", error);
     }
   };
+  // const handleDirectSubmit = async (event) => {
+  //   if (event?.preventDefault) event.preventDefault();
+  //   if (!problem?.question || feedback || disabled) return;
+
+  //   // 1. Extract textAnswer safely based on the Phase 2 schema
+  //   const textAnswer =
+  //     typeof answer === "string"
+  //       ? answer
+  //       : answer?.textAnswer || answer?.slots?.answer || "";
+
+  //   const userAnswer = String(textAnswer || "").trim();
+  //   if (!userAnswer) return;
+
+  //   // 2. The actual submission to the backend, wrapped in a reusable function
+  //   const executeSubmit = async () => {
+  //     try {
+  //       const result = await onSubmit(userAnswer);
+  //       applyFeedback(result);
+  //       queueNextProblem();
+  //     } catch (error) {
+  //       console.error("Failed to submit:", error);
+  //     }
+  //   };
+
+  //   // 3. Client-side check for animations
+  //   const rawCorrect = problem?.question?.correctAnswer;
+
+  //   // If we don't have a correct answer to check against locally, skip animation
+  //   if (rawCorrect === undefined || rawCorrect === null) {
+  //     executeSubmit();
+  //     return;
+  //   }
+
+  //   const dbAnswer = String(rawCorrect).trim();
+  //   const isCorrect = userAnswer === dbAnswer;
+
+  //   // 4. Check for animations using BOTH Phase 1 and Phase 2 types
+  //   const animatedTypes = [
+  //     // Phase 2 Types
+  //     "bar_model_builder",
+  //     "equation_builder",
+  //     "direct",
+  //     // Phase 1 Legacy Types
+  //     "visual",
+  //     "icons_items",
+  //     "algebraic",
+  //   ];
+
+  //   const shouldAnimate = animatedTypes.includes(problem?.question?.type);
+
+  //   // 5. Animation delay wrapping the NEW submission logic
+  //   if (shouldAnimate) {
+  //     if (isCorrect) {
+  //       playSuccessSound();
+  //       setIsSuccess(true);
+  //       // Wait 3 seconds to let animation play, then run backend logic
+  //       setTimeout(() => executeSubmit(), 3000);
+  //     } else {
+  //       playErrorSound();
+  //       setIsError(true);
+  //       // Wait 2.6 seconds, then run backend logic
+  //       setTimeout(() => executeSubmit(), 2600);
+  //     }
+  //   } else {
+  //     // If no animation is needed for this question type
+  //     executeSubmit();
+  //   }
+  // };
 
   const handleMatchComplete = async (isValid) => {
     if (feedback || disabled) return;
@@ -153,6 +236,7 @@ const QuestionCard = ({
     "schema_bar_model",
     "schema_equation",
     "schema_solve",
+    "word_to_bar",
   ].includes(problem?.question?.moduleStage);
   const showTelemetry = Boolean(problem?.adaptiveState) && import.meta.env.DEV;
   const isMatchTheFollowing =
@@ -167,8 +251,35 @@ const QuestionCard = ({
     <div className="question-shell">
       <div className="question-shell__main">
         <div className="question__card">
+          {/* Stats Container combining Correct, Attempted */}
+          {/* Using optional chaining '?.correct' as a secondary safety net */}
+          <div
+            className="practice-summary"
+            style={{ display: "flex", gap: "1rem", alignItems: "center" }}
+          >
+            <div className="practice-summary__stat">
+              <span
+                className="practice-summary__label"
+                style={{ marginRight: "0.5rem" }}
+              >
+                Correct:
+              </span>
+              <strong>{practiceSummary?.correct || 0}</strong>
+            </div>
+
+            <div className="practice-summary__stat">
+              <span
+                className="practice-summary__label"
+                style={{ marginRight: "0.5rem" }}
+              >
+                Attempted:
+              </span>
+              <strong>{practiceSummary?.attempted || 0}</strong>
+            </div>
+          </div>
+
           {isSuccess && (
-            <Confetti recycle={false} numberOfPieces={300} gravity={0.22} />
+            <Confetti recycle={false} numberOfPieces={500} gravity={0.3} />
           )}
 
           {isWorksheetDriven ? (
@@ -223,15 +334,17 @@ const QuestionCard = ({
                 />
               ) : (
                 <div>
-                  {!isConceptual && questionType !== "visual" && !isIconsItems && (
-                    <DirectInputQuestion
-                      answer={answer}
-                      setAnswer={setAnswer}
-                      isSuccess={isSuccess}
-                      isError={isError}
-                      handleSubmit={handleDirectSubmit}
-                    />
-                  )}
+                  {!isConceptual &&
+                    questionType !== "visual" &&
+                    !isIconsItems && (
+                      <DirectInputQuestion
+                        answer={answer}
+                        setAnswer={setAnswer}
+                        isSuccess={isSuccess}
+                        isError={isError}
+                        handleSubmit={handleDirectSubmit}
+                      />
+                    )}
                 </div>
               )}
             </>

@@ -7,7 +7,7 @@ import {
   getSlotDisplayValue,
   isCompareAnswerInputQuestion,
   isQuestionResponseReady,
-} from "../../utils/questionValidation";
+} from "../../../utils/questionValidation";
 
 const PRACTICE_PILLS = [
   { key: "single_add", label: "Single +" },
@@ -74,7 +74,9 @@ const getLearnerFacingLabel = (question, item) => {
 };
 
 const getAdaptiveDifferenceLabel = (comparisonWording, fallbackLabel) => {
-  const wording = String(comparisonWording || "").trim().toLowerCase();
+  const wording = String(comparisonWording || "")
+    .trim()
+    .toLowerCase();
   if (wording === "fewer than") {
     return "less";
   }
@@ -237,10 +239,7 @@ const StageTabs = ({ currentStage }) => (
 
 const getBarLabel = (box, spec) => {
   const role = box?.role || box?.key || "";
-  const semanticLabel =
-    spec?.roleLabels?.[role] ||
-    box?.label ||
-    "";
+  const semanticLabel = spec?.roleLabels?.[role] || box?.label || "";
 
   if (role === "difference") {
     return getAdaptiveDifferenceLabel(spec?.comparisonWording, semanticLabel);
@@ -251,12 +250,18 @@ const getBarLabel = (box, spec) => {
 
 const getGuidedCompareValue = (question, key, fallbackValue = "?") => {
   const primaryValue = question?.validation?.slots?.[key];
-  if (String(primaryValue || "").trim() && String(primaryValue).trim() !== "?") {
+  if (
+    String(primaryValue || "").trim() &&
+    String(primaryValue).trim() !== "?"
+  ) {
     return String(primaryValue).trim();
   }
 
   const alternateValue = question?.validation?.alternateSlots?.[key];
-  if (String(alternateValue || "").trim() && String(alternateValue).trim() !== "?") {
+  if (
+    String(alternateValue || "").trim() &&
+    String(alternateValue).trim() !== "?"
+  ) {
     return String(alternateValue).trim();
   }
 
@@ -331,7 +336,10 @@ const getDefaultActiveField = (question) => {
   }
 
   const firstEditableEquationField = equationTemplate.find(
-    (item) => item?.type !== "symbol" && item?.type !== "operator" && item?.editable !== false,
+    (item) =>
+      item?.type !== "symbol" &&
+      item?.type !== "operator" &&
+      item?.editable !== false,
   );
 
   if (firstEditableEquationField?.key) {
@@ -400,9 +408,17 @@ const BarBox = ({
   </button>
 );
 
-const TotalPartsBarModel = ({ spec, response, activeField, setActiveField }) => {
-  const { total: totalMagnitude, left: leftMagnitude, right: rightMagnitude } =
-    resolveTotalPartsMagnitudes(spec, response);
+const TotalPartsBarModel = ({
+  spec,
+  response,
+  activeField,
+  setActiveField,
+}) => {
+  const {
+    total: totalMagnitude,
+    left: leftMagnitude,
+    right: rightMagnitude,
+  } = resolveTotalPartsMagnitudes(spec, response);
   const percentages = getSegmentPercentages(
     leftMagnitude,
     rightMagnitude,
@@ -445,7 +461,12 @@ const TotalPartsBarModel = ({ spec, response, activeField, setActiveField }) => 
   );
 };
 
-const CompareStackedBarModel = ({ spec, response, activeField, setActiveField }) => {
+const CompareStackedBarModel = ({
+  spec,
+  response,
+  activeField,
+  setActiveField,
+}) => {
   const {
     bigger: biggerMagnitude,
     smaller: smallerMagnitude,
@@ -501,14 +522,7 @@ const CompareStackedBarModel = ({ spec, response, activeField, setActiveField })
   );
 };
 
-const CompareGapSegment = ({
-  box,
-  label,
-  value,
-  active,
-  onClick,
-  style,
-}) => (
+const CompareGapSegment = ({ box, label, value, active, onClick, style }) => (
   <div
     className={`compare-gap__left ${box.editable ? "is-editable" : ""} ${
       active ? "is-active" : ""
@@ -527,7 +541,12 @@ const CompareGapSegment = ({
   </div>
 );
 
-const CompareGapBarModel = ({ spec, response, activeField, setActiveField }) => {
+const CompareGapBarModel = ({
+  spec,
+  response,
+  activeField,
+  setActiveField,
+}) => {
   const {
     bigger: biggerMagnitude,
     smaller: smallerMagnitude,
@@ -620,7 +639,11 @@ const CompareGuidedAnswerModel = ({ question }) => {
         <BarBox
           box={{ ...spec.difference, editable: false }}
           label={getBarLabel(spec.difference, spec)}
-          value={getGuidedCompareValue(question, "difference", spec?.difference?.value)}
+          value={getGuidedCompareValue(
+            question,
+            "difference",
+            spec?.difference?.value,
+          )}
           active={false}
           className="bar-box--segment compare-guided__difference"
         />
@@ -639,7 +662,10 @@ const BarModel = ({ question, response, setResponse }) => {
       activeField: field,
     }));
 
-  if (spec.layout === "compare_offset" && spec.compareVariant === "fewer_than_gap") {
+  if (
+    spec.layout === "compare_offset" &&
+    spec.compareVariant === "fewer_than_gap"
+  ) {
     return (
       <CompareGapBarModel
         spec={spec}
@@ -813,9 +839,13 @@ const VerificationPanel = ({ question }) => {
 
   return (
     <div className="worksheet-verification">
-      {solutionLabel && <div className="worksheet-feedback is-success">{solutionLabel}</div>}
+      {solutionLabel && (
+        <div className="worksheet-feedback is-success">{solutionLabel}</div>
+      )}
       <p>Substitute your answer back. Does the equation hold?</p>
-      <div className="worksheet-verification__equation">{verificationEquation}</div>
+      <div className="worksheet-verification__equation">
+        {verificationEquation}
+      </div>
     </div>
   );
 };
@@ -831,10 +861,17 @@ const SchemaQuestion = ({
 }) => {
   const hasFeedback = Boolean(feedback);
   const isSuccess = Boolean(feedback?.isCorrect);
-  const canCheck = isQuestionResponseReady(question, response) && !isSubmitting && !hasFeedback;
-  const isSchemaStage = String(question?.moduleStage || "").startsWith("schema_");
+  const canCheck =
+    isQuestionResponseReady(question, response) &&
+    !isSubmitting &&
+    !hasFeedback;
+  const isSchemaStage = String(question?.moduleStage || "").startsWith(
+    "schema_",
+  );
   const isCompareAnswerInput = isCompareAnswerInputQuestion(question);
-  const showPromptStrip = !["practice", "equations"].includes(question?.moduleStage);
+  const showPromptStrip = !["practice", "equations"].includes(
+    question?.moduleStage,
+  );
   const compareAnswerLabel = isCompareAnswerInput
     ? getBarLabel(question?.barModelSpec?.smaller, question?.barModelSpec)
     : "";
@@ -842,8 +879,7 @@ const SchemaQuestion = ({
   const showUnknownButton =
     Object.values(question?.validation?.slots || {}).some(
       (value) => String(value).trim() === "?",
-    ) ||
-    question?.moduleStage === "bar_to_equation";
+    ) || question?.moduleStage === "bar_to_equation";
   const showOperatorPad =
     question?.inputMode === "keypad_equation" &&
     question?.equationSpec?.operatorEditable &&
@@ -1025,13 +1061,19 @@ const SchemaQuestion = ({
             <PracticeTabs activeKey={question?.practiceMode} />
           )}
 
-          {isSchemaStage && <StageTabs currentStage={question?.stageIndex || 1} />}
+          {isSchemaStage && (
+            <StageTabs currentStage={question?.stageIndex || 1} />
+          )}
         </div>
 
-        <div className="worksheet-title">{question?.promptTitle || "practice"}</div>
+        <div className="worksheet-title">
+          {question?.promptTitle || "practice"}
+        </div>
       </div>
 
-      {showPromptStrip && <div className="worksheet-prompt">{question?.text}</div>}
+      {showPromptStrip && (
+        <div className="worksheet-prompt">{question?.text}</div>
+      )}
 
       {(question?.moduleStage === "practice" ||
         question?.moduleStage === "equations" ||
@@ -1040,7 +1082,13 @@ const SchemaQuestion = ({
         <>
           {(question?.moduleStage === "bar_to_equation" ||
             question?.moduleStage === "schema_equation") &&
-            question?.barModelSpec && <BarModel question={question} response={response} setResponse={setResponse} />}
+            question?.barModelSpec && (
+              <BarModel
+                question={question}
+                response={response}
+                setResponse={setResponse}
+              />
+            )}
           <EquationBoard
             question={question}
             response={response}
@@ -1050,7 +1098,8 @@ const SchemaQuestion = ({
         </>
       )}
 
-      {question?.moduleStage === "schema_bar_model" &&
+      {(question?.moduleStage === "schema_bar_model" ||
+        question?.moduleStage === "word_to_bar") &&
         (isCompareAnswerInput ? (
           <>
             <CompareGuidedAnswerModel question={question} />
@@ -1073,13 +1122,18 @@ const SchemaQuestion = ({
             </label>
           </>
         ) : (
-          <BarModel question={question} response={response} setResponse={setResponse} />
+          <BarModel
+            question={question}
+            response={response}
+            setResponse={setResponse}
+          />
         ))}
 
       {question?.moduleStage === "schema_solve" && (
         <div className="worksheet-solve">
           <div className="worksheet-solve__equation">
-            {question?.validation?.displayEquation || question?.equationSpec?.displayEquation}
+            {question?.validation?.displayEquation ||
+              question?.equationSpec?.displayEquation}
           </div>
           <label className="worksheet-answer-field">
             <span>Your answer</span>
@@ -1121,10 +1175,10 @@ const SchemaQuestion = ({
         question?.inputMode !== "text_answer" &&
         !isCompareAnswerInput &&
         activeInputLabel && (
-        <div className="worksheet-target-hint">
-          Now filling: <strong>{activeInputLabel}</strong>
-        </div>
-      )}
+          <div className="worksheet-target-hint">
+            Now filling: <strong>{activeInputLabel}</strong>
+          </div>
+        )}
 
       {(isCompareAnswerInput
         ? "Use the bars to work out the missing amount, then type your answer."
@@ -1137,7 +1191,9 @@ const SchemaQuestion = ({
       )}
 
       {feedback && (
-        <div className={`worksheet-feedback ${feedback.isCorrect ? "is-success" : "is-error"}`}>
+        <div
+          className={`worksheet-feedback ${feedback.isCorrect ? "is-success" : "is-error"}`}
+        >
           {feedback.isCorrect
             ? feedback?.explanation || "Great job!"
             : `Try again next time. Correct answer: ${feedback?.correctAnswer ?? ""}`}
@@ -1160,7 +1216,9 @@ const SchemaQuestion = ({
             disabled={!canCheck}
             onClick={triggerCheck}
           >
-            {question?.moduleStage === "schema_solve" ? "Check answer →" : "Check ✓"}
+            {question?.moduleStage === "schema_solve"
+              ? "Check answer →"
+              : "Check ✓"}
           </button>
         )}
       </div>
