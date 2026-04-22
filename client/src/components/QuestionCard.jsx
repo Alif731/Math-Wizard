@@ -9,10 +9,10 @@ import "../sass/components/question_type/directInputQuestion.scss";
 import "../sass/components/question_type/schemaQuestion.scss";
 
 import GhostPanel from "./GhostPanel.jsx";
-import ConceptualQuestion from "./Question_Type/ConceptualQuestion";
-import VisualBarModel from "./Question_Type/VisualBarModel";
-import MatchTheFollowing from "./Question_Type/MatchTheFollowing";
-import DirectInputQuestion from "./Question_Type/DirectInputQuestion";
+import ConceptualQuestion from "./Question_Type/Phase1/ConceptualQuestion";
+import VisualBarModel from "./Question_Type/Phase1/VisualBarModel";
+import MatchTheFollowing from "./Question_Type/Phase1/MatchTheFollowing";
+import DirectInputQuestion from "./Question_Type/Phase1/DirectInputQuestion";
 import SchemaQuestion from "./Question_Type/Phase2/SchemaQuestion.jsx";
 import {
   buildSubmissionResponse,
@@ -28,7 +28,6 @@ const QuestionCard = ({
   onSubmit,
   onNext,
   disabled,
-  // FIX: Added a default empty object so it doesn't crash if omitted by Homepage!
   practiceSummary = { correct: 0, attempted: 0 },
 }) => {
   const [answer, setAnswer] = useState(() =>
@@ -39,13 +38,33 @@ const QuestionCard = ({
   const [isError, setIsError] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
 
+  // NEW: Holds our animation state safely
+  const [statAnim, setStatAnim] = useState({ key: 0, colorClass: "" });
+
+  // 1. When a new question loads, completely reset everything (including the animation)
   useEffect(() => {
     setAnswer(createInitialResponse(problem?.question));
     setFeedback(null);
     setIsSuccess(false);
     setIsError(false);
     setSelectedOption(null);
+    setStatAnim({ key: 0, colorClass: "" }); // Ensures no popping on question load!
   }, [problem]);
+
+  // 2. Only trigger animations when Success or Error actually occur
+  useEffect(() => {
+    if (isSuccess) {
+      setStatAnim((prev) => ({
+        key: prev.key + 1,
+        colorClass: "stat-pop-success",
+      }));
+    } else if (isError) {
+      setStatAnim((prev) => ({
+        key: prev.key + 1,
+        colorClass: "stat-pop-error",
+      }));
+    }
+  }, [isSuccess, isError]);
 
   const playSuccessSound = () => {
     audioSuccess.currentTime = 0;
@@ -142,74 +161,6 @@ const QuestionCard = ({
       console.error("Failed to submit:", error);
     }
   };
-  // const handleDirectSubmit = async (event) => {
-  //   if (event?.preventDefault) event.preventDefault();
-  //   if (!problem?.question || feedback || disabled) return;
-
-  //   // 1. Extract textAnswer safely based on the Phase 2 schema
-  //   const textAnswer =
-  //     typeof answer === "string"
-  //       ? answer
-  //       : answer?.textAnswer || answer?.slots?.answer || "";
-
-  //   const userAnswer = String(textAnswer || "").trim();
-  //   if (!userAnswer) return;
-
-  //   // 2. The actual submission to the backend, wrapped in a reusable function
-  //   const executeSubmit = async () => {
-  //     try {
-  //       const result = await onSubmit(userAnswer);
-  //       applyFeedback(result);
-  //       queueNextProblem();
-  //     } catch (error) {
-  //       console.error("Failed to submit:", error);
-  //     }
-  //   };
-
-  //   // 3. Client-side check for animations
-  //   const rawCorrect = problem?.question?.correctAnswer;
-
-  //   // If we don't have a correct answer to check against locally, skip animation
-  //   if (rawCorrect === undefined || rawCorrect === null) {
-  //     executeSubmit();
-  //     return;
-  //   }
-
-  //   const dbAnswer = String(rawCorrect).trim();
-  //   const isCorrect = userAnswer === dbAnswer;
-
-  //   // 4. Check for animations using BOTH Phase 1 and Phase 2 types
-  //   const animatedTypes = [
-  //     // Phase 2 Types
-  //     "bar_model_builder",
-  //     "equation_builder",
-  //     "direct",
-  //     // Phase 1 Legacy Types
-  //     "visual",
-  //     "icons_items",
-  //     "algebraic",
-  //   ];
-
-  //   const shouldAnimate = animatedTypes.includes(problem?.question?.type);
-
-  //   // 5. Animation delay wrapping the NEW submission logic
-  //   if (shouldAnimate) {
-  //     if (isCorrect) {
-  //       playSuccessSound();
-  //       setIsSuccess(true);
-  //       // Wait 3 seconds to let animation play, then run backend logic
-  //       setTimeout(() => executeSubmit(), 3000);
-  //     } else {
-  //       playErrorSound();
-  //       setIsError(true);
-  //       // Wait 2.6 seconds, then run backend logic
-  //       setTimeout(() => executeSubmit(), 2600);
-  //     }
-  //   } else {
-  //     // If no animation is needed for this question type
-  //     executeSubmit();
-  //   }
-  // };
 
   const handleMatchComplete = async (isValid) => {
     if (feedback || disabled) return;
@@ -247,37 +198,53 @@ const QuestionCard = ({
   const matchLeft = visualData?.leftItems || [];
   const matchRight = visualData?.rightItems || [];
 
+  const attempted = practiceSummary?.attempted || 0;
+  const correct = practiceSummary?.correct || 0;
+
+  const displayAttempted = isSuccess || isError ? attempted + 1 : attempted;
+  const displayCorrect = isSuccess ? correct + 1 : correct;
   return (
     <div className="question-shell">
+      <div
+        className="practice-summary"
+        style={{ display: "flex", gap: "1.2rem", alignItems: "center" }}
+      >
+        {/* CORRECT STAT */}
+        <div className="practice-summary__stat">
+          <span
+            className="practice-summary__label"
+            style={{ marginRight: "0.5rem" }}
+          >
+            Correct:
+          </span>
+          <strong
+            key={`correct-anim-${statAnim.key}`}
+            className={statAnim.colorClass}
+          >
+            {displayCorrect}
+          </strong>
+        </div>
+
+        {/* ATTEMPTED STAT */}
+        <div className="practice-summary__stat">
+          <span
+            className="practice-summary__label"
+            style={{ marginRight: "0.5rem" }}
+          >
+            Attempted:
+          </span>
+          <strong
+            /* Uses the exact same animation key so they pop at the exact same time */
+            key={`attempt-anim-${statAnim.key}`}
+            /* Only applies the subtle bump if an animation is actively playing */
+            className={statAnim.key > 0 ? "stat-pop-neutral" : ""}
+          >
+            {displayAttempted}
+          </strong>
+        </div>
+      </div>
       <div className="question-shell__main">
         <div className="question__card">
-          {/* Stats Container combining Correct, Attempted */}
-          {/* Using optional chaining '?.correct' as a secondary safety net */}
-          <div
-            className="practice-summary"
-            style={{ display: "flex", gap: "1rem", alignItems: "center" }}
-          >
-            <div className="practice-summary__stat">
-              <span
-                className="practice-summary__label"
-                style={{ marginRight: "0.5rem" }}
-              >
-                Correct:
-              </span>
-              <strong>{practiceSummary?.correct || 0}</strong>
-            </div>
-
-            <div className="practice-summary__stat">
-              <span
-                className="practice-summary__label"
-                style={{ marginRight: "0.5rem" }}
-              >
-                Attempted:
-              </span>
-              <strong>{practiceSummary?.attempted || 0}</strong>
-            </div>
-          </div>
-
           {isSuccess && (
             <Confetti recycle={false} numberOfPieces={500} gravity={0.3} />
           )}
