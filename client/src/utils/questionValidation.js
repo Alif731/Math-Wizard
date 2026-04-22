@@ -158,9 +158,11 @@ export const buildSubmissionResponse = (question, response) => {
   }
 
   if (inputMode === "keypad_single_blank") {
+    const answer = response?.slots?.answer || "";
     return {
+      textAnswer: answer,
       slots: {
-        answer: response?.slots?.answer || "",
+        answer,
       },
     };
   }
