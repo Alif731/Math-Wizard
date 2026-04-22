@@ -123,6 +123,42 @@ function verifySchemaQuestions() {
     false,
   );
 
+  const multiAddPracticeQuestion = {
+    interactionMode: "direct_answer",
+    inputMode: "keypad_single_blank",
+    correctAnswer: "22",
+    validation: {
+      acceptableAnswers: ["22"],
+      slots: { answer: "22" },
+    },
+  };
+
+  assert.equal(
+    validateQuestionResponse(multiAddPracticeQuestion, {
+      slots: { answer: "22" },
+    }),
+    true,
+  );
+  assert.equal(
+    validateQuestionResponse(multiAddPracticeQuestion, {
+      textAnswer: "22",
+      slots: { answer: "22" },
+    }),
+    true,
+  );
+  assert.equal(
+    validateQuestionResponse(multiAddPracticeQuestion, {
+      answer: "22",
+    }),
+    true,
+  );
+  assert.equal(
+    validateQuestionResponse(multiAddPracticeQuestion, {
+      slots: { answer: "23" },
+    }),
+    false,
+  );
+
   const barModelQuestion = {
     interactionMode: "bar_model_builder",
     validation: {
@@ -145,7 +181,7 @@ function verifySchemaQuestions() {
   );
 
   console.log(
-    "SUCCESS: schema validation, compare bar-model variants, and legacy compatibility verified.",
+    "SUCCESS: schema validation, compare bar-model variants, direct answers, and legacy compatibility verified.",
   );
 }
 

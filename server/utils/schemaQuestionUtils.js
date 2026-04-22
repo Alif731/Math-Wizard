@@ -105,7 +105,9 @@ const getResponseText = (response) => {
   }
 
   if (response && typeof response === "object") {
-    return response.textAnswer ?? response?.slots?.answer ?? "";
+    return (
+      response.textAnswer ?? response?.slots?.answer ?? response.answer ?? ""
+    );
   }
 
   return "";

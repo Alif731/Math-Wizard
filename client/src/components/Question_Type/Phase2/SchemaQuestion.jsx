@@ -1019,7 +1019,7 @@ const SchemaQuestion = ({
     isSubmitting,
     question?.inputMode,
     isCompareAnswerInput,
-    response?.activeField,
+    response,
     setResponse,
     showUnknownButton,
   ]);

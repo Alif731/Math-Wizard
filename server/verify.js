@@ -47,6 +47,7 @@ async function verify() {
     'multi_sub',
     'missing_part_equations',
     'equations_from_bar_models',
+    'recognize_combine',
     'schema_combine',
     'schema_change',
     'schema_compare',
