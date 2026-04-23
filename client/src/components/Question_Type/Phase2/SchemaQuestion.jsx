@@ -415,9 +415,9 @@ const SchemaQuestion = ({
         </div>
       )}
 
-      {feedback?.isCorrect && question?.moduleStage === "schema_solve" && (
+      {/* {feedback?.isCorrect && question?.moduleStage === "schema_solve" && (
         <VerificationPanel question={question} />
-      )}
+      )} */}
 
       <div className="worksheet-actions">
         {hasFeedback ? (
