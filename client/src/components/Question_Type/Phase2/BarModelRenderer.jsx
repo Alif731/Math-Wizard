@@ -10,6 +10,58 @@ import {
   getGuidedCompareValue,
 } from "./SchemaUtils";
 
+// const TotalPartsBarModel = ({
+//   spec,
+//   response,
+//   activeField,
+//   setActiveField,
+// }) => {
+//   const {
+//     total: totalMagnitude,
+//     left: leftMagnitude,
+//     right: rightMagnitude,
+//   } = resolveTotalPartsMagnitudes(spec, response);
+//   const percentages = getSegmentPercentages(
+//     leftMagnitude,
+//     rightMagnitude,
+//     totalMagnitude,
+//   );
+
+//   return (
+//     <div className="bar-model bar-model--total-parts">
+//       <div className="bar-model__top">
+//         <BarBox
+//           box={spec.total}
+//           label={getBarLabel(spec.total, spec)}
+//           value={getBarValue(response, spec.total)}
+//           active={activeField === spec.total.key}
+//           onClick={() => setActiveField(spec.total.key)}
+//           className="bar-box--wide"
+//         />
+//       </div>
+//       <div className="bar-model__bottom">
+//         <BarBox
+//           box={spec.left}
+//           label={getBarLabel(spec.left, spec)}
+//           value={getBarValue(response, spec.left)}
+//           active={activeField === spec.left.key}
+//           onClick={() => setActiveField(spec.left.key)}
+//           className="bar-box--segment"
+//           style={{ width: `${percentages.first}%` }}
+//         />
+//         <BarBox
+//           box={spec.right}
+//           label={getBarLabel(spec.right, spec)}
+//           value={getBarValue(response, spec.right)}
+//           active={activeField === spec.right.key}
+//           onClick={() => setActiveField(spec.right.key)}
+//           className="bar-box--segment"
+//           style={{ width: `${percentages.second}%` }}
+//         />
+//       </div>
+//     </div>
+//   );
+// };
 const TotalPartsBarModel = ({
   spec,
   response,
@@ -29,16 +81,21 @@ const TotalPartsBarModel = ({
 
   return (
     <div className="bar-model bar-model--total-parts">
-      <div className="bar-model__top">
-        <BarBox
-          box={spec.total}
-          label={getBarLabel(spec.total, spec)}
-          value={getBarValue(response, spec.total)}
-          active={activeField === spec.total.key}
-          onClick={() => setActiveField(spec.total.key)}
-          className="bar-box--wide"
-        />
-      </div>
+      
+      {/* NEW: We only render the top bar if hideTopBar is NOT true */}
+      {!spec.hideTopBar && (
+        <div className="bar-model__top">
+          <BarBox
+            box={spec.total}
+            label={getBarLabel(spec.total, spec)}
+            value={getBarValue(response, spec.total)}
+            active={activeField === spec.total.key}
+            onClick={() => setActiveField(spec.total.key)}
+            className="bar-box--wide"
+          />
+        </div>
+      )}
+
       <div className="bar-model__bottom">
         <BarBox
           box={spec.left}
@@ -62,7 +119,6 @@ const TotalPartsBarModel = ({
     </div>
   );
 };
-
 const CompareStackedBarModel = ({
   spec,
   response,

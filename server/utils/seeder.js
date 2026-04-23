@@ -455,6 +455,7 @@ const createSchemaEquationQuestion = ({
   compareVariant = null,
   alignmentMode = null,
   barDecorations = {},
+  hideTopBar = false,
 }) => {
   const equationSpec = {
     operator,
@@ -518,21 +519,24 @@ const createSchemaEquationQuestion = ({
     stageTotal: 3,
     helperText: "Tap any box to fill it in. Use ? for the unknown.",
     unknownSlot,
-    barModelSpec: createBarModelSpec({
-      schemaKind,
-      unknownSlot,
-      values: displayBarValues,
-      scaleValues,
-      labels,
-      roleLabels,
-      valueLabels,
-      participants,
-      comparisonWording,
-      equationForm,
-      compareVariant,
-      alignmentMode,
-      barDecorations,
-    }),
+    barModelSpec: {
+      ...createBarModelSpec({
+        schemaKind,
+        unknownSlot,
+        values: displayBarValues,
+        scaleValues,
+        labels,
+        roleLabels,
+        valueLabels,
+        participants,
+        comparisonWording,
+        equationForm,
+        compareVariant,
+        alignmentMode,
+        barDecorations,
+      }),
+      hideTopBar,
+    },
     equationSpec,
     validation: {
       slots: Object.fromEntries(
@@ -1215,6 +1219,7 @@ const conceptsData = [
   //     }),
   //   ],
   // },
+
   // ============================================================================
   // TRACK 1: THE COMBINE SCHEMA
   // ============================================================================
@@ -1431,6 +1436,7 @@ const conceptsData = [
         text: "Mia has 6 red and 4 blue marbles. How many altogether?",
         schemaKind: "combine",
         values: { partA: "6", partB: "4", total: "?" },
+        hideTopBar: true,
         scaleValues: { partA: 6, partB: 4, total: 10 },
         labels: {
           total: "total",
@@ -1476,6 +1482,7 @@ const conceptsData = [
         text: "A fruit basket has 12 apples and 8 bananas. How many pieces of fruit are there?",
         schemaKind: "combine",
         values: { partA: "12", partB: "8", total: "?" },
+        hideTopBar: true,
         scaleValues: { partA: 12, partB: 8, total: 20 },
         labels: {
           total: "total",
@@ -1521,6 +1528,7 @@ const conceptsData = [
         text: "In a class, there are 15 boys and 14 girls. How many students are in the class?",
         schemaKind: "combine",
         values: { partA: "15", partB: "14", total: "?" },
+        hideTopBar: true,
         scaleValues: { partA: 15, partB: 14, total: 29 },
         labels: {
           total: "total",
@@ -1566,6 +1574,7 @@ const conceptsData = [
         text: "Leo spent $25 on books and $15 on toys. How much money did Leo spend in total?",
         schemaKind: "combine",
         values: { partA: "25", partB: "15", total: "?" },
+        hideTopBar: true,
         scaleValues: { partA: 25, partB: 15, total: 40 },
         labels: {
           total: "total",
@@ -1611,6 +1620,7 @@ const conceptsData = [
         text: "A parking lot has 7 cars and 5 trucks. How many vehicles are there?",
         schemaKind: "combine",
         values: { partA: "7", partB: "5", total: "?" },
+        hideTopBar: true,
         scaleValues: { partA: 7, partB: 5, total: 12 },
         labels: {
           total: "total",
@@ -1843,6 +1853,7 @@ const conceptsData = [
         text: "Mia had some stickers. She got 4 more and now has 10.",
         schemaKind: "change",
         values: { start: "?", change: "4", end: "10" },
+        hideTopBar: true,
         scaleValues: { start: 6, change: 4, end: 10 },
         labels: {
           end: "total",
@@ -1888,6 +1899,7 @@ const conceptsData = [
         text: "Jorge had some money. Then he earned $16 babysitting. Now Jorge has $68.",
         schemaKind: "change",
         values: { start: "?", change: "16", end: "68" },
+        hideTopBar: true,
         scaleValues: { start: 52, change: 16, end: 68 },
         labels: {
           end: "total",
@@ -1933,6 +1945,7 @@ const conceptsData = [
         text: "Sam had some baseball cards. He bought 15 more, and now he has 35.",
         schemaKind: "change",
         values: { start: "?", change: "15", end: "35" },
+        hideTopBar: true,
         scaleValues: { start: 20, change: 15, end: 35 },
         labels: {
           end: "total",
@@ -1978,6 +1991,7 @@ const conceptsData = [
         text: "Maya had already read some pages. She read 8 more pages and finished page 20.",
         schemaKind: "change",
         values: { start: "?", change: "8", end: "20" },
+        hideTopBar: true,
         scaleValues: { start: 12, change: 8, end: 20 },
         labels: {
           end: "total",
@@ -2023,6 +2037,7 @@ const conceptsData = [
         text: "The team had some points. They scored 10 more to reach a total of 55 points.",
         schemaKind: "change",
         values: { start: "?", change: "10", end: "55" },
+        hideTopBar: true,
         scaleValues: { start: 45, change: 10, end: 55 },
         labels: {
           end: "total",
@@ -2268,6 +2283,7 @@ const conceptsData = [
         text: "Darnell has 234 fewer marbles than Delilah. Delilah has 362 marbles. How many marbles does Darnell have?",
         schemaKind: "compare",
         values: { bigger: "362", smaller: "?", difference: "234" },
+        hideTopBar: true,
         scaleValues: { bigger: 362, smaller: 128, difference: 234 },
         labels: {
           bigger: "Delilah's marbles",
@@ -2325,6 +2341,7 @@ const conceptsData = [
         text: "Tabitha wrote 110 words. Sasha wrote 25 fewer words than Tabitha. How many words did Sasha write?",
         schemaKind: "compare",
         values: { bigger: "110", smaller: "?", difference: "25" },
+        hideTopBar: true,
         scaleValues: { bigger: 110, smaller: 85, difference: 25 },
         labels: {
           bigger: "Tabitha",
@@ -2382,6 +2399,7 @@ const conceptsData = [
         text: "The Oak tree is 45 feet tall. The Pine tree is 15 feet shorter. How tall is the Pine tree?",
         schemaKind: "compare",
         values: { bigger: "45", smaller: "?", difference: "15" },
+        hideTopBar: true,
         scaleValues: { bigger: 45, smaller: 30, difference: 15 },
         labels: {
           bigger: "Oak",
@@ -2439,6 +2457,7 @@ const conceptsData = [
         text: "Sam has $80. Alex has $30 less than Sam. How much money does Alex have?",
         schemaKind: "compare",
         values: { bigger: "80", smaller: "?", difference: "30" },
+        hideTopBar: true,
         scaleValues: { bigger: 80, smaller: 50, difference: 30 },
         labels: {
           bigger: "Sam",
@@ -2496,6 +2515,7 @@ const conceptsData = [
         text: "Max the dog weighs 60 lbs. Bella the cat is 40 lbs lighter. How much does Bella weigh?",
         schemaKind: "compare",
         values: { bigger: "60", smaller: "?", difference: "40" },
+        hideTopBar: true,
         scaleValues: { bigger: 60, smaller: 20, difference: 40 },
         labels: {
           bigger: "Max",
@@ -2600,11 +2620,12 @@ const seedData = async () => {
     // "single_add"             -> Phase 1: Basic Math
     // "missing_part_equations" -> Phase 1: Algebraic Bridge
     // "combine_mod1"           -> Combine: Bar to Equation
+    // "combine_mod2"           -> Combine: Bar to Equation
     // "combine_mod3"           -> Combine: Full 3-Tab Solve
     // "change_mod2"            -> Change: Word to Bar
     // "compare_mod3"           -> Compare: Full 3-Tab Solve
 
-    const testStage = "combine_mod1"; // <--- CHANGE THIS TO JUMP
+    const testStage = "combine_mod3"; // single_add<--- CHANGE THIS TO JUMP
 
     // 3. Create the test user with ONLY that stage active
     const testUser = new User({
