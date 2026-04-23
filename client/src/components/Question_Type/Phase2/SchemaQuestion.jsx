@@ -165,7 +165,7 @@ const SchemaQuestion = ({
     isSubmitting,
     question?.inputMode,
     isCompareAnswerInput,
-    response?.activeField,
+    response,
     setResponse,
     showUnknownButton,
   ]);
@@ -341,9 +341,16 @@ const SchemaQuestion = ({
           <label className="worksheet-answer-field">
             <input
               type="text"
-              inputMode="none" /* Prevents the native mobile keyboard from popping up */
-              readOnly /* Forces the user to use your custom keypad */
+              inputMode="numeric"
               value={getDisplayedTextAnswer(response) || ""}
+              onChange={(event) =>
+                !hasFeedback &&
+                !isSubmitting &&
+                setResponse((current) => ({
+                  ...(current || {}),
+                  textAnswer: event.target.value,
+                }))
+              }
               disabled={hasFeedback || isSubmitting}
               placeholder="Your answer"
             />
