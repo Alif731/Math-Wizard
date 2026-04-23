@@ -1,4 +1,5 @@
 import React from "react";
+import { Delete, Check, Lock } from "lucide-react";
 import {
   getSlotDisplayValue,
   getEquationFixedValue,
@@ -12,38 +13,89 @@ const PRACTICE_PILLS = [
   { key: "multi_sub", label: "Multi -" },
 ];
 
-const STAGE_PILLS = [
-  { index: 1, label: "1. Bar model" },
-  { index: 2, label: "2. Equation" },
-  { index: 3, label: "3. Solve" },
+const SCHEMA_STAGES = [
+  { key: 1, label: "1. Bar model" },
+  { key: 2, label: "2. Equation" },
+  { key: 3, label: "3. Solve" },
 ];
 
-export const PracticeTabs = ({ activeKey }) => (
-  <div className="worksheet-tabs">
-    {PRACTICE_PILLS.map((pill) => (
-      <div
-        key={pill.key}
-        className={`worksheet-tab ${activeKey === pill.key ? "is-active" : ""}`}
-      >
-        {pill.label}
-      </div>
-    ))}
-  </div>
-);
+export const PracticeTabs = ({ activeKey }) => {
+  // Find where the user currently is in the sequence
+  const activeIndex = PRACTICE_PILLS.findIndex(
+    (pill) => pill.key === activeKey,
+  );
 
-export const StageTabs = ({ currentStage }) => (
-  <div className="worksheet-stage-tabs">
-    {STAGE_PILLS.map((pill) => (
-      <div
-        key={pill.index}
-        className={`worksheet-stage-tab ${pill.index < currentStage ? "is-complete" : pill.index === currentStage ? "is-active" : ""}`}
-      >
-        {pill.index < currentStage ? `✓ ${pill.label}` : pill.label}
-      </div>
-    ))}
-  </div>
-);
+  return (
+    <div className="worksheet-tabs progression-track">
+      {PRACTICE_PILLS.map((pill, index) => {
+        // Determine the state of each pill based on its index
+        let statusClass = "";
+        if (index < activeIndex) statusClass = "is-completed";
+        else if (index === activeIndex) statusClass = "is-active";
+        else statusClass = "is-locked";
 
+        return (
+          <div key={pill.key} className={`worksheet-tab ${statusClass}`}>
+            {/* Optional: Add icons based on state */}
+            {statusClass === "is-completed" && (
+              <Check size={14} className="tab-icon" />
+            )}
+            {statusClass === "is-locked" && (
+              <Lock size={12} className="tab-icon" />
+            )}
+
+            <span>{pill.label}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+// export const StageTabs = ({ currentStage }) => (
+//   <div className="worksheet-stage-tabs">
+//     {STAGE_PILLS.map((pill) => (
+//       <div
+//         key={pill.index}
+//         className={`worksheet-stage-tab ${pill.index < currentStage ? "is-complete" : pill.index === currentStage ? "is-active" : ""}`}
+//       >
+//         {pill.index < currentStage ? `✓ ${pill.label}` : pill.label}
+//       </div>
+//     ))}
+//   </div>
+// );
+
+export const StageTabs = ({ currentStage }) => {
+  return (
+    <div className="worksheet-tabs progression-track">
+      {SCHEMA_STAGES.map((stage) => {
+        // Determine the state based on the current stage number (1, 2, or 3)
+        let statusClass = "";
+
+        if (stage.key < currentStage) {
+          statusClass = "is-completed";
+        } else if (stage.key === currentStage) {
+          statusClass = "is-active";
+        } else {
+          statusClass = "is-locked";
+        }
+
+        return (
+          <div key={stage.key} className={`worksheet-tab ${statusClass}`}>
+            {statusClass === "is-completed" && (
+              <Check size={14} className="tab-icon" />
+            )}
+            {statusClass === "is-locked" && (
+              <Lock size={12} className="tab-icon" />
+            )}
+
+            <span>{stage.label}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
 export const BarBox = ({
   box,
   label,
@@ -186,7 +238,8 @@ export const Keypad = ({
           onClick={onBackspace}
           disabled={disabled}
         >
-          ⌫
+          {/* ⌫ */}
+          <Delete size={28} />
         </button>
         <button
           type="button"
@@ -202,7 +255,8 @@ export const Keypad = ({
           onClick={showUnknown ? onUnknown : onClear}
           disabled={disabled}
         >
-          {showUnknown ? "?" : "clr"}
+          {/* {showUnknown ? "?" : "Clr"} */}
+          {showUnknown ? "AC" : "AC"}
         </button>
       </div>
     )}

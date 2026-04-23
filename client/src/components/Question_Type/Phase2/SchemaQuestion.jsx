@@ -236,12 +236,16 @@ const SchemaQuestion = ({
             <button
               type="button"
               className={`worksheet-help ${showHint ? "is-open" : ""}`}
-              onClick={() =>
-                setShowHint(!showHint)
-              } /* 1. Toggles open/closed */
-              /* 2. Removed the disabled lock completely */
+              onClick={() => setShowHint(!showHint)}
             >
-              {showHint ? helpText : "Show Hint"}
+              {showHint ? (
+                /* New wrapper for the magical reveal animation */
+                <span className="hint-text-reveal">{helpText}</span>
+              ) : (
+                <span>
+                  <span className="sparkle">✨</span> Reveal Clue
+                </span>
+              )}
             </button>
           );
         })()}
