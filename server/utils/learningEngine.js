@@ -471,7 +471,76 @@ function updateBanditBounds(masteryEntry, totalPlays) {
   return adaptiveState.ucb;
 }
 
+// function chooseNextConceptId(user, frontier) {
+//   for (const conceptId of frontier) {
+//     const masteryEntry = ensureMasteryEntry(user, conceptId, {
+//       status: "unlocked",
+//       timeAdded: getTotalInteractionCount(user),
+//     });
+
+//     if (masteryEntry.adaptiveState.timesPlayed === 0) {
+//       masteryEntry.adaptiveState.ucb = 1;
+//       masteryEntry.adaptiveState.lcb = 0;
+//       persistMasteryEntry(user, conceptId, masteryEntry);
+//       return conceptId;
+//     }
+//   }
+
+//   const totalPlays = frontier.reduce((sum, conceptId) => {
+//     const masteryEntry = ensureMasteryEntry(user, conceptId, {
+//       status: "unlocked",
+//       timeAdded: getTotalInteractionCount(user),
+//     });
+//     return sum + masteryEntry.adaptiveState.timesPlayed;
+//   }, 0);
+
+//   let bestConceptId = frontier[0];
+//   let bestScore = -Infinity;
+
+//   for (const conceptId of frontier) {
+//     const masteryEntry = ensureMasteryEntry(user, conceptId, {
+//       status: "unlocked",
+//       timeAdded: getTotalInteractionCount(user),
+//     });
+//     const score = updateBanditBounds(masteryEntry, totalPlays);
+
+//     persistMasteryEntry(user, conceptId, masteryEntry);
+
+//     if (score > bestScore) {
+//       bestScore = score;
+//       bestConceptId = conceptId;
+//     }
+//   }
+
+//   return bestConceptId;
+// }
 function chooseNextConceptId(user, frontier) {
+  // ==========================================
+  // 1. THE MOD 3 BUNDLE LOCK-IN CHECK
+  // ==========================================
+  for (const conceptId of frontier) {
+    // If the concept is a Mod 3 concept...
+    if (String(conceptId).includes("mod3")) {
+      const masteryEntry = ensureMasteryEntry(user, conceptId, {
+        status: "unlocked",
+        timeAdded: getTotalInteractionCount(user),
+      });
+
+      // If timesPlayed is not a multiple of 3, they are mid-bundle!
+      // (e.g., timesPlayed is 1 or 2, meaning they finished Bar or Eq but not Solve)
+      if (
+        masteryEntry.adaptiveState.timesPlayed > 0 &&
+        masteryEntry.adaptiveState.timesPlayed % 3 !== 0
+      ) {
+        // Bypass all AI logic and force them to finish this bundle!
+        return conceptId;
+      }
+    }
+  }
+
+  // ==========================================
+  // 2. NORMAL UNPLAYED CHECK
+  // ==========================================
   for (const conceptId of frontier) {
     const masteryEntry = ensureMasteryEntry(user, conceptId, {
       status: "unlocked",
@@ -486,6 +555,9 @@ function chooseNextConceptId(user, frontier) {
     }
   }
 
+  // ==========================================
+  // 3. NORMAL UCB MULTI-ARMED BANDIT LOGIC
+  // ==========================================
   const totalPlays = frontier.reduce((sum, conceptId) => {
     const masteryEntry = ensureMasteryEntry(user, conceptId, {
       status: "unlocked",
@@ -515,14 +587,60 @@ function chooseNextConceptId(user, frontier) {
   return bestConceptId;
 }
 
-function getQuestionForConcept(concept, masteryEntry) {
+function getQuestionForConcept(concept, masteryEntry, user) {
   if (!concept?.questions?.length) {
     return null;
   }
 
-  const questionIndex =
-    masteryEntry.adaptiveState.timesPlayed % concept.questions.length;
-  return concept.questions[questionIndex];
+  const questions = concept.questions;
+  const length = questions.length;
+  const timesPlayed = masteryEntry.adaptiveState?.timesPlayed || 0;
+
+  // The Salt: Unique starting point based on username
+  // const saltSource = user?.username || user?._id?.toString() || "default";
+  const saltSource = user?._id?.toString() || user?.username || "default";
+  const salt = saltSource
+    .split("")
+    .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+
+  // Check if this concept requires the 3-part sequence (mod3)
+  const isMod3 = String(concept.id || "").includes("mod3");
+
+  if (isMod3) {
+    // ==========================================
+    // MOD 3 LOGIC: Randomize Bundles of 3
+    // ==========================================
+    const BUNDLE_SIZE = 3;
+    const numBundles = Math.floor(length / BUNDLE_SIZE);
+
+    if (numBundles === 0) return questions[timesPlayed % length]; // Safety fallback
+
+    // Jump by a prime number of bundles
+    let bundleStep = 3;
+    if (numBundles % bundleStep === 0) bundleStep = 5;
+
+    // Which bundle are we on? (Changes every 3 plays)
+    const currentBundleIndex = Math.floor(timesPlayed / BUNDLE_SIZE);
+
+    // Which step of the bundle are we on? (0 = Bar, 1 = Eq, 2 = Solve)
+    const stepInsideBundle = timesPlayed % BUNDLE_SIZE;
+
+    // Calculate which bundle to load next, then pick the exact step inside it
+    const randomizedBundle =
+      (salt + currentBundleIndex * bundleStep) % numBundles;
+    const finalIndex = randomizedBundle * BUNDLE_SIZE + stepInsideBundle;
+
+    return questions[finalIndex];
+  } else {
+    // ==========================================
+    // MOD 1 & 2 LOGIC: Standard Randomization
+    // ==========================================
+    let step = 7;
+    if (length % step === 0) step = 11;
+
+    const index = (salt + timesPlayed * step) % length;
+    return questions[index];
+  }
 }
 
 function updateAdaptiveState(adaptiveState, isCorrect) {
@@ -586,7 +704,8 @@ async function getNextProblem(user) {
 
   return {
     concept,
-    question: getQuestionForConcept(concept, masteryEntry),
+    // We added `user` right here! -->
+    question: getQuestionForConcept(concept, masteryEntry, user),
   };
 }
 

@@ -203,7 +203,11 @@ export const Keypad = ({
   onOperator,
   disabled,
 }) => (
-  <div className="worksheet-keypad">
+  <div
+    className="worksheet-keypad"
+    /* THE FIX: This forces React to remount and trigger the animation */
+    key={showOperatorPad ? "operator-pad" : "number-pad"}
+  >
     <div className="worksheet-keypad__title">{title}</div>
     {showOperatorPad ? (
       <div className="worksheet-keypad__operators">
