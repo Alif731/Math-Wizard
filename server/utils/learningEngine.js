@@ -3,6 +3,9 @@ const Concept = require("../models/Concept");
 const WINDOW_SIZE = 5;
 const MASTERY_MIN_ATTEMPTS = 3;
 const MASTERY_SCORE_THRESHOLD = 3;
+// const WINDOW_SIZE = 3;
+// const MASTERY_MIN_ATTEMPTS = 2;
+// const MASTERY_SCORE_THRESHOLD = 2;
 const CHANGE_POINT_FALSE_POSITIVE_RATE = Math.exp(-MASTERY_SCORE_THRESHOLD);
 const BANDIT_PRIORS = Object.freeze({
   guessAlpha: 20,
@@ -714,6 +717,49 @@ async function getNextConcept(user) {
   return concept;
 }
 
+// async function updateMastery(user, conceptId, isCorrect) {
+//   const graph = await loadConceptGraph();
+//   const masteryEntry = ensureMasteryEntry(user, conceptId, {
+//     status: "unlocked",
+//     timeAdded: getTotalInteractionCount(user),
+//   });
+
+//   masteryEntry.lastAttempts = normalizeBooleanList(
+//     [...masteryEntry.lastAttempts, isCorrect],
+//     WINDOW_SIZE,
+//   );
+//   masteryEntry.attemptCount += 1;
+//   if (isCorrect) {
+//     masteryEntry.successCount += 1;
+//   }
+
+//   updateAdaptiveState(masteryEntry.adaptiveState, Boolean(isCorrect));
+//   persistMasteryEntry(user, conceptId, masteryEntry);
+
+//   if (
+//     masteryEntry.status !== "mastered" &&
+//     masteryEntry.attemptCount >= MASTERY_MIN_ATTEMPTS &&
+//     hasMasteryChangePoint(masteryEntry.adaptiveState)
+//   ) {
+//     masteryEntry.status = "mastered";
+//     persistMasteryEntry(user, conceptId, masteryEntry);
+//     await unlockChildren(user, conceptId, graph);
+//   } else if (masteryEntry.status === "mastered") {
+//     user.zpdNodes = dedupeIds(
+//       (user.zpdNodes || []).filter((id) => id !== conceptId),
+//     );
+//   }
+
+//   user.zpdNodes = dedupeIds(
+//     (user.zpdNodes || []).filter((activeConceptId) =>
+//       graph.conceptMap.has(activeConceptId),
+//     ),
+//   );
+
+//   return masteryEntry;
+// }
+
+// Critical Bug Fix (Stop ZPD from jumping from module 3 without completing)
 async function updateMastery(user, conceptId, isCorrect) {
   const graph = await loadConceptGraph();
   const masteryEntry = ensureMasteryEntry(user, conceptId, {
@@ -733,10 +779,19 @@ async function updateMastery(user, conceptId, isCorrect) {
   updateAdaptiveState(masteryEntry.adaptiveState, Boolean(isCorrect));
   persistMasteryEntry(user, conceptId, masteryEntry);
 
+  // ==========================================
+  // THE FIX: Check if they are allowed to graduate
+  // ==========================================
+  const isMod3 = String(conceptId).includes("mod3");
+  // If it's Mod 3, attemptCount MUST be a multiple of 3 to complete a bundle.
+  // If it's Mod 1 or 2, they are always "bundle complete" (single questions).
+  const isBundleComplete = isMod3 ? masteryEntry.attemptCount % 3 === 0 : true;
+
   if (
     masteryEntry.status !== "mastered" &&
     masteryEntry.attemptCount >= MASTERY_MIN_ATTEMPTS &&
-    hasMasteryChangePoint(masteryEntry.adaptiveState)
+    hasMasteryChangePoint(masteryEntry.adaptiveState) &&
+    isBundleComplete // <--- Blocks graduation until the Solve step is done!
   ) {
     masteryEntry.status = "mastered";
     persistMasteryEntry(user, conceptId, masteryEntry);
@@ -755,7 +810,6 @@ async function updateMastery(user, conceptId, isCorrect) {
 
   return masteryEntry;
 }
-
 module.exports = {
   updateMastery,
   getNextConcept,

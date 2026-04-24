@@ -852,13 +852,81 @@ const conceptsData = [
   // ============================================================================
   {
     id: "combine_mod1",
+    title: "Combine: Word to Bar",
+    description: "Read the combine story and build the bar model.",
+    prerequisites: ["missing_part_equations"],
+    questions: [
+      createSchemaRecognitionQuestion({
+        concept: "combine_mod1",
+        text: "Mia has 6 red and 4 blue marbles. How many altogether?",
+        schemaKind: "combine",
+        values: { partA: 6, partB: 4, total: 10 },
+        labels: { total: "total", partA: "red", partB: "blue" },
+        displayValues: { partA: "?", partB: "?", total: "?" },
+        validationSlots: { total: "?", partA: "6", partB: "4" },
+        alternateSlots: { total: "10", partA: "6", partB: "4" },
+        unknownSlot: "total",
+        difficulty: 2,
+      }),
+      createSchemaRecognitionQuestion({
+        concept: "combine_mod1",
+        text: "A fruit basket has 12 apples and 8 bananas. How many pieces of fruit are there?",
+        schemaKind: "combine",
+        values: { partA: 12, partB: 8, total: 20 },
+        labels: { total: "total", partA: "apples", partB: "bananas" },
+        displayValues: { partA: "?", partB: "?", total: "?" },
+        validationSlots: { total: "?", partA: "12", partB: "8" },
+        alternateSlots: { total: "20", partA: "12", partB: "8" },
+        unknownSlot: "total",
+        difficulty: 2,
+      }),
+      createSchemaRecognitionQuestion({
+        concept: "combine_mod1",
+        text: "In a class, there are 15 boys and 14 girls. How many students are in the class?",
+        schemaKind: "combine",
+        values: { partA: 15, partB: 14, total: 29 },
+        labels: { total: "total", partA: "boys", partB: "girls" },
+        displayValues: { partA: "?", partB: "?", total: "?" },
+        validationSlots: { total: "?", partA: "15", partB: "14" },
+        alternateSlots: { total: "29", partA: "15", partB: "14" },
+        unknownSlot: "total",
+        difficulty: 2,
+      }),
+      createSchemaRecognitionQuestion({
+        concept: "combine_mod1",
+        text: "Leo spent $25 on books and $15 on toys. How much money did Leo spend in total?",
+        schemaKind: "combine",
+        values: { partA: 25, partB: 15, total: 40 },
+        labels: { total: "total", partA: "books", partB: "toys" },
+        displayValues: { partA: "?", partB: "?", total: "?" },
+        validationSlots: { total: "?", partA: "25", partB: "15" },
+        alternateSlots: { total: "40", partA: "25", partB: "15" },
+        unknownSlot: "total",
+        difficulty: 3,
+      }),
+      createSchemaRecognitionQuestion({
+        concept: "combine_mod1",
+        text: "A parking lot has 7 cars and 5 trucks. How many vehicles are there?",
+        schemaKind: "combine",
+        values: { partA: 7, partB: 5, total: 12 },
+        labels: { total: "total", partA: "cars", partB: "trucks" },
+        displayValues: { partA: "?", partB: "?", total: "?" },
+        validationSlots: { total: "?", partA: "7", partB: "5" },
+        alternateSlots: { total: "12", partA: "7", partB: "5" },
+        unknownSlot: "total",
+        difficulty: 1,
+      }),
+    ],
+  },
+  {
+    id: "combine_mod2",
     title: "Combine: Bar to Eq",
     description: "Translate Combine bar models into equations.",
-    prerequisites: ["missing_part_equations"],
+    prerequisites: ["combine_mod1"],
     questions: [
       // Q1
       createEquationFromBarQuestion({
-        concept: "combine_mod1",
+        concept: "combine_mod2",
         text: "Build the equation for the red and blue parts.",
         schemaKind: "combine",
         barValues: { partA: "6", partB: "4", total: "10" },
@@ -879,7 +947,7 @@ const conceptsData = [
       }),
       // Q2
       createEquationFromBarQuestion({
-        concept: "combine_mod1",
+        concept: "combine_mod2",
         text: "Build the equation for the apples and bananas.",
         schemaKind: "combine",
         barValues: { partA: "12", partB: "8", total: "20" },
@@ -900,7 +968,7 @@ const conceptsData = [
       }),
       // Q3
       createEquationFromBarQuestion({
-        concept: "combine_mod1",
+        concept: "combine_mod2",
         text: "Build the equation for the boys and girls.",
         schemaKind: "combine",
         barValues: { partA: "15", partB: "14", total: "29" },
@@ -925,7 +993,7 @@ const conceptsData = [
       }),
       // Q4
       createEquationFromBarQuestion({
-        concept: "combine_mod1",
+        concept: "combine_mod2",
         text: "Build the equation for the books and toys.",
         schemaKind: "combine",
         barValues: { partA: "25", partB: "15", total: "40" },
@@ -950,7 +1018,7 @@ const conceptsData = [
       }),
       // Q5
       createEquationFromBarQuestion({
-        concept: "combine_mod1",
+        concept: "combine_mod2",
         text: "Build the equation for the cars and trucks.",
         schemaKind: "combine",
         barValues: { partA: "7", partB: "5", total: "12" },
@@ -967,74 +1035,6 @@ const conceptsData = [
         validationSlots: { leftTerm: "7", rightTerm: "5", result: "12" },
         alternateSlots: { leftTerm: "7", rightTerm: "5", result: "12" },
         operator: "+",
-        difficulty: 1,
-      }),
-    ],
-  },
-  {
-    id: "combine_mod2",
-    title: "Combine: Word to Bar",
-    description: "Read the combine story and build the bar model.",
-    prerequisites: ["combine_mod1"],
-    questions: [
-      createSchemaRecognitionQuestion({
-        concept: "combine_mod2",
-        text: "Mia has 6 red and 4 blue marbles. How many altogether?",
-        schemaKind: "combine",
-        values: { partA: 6, partB: 4, total: 10 },
-        labels: { total: "total", partA: "red", partB: "blue" },
-        displayValues: { partA: "?", partB: "?", total: "?" },
-        validationSlots: { total: "?", partA: "6", partB: "4" },
-        alternateSlots: { total: "10", partA: "6", partB: "4" },
-        unknownSlot: "total",
-        difficulty: 2,
-      }),
-      createSchemaRecognitionQuestion({
-        concept: "combine_mod2",
-        text: "A fruit basket has 12 apples and 8 bananas. How many pieces of fruit are there?",
-        schemaKind: "combine",
-        values: { partA: 12, partB: 8, total: 20 },
-        labels: { total: "total", partA: "apples", partB: "bananas" },
-        displayValues: { partA: "?", partB: "?", total: "?" },
-        validationSlots: { total: "?", partA: "12", partB: "8" },
-        alternateSlots: { total: "20", partA: "12", partB: "8" },
-        unknownSlot: "total",
-        difficulty: 2,
-      }),
-      createSchemaRecognitionQuestion({
-        concept: "combine_mod2",
-        text: "In a class, there are 15 boys and 14 girls. How many students are in the class?",
-        schemaKind: "combine",
-        values: { partA: 15, partB: 14, total: 29 },
-        labels: { total: "total", partA: "boys", partB: "girls" },
-        displayValues: { partA: "?", partB: "?", total: "?" },
-        validationSlots: { total: "?", partA: "15", partB: "14" },
-        alternateSlots: { total: "29", partA: "15", partB: "14" },
-        unknownSlot: "total",
-        difficulty: 2,
-      }),
-      createSchemaRecognitionQuestion({
-        concept: "combine_mod2",
-        text: "Leo spent $25 on books and $15 on toys. How much money did Leo spend in total?",
-        schemaKind: "combine",
-        values: { partA: 25, partB: 15, total: 40 },
-        labels: { total: "total", partA: "books", partB: "toys" },
-        displayValues: { partA: "?", partB: "?", total: "?" },
-        validationSlots: { total: "?", partA: "25", partB: "15" },
-        alternateSlots: { total: "40", partA: "25", partB: "15" },
-        unknownSlot: "total",
-        difficulty: 3,
-      }),
-      createSchemaRecognitionQuestion({
-        concept: "combine_mod2",
-        text: "A parking lot has 7 cars and 5 trucks. How many vehicles are there?",
-        schemaKind: "combine",
-        values: { partA: 7, partB: 5, total: 12 },
-        labels: { total: "total", partA: "cars", partB: "trucks" },
-        displayValues: { partA: "?", partB: "?", total: "?" },
-        validationSlots: { total: "?", partA: "7", partB: "5" },
-        alternateSlots: { total: "12", partA: "7", partB: "5" },
-        unknownSlot: "total",
         difficulty: 1,
       }),
     ],
@@ -1282,14 +1282,148 @@ const conceptsData = [
   // ============================================================================
   {
     id: "change_mod1",
+    title: "Change: Word to Bar",
+    description: "Read the change story and build the bar model.",
+    prerequisites: ["combine_mod3"],
+    questions: [
+      // -------------------------------Subtraction-------------------------------
+      createSchemaRecognitionQuestion({
+        concept: "change_mod1",
+        text: "Leo had 20 cookies. He ate 6 of them. How many cookies does Leo have left?",
+        schemaKind: "change",
+        values: { start: 20, change: 6, end: 14 },
+        labels: { end: "left over", start: "start", change: "ate" },
+        displayValues: { start: "?", change: "?", end: "?" },
+        validationSlots: { end: "?", start: "20", change: "6" },
+        alternateSlots: { end: "14", start: "20", change: "6" },
+        unknownSlot: "end",
+        difficulty: 2,
+      }),
+      // Subtraction 1: Finding the change
+      createSchemaRecognitionQuestion({
+        concept: "change_mod1",
+        text: "A tree had 24 leaves. The wind blew some away, and now there are 15 leaves left. How many leaves blew away?",
+        schemaKind: "change",
+        values: { start: 24, change: 9, end: 15 },
+        labels: { end: "left over", start: "start", change: "blew away" },
+        displayValues: { start: "?", change: "?", end: "?" },
+        validationSlots: { end: "15", start: "24", change: "?" },
+        alternateSlots: { end: "15", start: "24", change: "9" },
+        unknownSlot: "change",
+        difficulty: 2,
+      }),
+      // Subtraction 2: Finding the start
+      createSchemaRecognitionQuestion({
+        concept: "change_mod1",
+        text: "Sam had some money. He spent $18 on a toy and has $32 left. How much money did Sam start with?",
+        schemaKind: "change",
+        values: { start: 50, change: 18, end: 32 },
+        labels: { end: "left over", start: "start", change: "spent" },
+        displayValues: { start: "?", change: "?", end: "?" },
+        validationSlots: { end: "32", start: "?", change: "18" },
+        alternateSlots: { end: "32", start: "50", change: "18" },
+        unknownSlot: "start",
+        difficulty: 3,
+      }),
+      // Subtraction 3: Finding the end
+      createSchemaRecognitionQuestion({
+        concept: "change_mod1",
+        text: "12 birds were sitting on a fence. 5 birds flew away. How many birds are still on the fence?",
+        schemaKind: "change",
+        values: { start: 12, change: 5, end: 7 },
+        labels: { end: "remaining", start: "start", change: "flew away" },
+        displayValues: { start: "?", change: "?", end: "?" },
+        validationSlots: { end: "?", start: "12", change: "5" },
+        alternateSlots: { end: "7", start: "12", change: "5" },
+        unknownSlot: "end",
+        difficulty: 1,
+      }),
+      // Subtraction 4: Finding the start
+      createSchemaRecognitionQuestion({
+        concept: "change_mod1",
+        text: "Emma had some candies. She gave 15 to her friends and now has 20 left. How many candies did she start with?",
+        schemaKind: "change",
+        values: { start: 35, change: 15, end: 20 },
+        labels: { end: "left over", start: "start", change: "gave away" },
+        displayValues: { start: "?", change: "?", end: "?" },
+        validationSlots: { end: "20", start: "?", change: "15" },
+        alternateSlots: { end: "20", start: "35", change: "15" },
+        unknownSlot: "start",
+        difficulty: 3,
+      }),
+      //------------------------------- Addition -------------------------------
+      createSchemaRecognitionQuestion({
+        concept: "change_mod1",
+        text: "Mia had some stickers. She got 4 more and now has 10.",
+        schemaKind: "change",
+        values: { start: 6, change: 4, end: 10 },
+        labels: { end: "total", start: "start", change: "added" },
+        displayValues: { start: "?", change: "?", end: "?" },
+        validationSlots: { end: "10", start: "?", change: "4" },
+        alternateSlots: { end: "10", start: "6", change: "4" },
+        unknownSlot: "start",
+        difficulty: 2,
+      }),
+      createSchemaRecognitionQuestion({
+        concept: "change_mod1",
+        text: "Jorge had some money. Then he earned $16 babysitting. Now Jorge has $68.",
+        schemaKind: "change",
+        values: { start: 52, change: 16, end: 68 },
+        labels: { end: "total", start: "start", change: "earned" },
+        displayValues: { start: "?", change: "?", end: "?" },
+        validationSlots: { end: "68", start: "?", change: "16" },
+        alternateSlots: { end: "68", start: "52", change: "16" },
+        unknownSlot: "start",
+        difficulty: 2,
+      }),
+      createSchemaRecognitionQuestion({
+        concept: "change_mod1",
+        text: "Sam had some baseball cards. He bought 15 more, and now he has 35.",
+        schemaKind: "change",
+        values: { start: 20, change: 15, end: 35 },
+        labels: { end: "total", start: "start", change: "bought" },
+        displayValues: { start: "?", change: "?", end: "?" },
+        validationSlots: { end: "35", start: "?", change: "15" },
+        alternateSlots: { end: "35", start: "20", change: "15" },
+        unknownSlot: "start",
+        difficulty: 2,
+      }),
+      createSchemaRecognitionQuestion({
+        concept: "change_mod1",
+        text: "Maya had already read some pages. She read 8 more pages and finished page 20.",
+        schemaKind: "change",
+        values: { start: 12, change: 8, end: 20 },
+        labels: { end: "total", start: "start", change: "read" },
+        displayValues: { start: "?", change: "?", end: "?" },
+        validationSlots: { end: "20", start: "?", change: "8" },
+        alternateSlots: { end: "20", start: "12", change: "8" },
+        unknownSlot: "start",
+        difficulty: 1,
+      }),
+      createSchemaRecognitionQuestion({
+        concept: "change_mod1",
+        text: "The team had some points. They scored 10 more to reach a total of 55 points.",
+        schemaKind: "change",
+        values: { start: 45, change: 10, end: 55 },
+        labels: { end: "total", start: "start", change: "scored" },
+        displayValues: { start: "?", change: "?", end: "?" },
+        validationSlots: { end: "55", start: "?", change: "10" },
+        alternateSlots: { end: "55", start: "45", change: "10" },
+        unknownSlot: "start",
+        difficulty: 3,
+      }),
+    ],
+  },
+  {
+    id: "change_mod2",
     title: "Change: Bar to Eq",
     description: "Translate Change bar models into equations.",
-    prerequisites: ["combine_mod3"],
+    prerequisites: ["change_mod1"],
     questions: [
       // -------------------------------Subtraction-------------------------------
       // Subtraction 1: Ballon flew
       createEquationFromBarQuestion({
-        concept: "change_mod1",
+        concept: "change_mod2",
         text: "Build the equation for the balloons that flew away.",
         schemaKind: "change",
         barValues: { start: "15", change: "?", end: "11" },
@@ -1310,7 +1444,7 @@ const conceptsData = [
       }),
       // Subtraction 2: Finding the start
       createEquationFromBarQuestion({
-        concept: "change_mod1",
+        concept: "change_mod2",
         text: "Build the equation for the money Sam started with.",
         schemaKind: "change",
         barValues: { start: "?", change: "18", end: "32" },
@@ -1331,7 +1465,7 @@ const conceptsData = [
       }),
       // Subtraction 3: Finding the end
       createEquationFromBarQuestion({
-        concept: "change_mod1",
+        concept: "change_mod2",
         text: "Build the equation for the birds remaining on the fence.",
         schemaKind: "change",
         barValues: { start: "12", change: "5", end: "?" },
@@ -1352,7 +1486,7 @@ const conceptsData = [
       }),
       // Subtraction 4: Finding the start
       createEquationFromBarQuestion({
-        concept: "change_mod1",
+        concept: "change_mod2",
         text: "Build the equation for the candies Emma started with.",
         schemaKind: "change",
         barValues: { start: "?", change: "15", end: "20" },
@@ -1373,7 +1507,7 @@ const conceptsData = [
       }),
       // Subtraction 5: Finding the end (left over)
       createEquationFromBarQuestion({
-        concept: "change_mod1",
+        concept: "change_mod2",
         text: "Build the equation for the remaining slices of pizza.",
         schemaKind: "change",
         barValues: { start: "8", change: "3", end: "?" },
@@ -1394,7 +1528,7 @@ const conceptsData = [
       }),
       // -------------------------------Addition-------------------------------
       createEquationFromBarQuestion({
-        concept: "change_mod1",
+        concept: "change_mod2",
         text: "Build the equation for the added stickers.",
         schemaKind: "change",
         barValues: { start: "?", change: "4", end: "10" },
@@ -1414,7 +1548,7 @@ const conceptsData = [
         difficulty: 2,
       }),
       createEquationFromBarQuestion({
-        concept: "change_mod1",
+        concept: "change_mod2",
         text: "Build the equation for Jorge's babysitting total.",
         schemaKind: "change",
         barValues: { start: "?", change: "16", end: "68" },
@@ -1434,7 +1568,7 @@ const conceptsData = [
         difficulty: 2,
       }),
       createEquationFromBarQuestion({
-        concept: "change_mod1",
+        concept: "change_mod2",
         text: "Build the equation for Sam's card total.",
         schemaKind: "change",
         barValues: { start: "?", change: "15", end: "35" },
@@ -1454,7 +1588,7 @@ const conceptsData = [
         difficulty: 2,
       }),
       createEquationFromBarQuestion({
-        concept: "change_mod1",
+        concept: "change_mod2",
         text: "Build the equation for Maya's page total.",
         schemaKind: "change",
         barValues: { start: "?", change: "8", end: "20" },
@@ -1474,7 +1608,7 @@ const conceptsData = [
         difficulty: 1,
       }),
       createEquationFromBarQuestion({
-        concept: "change_mod1",
+        concept: "change_mod2",
         text: "Build the equation for the team's point total.",
         schemaKind: "change",
         barValues: { start: "?", change: "10", end: "55" },
@@ -1491,140 +1625,6 @@ const conceptsData = [
         validationSlots: { leftTerm: "?", rightTerm: "10", result: "55" },
         alternateSlots: { leftTerm: "45", rightTerm: "10", result: "55" },
         operator: "+",
-        difficulty: 3,
-      }),
-    ],
-  },
-  {
-    id: "change_mod2",
-    title: "Change: Word to Bar",
-    description: "Read the change story and build the bar model.",
-    prerequisites: ["change_mod1"],
-    questions: [
-      // -------------------------------Subtraction-------------------------------
-      createSchemaRecognitionQuestion({
-        concept: "change_mod2",
-        text: "Leo had 20 cookies. He ate 6 of them. How many cookies does Leo have left?",
-        schemaKind: "change",
-        values: { start: 20, change: 6, end: 14 },
-        labels: { end: "left over", start: "start", change: "ate" },
-        displayValues: { start: "?", change: "?", end: "?" },
-        validationSlots: { end: "?", start: "20", change: "6" },
-        alternateSlots: { end: "14", start: "20", change: "6" },
-        unknownSlot: "end",
-        difficulty: 2,
-      }),
-      // Subtraction 1: Finding the change
-      createSchemaRecognitionQuestion({
-        concept: "change_mod2",
-        text: "A tree had 24 leaves. The wind blew some away, and now there are 15 leaves left. How many leaves blew away?",
-        schemaKind: "change",
-        values: { start: 24, change: 9, end: 15 },
-        labels: { end: "left over", start: "start", change: "blew away" },
-        displayValues: { start: "?", change: "?", end: "?" },
-        validationSlots: { end: "15", start: "24", change: "?" },
-        alternateSlots: { end: "15", start: "24", change: "9" },
-        unknownSlot: "change",
-        difficulty: 2,
-      }),
-      // Subtraction 2: Finding the start
-      createSchemaRecognitionQuestion({
-        concept: "change_mod2",
-        text: "Sam had some money. He spent $18 on a toy and has $32 left. How much money did Sam start with?",
-        schemaKind: "change",
-        values: { start: 50, change: 18, end: 32 },
-        labels: { end: "left over", start: "start", change: "spent" },
-        displayValues: { start: "?", change: "?", end: "?" },
-        validationSlots: { end: "32", start: "?", change: "18" },
-        alternateSlots: { end: "32", start: "50", change: "18" },
-        unknownSlot: "start",
-        difficulty: 3,
-      }),
-      // Subtraction 3: Finding the end
-      createSchemaRecognitionQuestion({
-        concept: "change_mod2",
-        text: "12 birds were sitting on a fence. 5 birds flew away. How many birds are still on the fence?",
-        schemaKind: "change",
-        values: { start: 12, change: 5, end: 7 },
-        labels: { end: "remaining", start: "start", change: "flew away" },
-        displayValues: { start: "?", change: "?", end: "?" },
-        validationSlots: { end: "?", start: "12", change: "5" },
-        alternateSlots: { end: "7", start: "12", change: "5" },
-        unknownSlot: "end",
-        difficulty: 1,
-      }),
-      // Subtraction 4: Finding the start
-      createSchemaRecognitionQuestion({
-        concept: "change_mod2",
-        text: "Emma had some candies. She gave 15 to her friends and now has 20 left. How many candies did she start with?",
-        schemaKind: "change",
-        values: { start: 35, change: 15, end: 20 },
-        labels: { end: "left over", start: "start", change: "gave away" },
-        displayValues: { start: "?", change: "?", end: "?" },
-        validationSlots: { end: "20", start: "?", change: "15" },
-        alternateSlots: { end: "20", start: "35", change: "15" },
-        unknownSlot: "start",
-        difficulty: 3,
-      }),
-      // //------------------------------- Addition -------------------------------
-      createSchemaRecognitionQuestion({
-        concept: "change_mod2",
-        text: "Mia had some stickers. She got 4 more and now has 10.",
-        schemaKind: "change",
-        values: { start: 6, change: 4, end: 10 },
-        labels: { end: "total", start: "start", change: "added" },
-        displayValues: { start: "?", change: "?", end: "?" },
-        validationSlots: { end: "10", start: "?", change: "4" },
-        alternateSlots: { end: "10", start: "6", change: "4" },
-        unknownSlot: "start",
-        difficulty: 2,
-      }),
-      createSchemaRecognitionQuestion({
-        concept: "change_mod2",
-        text: "Jorge had some money. Then he earned $16 babysitting. Now Jorge has $68.",
-        schemaKind: "change",
-        values: { start: 52, change: 16, end: 68 },
-        labels: { end: "total", start: "start", change: "earned" },
-        displayValues: { start: "?", change: "?", end: "?" },
-        validationSlots: { end: "68", start: "?", change: "16" },
-        alternateSlots: { end: "68", start: "52", change: "16" },
-        unknownSlot: "start",
-        difficulty: 2,
-      }),
-      createSchemaRecognitionQuestion({
-        concept: "change_mod2",
-        text: "Sam had some baseball cards. He bought 15 more, and now he has 35.",
-        schemaKind: "change",
-        values: { start: 20, change: 15, end: 35 },
-        labels: { end: "total", start: "start", change: "bought" },
-        displayValues: { start: "?", change: "?", end: "?" },
-        validationSlots: { end: "35", start: "?", change: "15" },
-        alternateSlots: { end: "35", start: "20", change: "15" },
-        unknownSlot: "start",
-        difficulty: 2,
-      }),
-      createSchemaRecognitionQuestion({
-        concept: "change_mod2",
-        text: "Maya had already read some pages. She read 8 more pages and finished page 20.",
-        schemaKind: "change",
-        values: { start: 12, change: 8, end: 20 },
-        labels: { end: "total", start: "start", change: "read" },
-        displayValues: { start: "?", change: "?", end: "?" },
-        validationSlots: { end: "20", start: "?", change: "8" },
-        alternateSlots: { end: "20", start: "12", change: "8" },
-        unknownSlot: "start",
-        difficulty: 1,
-      }),
-      createSchemaRecognitionQuestion({
-        concept: "change_mod2",
-        text: "The team had some points. They scored 10 more to reach a total of 55 points.",
-        schemaKind: "change",
-        values: { start: 45, change: 10, end: 55 },
-        labels: { end: "total", start: "start", change: "scored" },
-        displayValues: { start: "?", change: "?", end: "?" },
-        validationSlots: { end: "55", start: "?", change: "10" },
-        alternateSlots: { end: "55", start: "45", change: "10" },
-        unknownSlot: "start",
         difficulty: 3,
       }),
     ],
@@ -2109,12 +2109,76 @@ const conceptsData = [
   // ============================================================================
   {
     id: "compare_mod1",
-    title: "Compare: Bar to Eq",
-    description: "Translate Compare bar models into equations.",
+    title: "Compare: Word to Bar",
+    description: "Read the compare story and build the bar model.",
     prerequisites: ["change_mod3"],
     questions: [
-      createEquationFromBarQuestion({
+      createSchemaRecognitionQuestion({
         concept: "compare_mod1",
+        text: "Darnell has 234 fewer marbles than Delilah. Delilah has 362 marbles. How many does Darnell have?",
+        schemaKind: "compare",
+        values: { bigger: 362, smaller: 128, difference: 234 },
+        labels: { bigger: "Delilah", smaller: "Darnell", difference: "fewer" },
+        displayValues: { bigger: "?", smaller: "?", difference: "?" },
+        validationSlots: { bigger: "362", smaller: "?", difference: "234" },
+        unknownSlot: "smaller",
+        difficulty: 4,
+      }),
+      createSchemaRecognitionQuestion({
+        concept: "compare_mod1",
+        text: "Tabitha wrote 110 words. Sasha wrote 25 fewer words than Tabitha. How many words did Sasha write?",
+        schemaKind: "compare",
+        values: { bigger: 110, smaller: 85, difference: 25 },
+        labels: { bigger: "Tabitha", smaller: "Sasha", difference: "fewer" },
+        displayValues: { bigger: "?", smaller: "?", difference: "?" },
+        validationSlots: { bigger: "110", smaller: "?", difference: "25" },
+        unknownSlot: "smaller",
+        difficulty: 3,
+      }),
+      createSchemaRecognitionQuestion({
+        concept: "compare_mod1",
+        text: "The Oak tree is 45 feet tall. The Pine tree is 15 feet shorter. How tall is the Pine tree?",
+        schemaKind: "compare",
+        values: { bigger: 45, smaller: 30, difference: 15 },
+        labels: { bigger: "Oak", smaller: "Pine", difference: "shorter" },
+        displayValues: { bigger: "?", smaller: "?", difference: "?" },
+        validationSlots: { bigger: "45", smaller: "?", difference: "15" },
+        unknownSlot: "smaller",
+        difficulty: 2,
+      }),
+      createSchemaRecognitionQuestion({
+        concept: "compare_mod1",
+        text: "Sam has $80. Alex has $30 less than Sam. How much money does Alex have?",
+        schemaKind: "compare",
+        values: { bigger: 80, smaller: 50, difference: 30 },
+        labels: { bigger: "Sam", smaller: "Alex", difference: "less" },
+        displayValues: { bigger: "?", smaller: "?", difference: "?" },
+        validationSlots: { bigger: "80", smaller: "?", difference: "30" },
+        unknownSlot: "smaller",
+        difficulty: 2,
+      }),
+      createSchemaRecognitionQuestion({
+        concept: "compare_mod1",
+        text: "Max the dog weighs 60 lbs. Bella the cat is 40 lbs lighter. How much does Bella weigh?",
+        schemaKind: "compare",
+        values: { bigger: 60, smaller: 20, difference: 40 },
+        labels: { bigger: "Max", smaller: "Bella", difference: "lighter" },
+        displayValues: { bigger: "?", smaller: "?", difference: "?" },
+        validationSlots: { bigger: "60", smaller: "?", difference: "40" },
+        unknownSlot: "smaller",
+        difficulty: 2,
+      }),
+    ],
+  },
+
+  {
+    id: "compare_mod2",
+    title: "Compare: Bar to Eq",
+    description: "Translate Compare bar models into equations.",
+    prerequisites: ["compare_mod1"],
+    questions: [
+      createEquationFromBarQuestion({
+        concept: "compare_mod2",
         text: "Build the equation for Delilah and Darnell's marbles.",
         schemaKind: "compare",
         barValues: { bigger: "362", smaller: "?", difference: "234" },
@@ -2138,7 +2202,7 @@ const conceptsData = [
         difficulty: 3,
       }),
       createEquationFromBarQuestion({
-        concept: "compare_mod1",
+        concept: "compare_mod2",
         text: "Build the equation for Tabitha and Sasha's words.",
         schemaKind: "compare",
         barValues: { bigger: "110", smaller: "?", difference: "25" },
@@ -2162,7 +2226,7 @@ const conceptsData = [
         difficulty: 3,
       }),
       createEquationFromBarQuestion({
-        concept: "compare_mod1",
+        concept: "compare_mod2",
         text: "Build the equation for the Oak and Pine heights.",
         schemaKind: "compare",
         barValues: { bigger: "45", smaller: "?", difference: "15" },
@@ -2182,7 +2246,7 @@ const conceptsData = [
         difficulty: 2,
       }),
       createEquationFromBarQuestion({
-        concept: "compare_mod1",
+        concept: "compare_mod2",
         text: "Build the equation for Sam and Alex's money.",
         schemaKind: "compare",
         barValues: { bigger: "80", smaller: "?", difference: "30" },
@@ -2202,7 +2266,7 @@ const conceptsData = [
         difficulty: 2,
       }),
       createEquationFromBarQuestion({
-        concept: "compare_mod1",
+        concept: "compare_mod2",
         text: "Build the equation for Max and Bella's weights.",
         schemaKind: "compare",
         barValues: { bigger: "60", smaller: "?", difference: "40" },
@@ -2223,69 +2287,7 @@ const conceptsData = [
       }),
     ],
   },
-  {
-    id: "compare_mod2",
-    title: "Compare: Word to Bar",
-    description: "Read the compare story and build the bar model.",
-    prerequisites: ["compare_mod1"],
-    questions: [
-      createSchemaRecognitionQuestion({
-        concept: "compare_mod2",
-        text: "Darnell has 234 fewer marbles than Delilah. Delilah has 362 marbles. How many does Darnell have?",
-        schemaKind: "compare",
-        values: { bigger: 362, smaller: 128, difference: 234 },
-        labels: { bigger: "Delilah", smaller: "Darnell", difference: "fewer" },
-        displayValues: { bigger: "?", smaller: "?", difference: "?" },
-        validationSlots: { bigger: "362", smaller: "?", difference: "234" },
-        unknownSlot: "smaller",
-        difficulty: 4,
-      }),
-      createSchemaRecognitionQuestion({
-        concept: "compare_mod2",
-        text: "Tabitha wrote 110 words. Sasha wrote 25 fewer words than Tabitha. How many words did Sasha write?",
-        schemaKind: "compare",
-        values: { bigger: 110, smaller: 85, difference: 25 },
-        labels: { bigger: "Tabitha", smaller: "Sasha", difference: "fewer" },
-        displayValues: { bigger: "?", smaller: "?", difference: "?" },
-        validationSlots: { bigger: "110", smaller: "?", difference: "25" },
-        unknownSlot: "smaller",
-        difficulty: 3,
-      }),
-      createSchemaRecognitionQuestion({
-        concept: "compare_mod2",
-        text: "The Oak tree is 45 feet tall. The Pine tree is 15 feet shorter. How tall is the Pine tree?",
-        schemaKind: "compare",
-        values: { bigger: 45, smaller: 30, difference: 15 },
-        labels: { bigger: "Oak", smaller: "Pine", difference: "shorter" },
-        displayValues: { bigger: "?", smaller: "?", difference: "?" },
-        validationSlots: { bigger: "45", smaller: "?", difference: "15" },
-        unknownSlot: "smaller",
-        difficulty: 2,
-      }),
-      createSchemaRecognitionQuestion({
-        concept: "compare_mod2",
-        text: "Sam has $80. Alex has $30 less than Sam. How much money does Alex have?",
-        schemaKind: "compare",
-        values: { bigger: 80, smaller: 50, difference: 30 },
-        labels: { bigger: "Sam", smaller: "Alex", difference: "less" },
-        displayValues: { bigger: "?", smaller: "?", difference: "?" },
-        validationSlots: { bigger: "80", smaller: "?", difference: "30" },
-        unknownSlot: "smaller",
-        difficulty: 2,
-      }),
-      createSchemaRecognitionQuestion({
-        concept: "compare_mod2",
-        text: "Max the dog weighs 60 lbs. Bella the cat is 40 lbs lighter. How much does Bella weigh?",
-        schemaKind: "compare",
-        values: { bigger: 60, smaller: 20, difference: 40 },
-        labels: { bigger: "Max", smaller: "Bella", difference: "lighter" },
-        displayValues: { bigger: "?", smaller: "?", difference: "?" },
-        validationSlots: { bigger: "60", smaller: "?", difference: "40" },
-        unknownSlot: "smaller",
-        difficulty: 2,
-      }),
-    ],
-  },
+
   {
     id: "compare_mod3",
     title: "Compare: Solve",
@@ -2658,18 +2660,24 @@ const seedData = async () => {
     // 2. THE TESTING SWITCH
     // Change this variable to the ID you want to test right now.
     // Here are some common jump points:
-    // "single_add"             -> Phase 1: Basic Math
-    // "missing_part_equations" -> Phase 1: Algebraic Bridge
-    // "combine_mod1"           -> Combine: Bar to Equation
-    // "combine_mod2"           -> Combine: Bar to Equation
-    // "combine_mod3"           -> Combine: Full 3-Tab Solve
-    // "change_mod1"            -> Change: Word to Bar
-    // "change_mod2"            -> Change: Word to Bar
-    // "change_mod3"            -> Change: Word to Bar
-    // "compare_mod3"           -> Compare: Full 3-Tab Solve
 
-    // const testStage = "combine_mod1"; // single_add<--- CHANGE THIS TO JUMP
-    const testStage = "combine_mod3"; // single_add<--- CHANGE THIS TO JUMP
+    // ---------- Practice -------------
+    // "single_add"             -> Phase 1: Basic Math
+    // "single_sub"             -> Phase 1: Basic Math
+    // "multi_add"             -> Phase 1: Basic Math
+    // "multi_sub"             -> Phase 1: Basic Math
+
+    // "missing_part_equations" -> Phase 1: Algebraic Bridge
+    // ---------- Main Modules -------------
+    // "combine_mod1"           -> Combine: Bar to Equation
+    // "combine_mod2"           -> Combine: Word to Bar
+    // "combine_mod3"           -> Combine: Full 3-Tab Solve
+
+    // "change_mod1"            -> Change: Bar to Equation
+    // "change_mod2"            -> Change: Word to Bar
+    // "change_mod3"            -> Change: Full 3-Tab Solve
+
+    const testStage = "change_mod1"; // CHANGE THIS TO JUMP
 
     // 3. Create the test user with ONLY that stage active
     const testUser = new User({
