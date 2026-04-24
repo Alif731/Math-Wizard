@@ -565,23 +565,30 @@ const CompareStackedBarModel = ({
   );
 };
 
-const CompareGapSegment = ({ box, label, value, active, onClick, style }) => (
-  <div
-    className={`compare-gap__left ${box.editable ? "is-editable" : ""} ${active ? "is-active" : ""} ${box.accent === "unknown" ? "is-unknown" : ""}`}
-    style={style}
-  >
-    <button
-      type="button"
-      className={`bar-box bar-box--${box.color} ${box.editable ? "is-editable" : ""} ${active ? "is-active" : ""} ${value ? "is-filled" : ""} ${box.accent === "unknown" ? "is-unknown" : ""} ${className}`}
-      onClick={onClick}
-      disabled={!box.editable}
+const CompareGapSegment = ({ box, label, value, active, onClick, style }) => {
+  const displayValue =
+    box.editable && String(value || "").trim() === "?" ? "" : value;
+
+  return (
+    <div
+      className={`compare-gap__left ${box.editable ? "is-editable" : ""} ${active ? "is-active" : ""} ${box.accent === "unknown" ? "is-unknown" : ""}`}
       style={style}
     >
-      <strong>{value || <span className="hide-on-focus">?</span>}</strong>{" "}
-      <span>{label}</span>
-    </button>
-  </div>
-);
+      <button
+        type="button"
+        className={`bar-box bar-box--${box.color} ${box.editable ? "is-editable" : ""} ${active ? "is-active" : ""} ${displayValue ? "is-filled" : ""} ${box.accent === "unknown" ? "is-unknown" : ""}`}
+        onClick={onClick}
+        disabled={!box.editable}
+        style={style}
+      >
+        <strong>
+          {displayValue || <span className="hide-on-focus">?</span>}
+        </strong>{" "}
+        <span>{label}</span>
+      </button>
+    </div>
+  );
+};
 
 const CompareGapBarModel = ({
   spec,

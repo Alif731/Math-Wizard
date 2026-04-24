@@ -117,7 +117,7 @@ function verifySchemaQuestions() {
   assert.equal(
     validateQuestionResponse(legacyDirectQuestion, { textAnswer: "12" }),
     true,
-un   );
+  );
   assert.equal(
     validateQuestionResponse(legacyDirectQuestion, { textAnswer: "13" }),
     false,

@@ -52,6 +52,15 @@ $page-accent: #f2cc8f;
     rgb(129 178 154 / 0%) -3px -3px 6px 1px inset;
 }
 
+.success-confetti {
+  position: fixed !important;
+  inset: 0;
+  width: 100vw !important;
+  height: 100vh !important;
+  pointer-events: none;
+  z-index: 9999;
+}
+
 .question__text {
   margin: 1.2rem 1.2rem 0;
   border-radius: 20px;

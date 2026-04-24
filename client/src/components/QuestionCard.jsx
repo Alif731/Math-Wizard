@@ -22,6 +22,18 @@ import {
 
 const audioSuccess = new Audio("/success1.mp3");
 const audioFailure = new Audio("/failure.mp3");
+const NEXT_PROBLEM_DELAY_MS = 1800;
+
+const getViewportSize = () => {
+  if (typeof window === "undefined") {
+    return { width: 0, height: 0 };
+  }
+
+  return {
+    width: window.innerWidth,
+    height: window.innerHeight,
+  };
+};
 
 const QuestionCard = ({
   problem,
@@ -37,6 +49,7 @@ const QuestionCard = ({
   const [isSuccess, setIsSuccess] = useState(false);
   const [isError, setIsError] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
+  const [viewportSize, setViewportSize] = useState(getViewportSize);
 
   // NEW: Holds our animation state safely
   const [statAnim, setStatAnim] = useState({ key: 0, colorClass: "" });
@@ -66,6 +79,15 @@ const QuestionCard = ({
     }
   }, [isSuccess, isError]);
 
+  useEffect(() => {
+    const handleResize = () => setViewportSize(getViewportSize());
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const playSuccessSound = () => {
     audioSuccess.currentTime = 0;
     audioSuccess.play().catch(() => {});
@@ -77,7 +99,7 @@ const QuestionCard = ({
   };
 
   const queueNextProblem = () => {
-    window.setTimeout(() => onNext?.(), 3000);
+    window.setTimeout(() => onNext?.(), NEXT_PROBLEM_DELAY_MS);
   };
 
   const applyFeedback = (result) => {
@@ -86,11 +108,7 @@ const QuestionCard = ({
     setIsError(Boolean(result) && !result.isCorrect);
 
     if (result?.isCorrect) {
-<<<<<<< HEAD
-     // playSuccessSound();
-=======
       // playSuccessSound();
->>>>>>> d7bdffe89c95d4957e1eddc54dc9f84ca9f100d5
     } else {
       playErrorSound();
     }
@@ -250,7 +268,22 @@ const QuestionCard = ({
       <div className="question-shell__main">
         <div className="question__card">
           {isSuccess && (
-            <Confetti recycle={false} numberOfPieces={500} gravity={0.3} />
+            <Confetti
+              key={`success-confetti-${statAnim.key}`}
+              width={viewportSize.width}
+              height={viewportSize.height}
+              recycle={false}
+              numberOfPieces={360}
+              gravity={0.48}
+              tweenDuration={700}
+              className="success-confetti"
+              style={{
+                position: "fixed",
+                inset: 0,
+                pointerEvents: "none",
+                zIndex: 9999,
+              }}
+            />
           )}
 
           {isWorksheetDriven ? (
