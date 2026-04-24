@@ -2669,7 +2669,7 @@ const seedData = async () => {
     // "compare_mod3"           -> Compare: Full 3-Tab Solve
 
     // const testStage = "combine_mod1"; // single_add<--- CHANGE THIS TO JUMP
-    const testStage = "combine_mod3"; // single_add<--- CHANGE THIS TO JUMP
+    const testStage = "combine_mod1"; // single_add<--- CHANGE THIS TO JUMP
 
     // 3. Create the test user with ONLY that stage active
     const testUser = new User({
