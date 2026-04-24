@@ -86,7 +86,11 @@ const QuestionCard = ({
     setIsError(Boolean(result) && !result.isCorrect);
 
     if (result?.isCorrect) {
+<<<<<<< HEAD
      // playSuccessSound();
+=======
+      // playSuccessSound();
+>>>>>>> d7bdffe89c95d4957e1eddc54dc9f84ca9f100d5
     } else {
       playErrorSound();
     }
