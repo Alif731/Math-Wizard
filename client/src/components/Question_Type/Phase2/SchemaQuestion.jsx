@@ -41,6 +41,12 @@ const SchemaQuestion = ({
   const showPromptStrip = !["practice", "equations"].includes(
     question?.moduleStage,
   );
+  const locksUnknownSlots = [
+    "word_to_bar",
+    "bar_to_equation",
+    "schema_bar_model",
+    "schema_equation",
+  ].includes(question?.moduleStage);
 
   const compareAnswerLabel = isCompareAnswerInput
     ? getBarLabel(question?.barModelSpec?.smaller, question?.barModelSpec)
@@ -48,9 +54,10 @@ const SchemaQuestion = ({
   const compareAnswerCopy = buildCompareAnswerPrompt(compareAnswerLabel);
 
   const showUnknownButton =
+    !locksUnknownSlots &&
     Object.values(question?.validation?.slots || {}).some(
       (value) => String(value).trim() === "?",
-    ) || question?.moduleStage === "bar_to_equation";
+    );
   const showOperatorPad =
     question?.inputMode === "keypad_equation" &&
     question?.equationSpec?.operatorEditable &&

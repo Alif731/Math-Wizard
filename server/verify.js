@@ -1,91 +1,186 @@
-const mongoose = require('mongoose');
-const assert = require('node:assert/strict');
-const { MongoMemoryServer } = require('mongodb-memory-server');
-const seedData = require('./utils/seeder');
-const User = require('./models/User');
-const { updateMastery, getNextProblem } = require('./utils/learningEngine');
+const mongoose = require("mongoose");
+const assert = require("node:assert/strict");
+const { MongoMemoryServer } = require("mongodb-memory-server");
+const seedData = require("./utils/seeder");
+const Concept = require("./models/Concept");
+const User = require("./models/User");
+const { updateMastery, getNextProblem } = require("./utils/learningEngine");
+
+const orderedConcepts = [
+  "single_add",
+  "single_sub",
+  "multi_add",
+  "multi_sub",
+  "missing_part_equations",
+  "combine_mod1",
+  "combine_mod2",
+  "combine_mod3",
+  "change_mod1",
+  "change_mod2",
+  "change_mod3",
+  "compare_mod1",
+  "compare_mod2",
+  "compare_mod3",
+];
+
+const expectedPrerequisites = {
+  single_add: [],
+  single_sub: ["single_add"],
+  multi_add: ["single_sub"],
+  multi_sub: ["multi_add"],
+  missing_part_equations: ["multi_sub"],
+  combine_mod1: ["missing_part_equations"],
+  combine_mod2: ["combine_mod1"],
+  combine_mod3: ["combine_mod2"],
+  change_mod1: ["combine_mod3"],
+  change_mod2: ["change_mod1"],
+  change_mod3: ["change_mod2"],
+  compare_mod1: ["change_mod3"],
+  compare_mod2: ["compare_mod1"],
+  compare_mod3: ["compare_mod2"],
+};
+
+const getGivenSlotKeys = (slots = {}) =>
+  Object.entries(slots)
+    .filter(([, value]) => String(value).trim() !== "?")
+    .map(([key]) => key)
+    .sort();
+
+const getEditableEquationKeys = (question) =>
+  (question.equationSpec?.template || [])
+    .filter((item) => item.type === "slot" && item.editable !== false)
+    .map((item) => item.key)
+    .sort();
+
+function assertSchemaQuestionShape(concept) {
+  for (const question of concept.questions) {
+    if (question.moduleStage === "word_to_bar" || question.moduleStage === "schema_bar_model") {
+      assert.deepEqual(
+        [...(question.barModelSpec?.editableKeys || [])].sort(),
+        getGivenSlotKeys(question.validation?.slots),
+        `${concept.id} should only make given bar slots editable`,
+      );
+      assert.equal(
+        question.barModelSpec?.editableKeys?.includes(question.unknownSlot),
+        false,
+        `${concept.id} should lock the unknown bar slot`,
+      );
+    }
+
+    if (question.moduleStage === "bar_to_equation" || question.moduleStage === "schema_equation") {
+      assert.deepEqual(
+        getEditableEquationKeys(question),
+        getGivenSlotKeys(question.validation?.slots),
+        `${concept.id} should only make given equation slots editable`,
+      );
+    }
+  }
+}
+
+function assertModuleBundleOrder(concept) {
+  assert.equal(concept.questions.length, 30, `${concept.id} should have 30 records`);
+
+  for (let index = 0; index < concept.questions.length; index += 3) {
+    const stages = concept.questions
+      .slice(index, index + 3)
+      .map((question) => question.moduleStage);
+
+    assert.deepEqual(
+      stages,
+      ["schema_bar_model", "schema_equation", "schema_solve"],
+      `${concept.id} bundle ${index / 3 + 1} should be bar -> equation -> solve`,
+    );
+  }
+}
 
 async function verify() {
-  // 1. Setup DB
   const mongoServer = await MongoMemoryServer.create();
   await mongoose.connect(mongoServer.getUri());
-  console.log('DB Connected');
+  console.log("DB Connected");
 
-  // 2. Seed
   await seedData();
-  console.log('Seeded');
+  console.log("Seeded");
 
-  // 3. Create a clean student state for adaptive sequencing verification
+  const concepts = await Concept.find({});
+  const conceptMap = new Map(concepts.map((concept) => [concept.id, concept]));
+
+  for (const conceptId of orderedConcepts) {
+    assert.ok(conceptMap.has(conceptId), `${conceptId} should be seeded`);
+    assert.deepEqual(
+      conceptMap.get(conceptId).prerequisites,
+      expectedPrerequisites[conceptId],
+      `${conceptId} prerequisites should match the workflow`,
+    );
+  }
+
+  assert.equal(conceptMap.get("combine_mod1").questions.length, 10);
+  assert.equal(conceptMap.get("combine_mod2").questions.length, 10);
+  assert.equal(conceptMap.get("change_mod1").questions.length, 10);
+  assert.equal(conceptMap.get("change_mod2").questions.length, 10);
+  assertModuleBundleOrder(conceptMap.get("combine_mod3"));
+  assertModuleBundleOrder(conceptMap.get("change_mod3"));
+
+  for (const conceptId of [
+    "combine_mod1",
+    "combine_mod2",
+    "combine_mod3",
+    "change_mod1",
+    "change_mod2",
+    "change_mod3",
+  ]) {
+    assertSchemaQuestionShape(conceptMap.get(conceptId));
+  }
+
   let user = await User.create({
-    username: 'adaptive_student',
-    password: 'password123',
-    role: 'student',
+    username: "adaptive_student",
+    password: "password123",
+    role: "student",
     mastery: {},
-    zpdNodes: ['single_add'],
+    zpdNodes: ["single_add"],
   });
-  console.log('Initial ZPD:', user.zpdNodes);
 
-  // 4. Verify question sequencing within the same concept.
-  let firstProblem = await getNextProblem(user);
+  const firstProblem = await getNextProblem(user);
   await user.save();
-  console.log('First chosen concept:', firstProblem.concept.id);
-  assert.equal(firstProblem.concept.id, 'single_add');
+  assert.equal(firstProblem.concept.id, "single_add");
 
-  await updateMastery(user, 'single_add', true);
+  await updateMastery(user, "single_add", true);
   await user.save();
   user = await User.findById(user._id);
 
-  let secondProblem = await getNextProblem(user);
+  const secondProblem = await getNextProblem(user);
   await user.save();
   assert.notEqual(String(secondProblem.question._id), String(firstProblem.question._id));
-  console.log('Question sequencing verified for single_add.');
+  console.log("Question sequencing verified for single_add.");
 
-  const orderedConcepts = [
-    'single_add',
-    'single_sub',
-    'multi_add',
-    'multi_sub',
-    'missing_part_equations',
-    'equations_from_bar_models',
-    'recognize_combine',
-    'schema_combine',
-    'schema_change',
-    'schema_compare',
-  ];
-
-  for (let index = 0; index < orderedConcepts.length - 1; index++) {
+  for (let index = 0; index < orderedConcepts.length - 1; index += 1) {
     const currentConceptId = orderedConcepts[index];
     const nextConceptId = orderedConcepts[index + 1];
-
-    console.log(`Simulating mastery for ${currentConceptId}...`);
-    const existingAttempts = currentConceptId === 'single_add' ? 1 : 0;
+    const existingAttempts = currentConceptId === "single_add" ? 1 : 0;
     const requiredAttempts = 15 - existingAttempts;
 
-    for (let i = 0; i < requiredAttempts; i++) {
+    for (let i = 0; i < requiredAttempts; i += 1) {
       await updateMastery(user, currentConceptId, true);
     }
 
     await user.save();
     user = await User.findById(user._id);
 
-    const masteredEntry = user.mastery.get(currentConceptId);
-    console.log(`Mastery Status (${currentConceptId}):`, masteredEntry?.status);
-    assert.equal(masteredEntry?.status, 'mastered');
-
-    const unlockedEntry = user.mastery.get(nextConceptId);
-    console.log(`Mastery Status (${nextConceptId}):`, unlockedEntry ? unlockedEntry.status : 'undefined');
-    assert.equal(unlockedEntry?.status, 'unlocked');
+    assert.equal(user.mastery.get(currentConceptId)?.status, "mastered");
+    assert.equal(user.mastery.get(nextConceptId)?.status, "unlocked");
   }
 
   const finalProblem = await getNextProblem(user);
   await user.save();
-  assert.equal(finalProblem.concept.id, 'schema_compare');
+  assert.equal(finalProblem.concept.id, "compare_mod3");
 
-  console.log('SUCCESS: KL-UCB sequencing, change-point mastery, and graph progression verified.');
+  console.log("SUCCESS: curriculum workflow, schema locking, and KL-UCB progression verified.");
+  await mongoose.disconnect();
+  await mongoServer.stop();
   process.exit(0);
 }
 
-verify().catch(err => {
+verify().catch(async (err) => {
   console.error(err);
+  await mongoose.disconnect().catch(() => {});
   process.exit(1);
 });
