@@ -107,11 +107,11 @@ const QuestionCard = ({
     setIsSuccess(Boolean(result?.isCorrect));
     setIsError(Boolean(result) && !result.isCorrect);
 
-    if (result?.isCorrect) {
-      // playSuccessSound();
-    } else {
-      playErrorSound();
-    }
+    // if (result?.isCorrect) {
+    //   playSuccessSound();
+    // } else {
+    //   playErrorSound();
+    // }
   };
 
   const submitStructuredResponse = async (overrideResponse) => {
@@ -152,11 +152,11 @@ const QuestionCard = ({
 
     if (isCorrect) {
       setIsSuccess(true);
-      playSuccessSound();
+      // playSuccessSound();
       setTimeout(() => onSubmit(option), 3000);
     } else {
       setIsError(true);
-      playErrorSound();
+      // playErrorSound();
       setTimeout(() => onSubmit(option), 2600);
     }
   };
