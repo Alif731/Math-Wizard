@@ -639,7 +639,13 @@ const createCombineEquationQuestion = ({
   return question;
 };
 
-const createCombineSolveQuestion = ({ concept, text, values, unknownSlot, difficulty }) => {
+const createCombineSolveQuestion = ({
+  concept,
+  text,
+  values,
+  unknownSlot,
+  difficulty,
+}) => {
   const displayValues = withUnknownSlot(values, unknownSlot);
   const displayEquation = `${displayValues.partA} + ${displayValues.partB} = ${displayValues.total}`;
   const answer = values[unknownSlot];
@@ -672,6 +678,41 @@ const createCombineFullBundle = (item) => [
 ];
 
 const combineMod1Items = [
+  {
+    text: "A bowl has 25 berries. 12 are blueberries and the rest are strawberries. How many strawberries are in the bowl?",
+    values: { partA: 12, partB: 13, total: 25 },
+    labels: { total: "berries", partA: "blueberries", partB: "strawberries" },
+    unknownSlot: "partB",
+    difficulty: 2,
+  },
+  {
+    text: "There are 30 animals at the farm. 18 are sheep and the rest are pigs. How many pigs are at the farm?",
+    values: { partA: 18, partB: 12, total: 30 },
+    labels: { total: "animals", partA: "sheep", partB: "pigs" },
+    unknownSlot: "partB",
+    difficulty: 3,
+  },
+  {
+    text: "A pencil case holds 22 pens. 15 are blue pens and the rest are black pens. How many black pens are in the case?",
+    values: { partA: 15, partB: 7, total: 22 },
+    labels: { total: "pens", partA: "blue pens", partB: "black pens" },
+    unknownSlot: "partB",
+    difficulty: 2,
+  },
+  {
+    text: "Mia baked 36 muffins. 20 are blueberry muffins and the rest are chocolate chip. How many chocolate chip muffins did Mia bake?",
+    values: { partA: 20, partB: 16, total: 36 },
+    labels: { total: "muffins", partA: "blueberry", partB: "chocolate chip" },
+    unknownSlot: "partB",
+    difficulty: 3,
+  },
+  {
+    text: "A sports store sold 45 balls today. 25 were soccer balls and the rest were basketballs. How many basketballs did they sell?",
+    values: { partA: 25, partB: 20, total: 45 },
+    labels: { total: "balls", partA: "soccer balls", partB: "basketballs" },
+    unknownSlot: "partB",
+    difficulty: 3,
+  },
   {
     text: "Mia has 4 red and 6 blue marbles. How many marbles does Mia have in total?",
     values: { partA: 4, partB: 6, total: 10 },
@@ -1174,6 +1215,7 @@ const conceptsData = [
     prerequisites: ["combine_mod3"],
     questions: [
       // -------------------------------Subtraction-------------------------------
+      // Subtraction 1: Cookies
       createSchemaRecognitionQuestion({
         concept: "change_mod1",
         text: "Leo had 20 cookies. He ate 6 of them. How many cookies does Leo have left?",
@@ -1186,7 +1228,7 @@ const conceptsData = [
         unknownSlot: "end",
         difficulty: 2,
       }),
-      // Subtraction 1: Finding the change
+      // Subtraction 2: Finding the change
       createSchemaRecognitionQuestion({
         concept: "change_mod1",
         text: "A tree had 24 leaves. The wind blew some away, and now there are 15 leaves left. How many leaves blew away?",
@@ -1199,7 +1241,7 @@ const conceptsData = [
         unknownSlot: "change",
         difficulty: 2,
       }),
-      // Subtraction 2: Finding the start
+      // Subtraction 3: Finding the start
       createSchemaRecognitionQuestion({
         concept: "change_mod1",
         text: "Sam had some money. He spent $18 on a toy and has $32 left. How much money did Sam start with?",
@@ -1212,7 +1254,7 @@ const conceptsData = [
         unknownSlot: "start",
         difficulty: 3,
       }),
-      // Subtraction 3: Finding the end
+      // Subtraction 4: Finding the end
       createSchemaRecognitionQuestion({
         concept: "change_mod1",
         text: "12 birds were sitting on a fence. 5 birds flew away. How many birds are still on the fence?",
@@ -1225,7 +1267,7 @@ const conceptsData = [
         unknownSlot: "end",
         difficulty: 1,
       }),
-      // Subtraction 4: Finding the start
+      // Subtraction 5: Finding the start
       createSchemaRecognitionQuestion({
         concept: "change_mod1",
         text: "Emma had some candies. She gave 15 to her friends and now has 20 left. How many candies did she start with?",
@@ -2564,7 +2606,8 @@ const seedData = async () => {
     // "change_mod2"            -> Change: Bar to Equation
     // "change_mod3"            -> Change: Full 3-Tab Solve
 
-    const testStage = "combine_mod1"; // CHANGE THIS TO JUMP
+    // const testStage = "combine_mod1"; // CHANGE THIS TO JUMP
+    const testStage = "change_mod2"; // CHANGE THIS TO JUMP
 
     // 3. Create the test user with ONLY that stage active
     const testUser = new User({
