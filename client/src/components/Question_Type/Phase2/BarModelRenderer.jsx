@@ -10,12 +10,18 @@ import {
   getGuidedCompareValue,
 } from "./SchemaUtils";
 
+// ==========================================
+// THE TOTAL PARTS SCHEMA
+// ==========================================
 const TotalPartsBarModel = ({
   spec,
   response,
   activeField,
   setActiveField,
   question,
+  isAttempted,
+  isCorrect,
+  targetField,
 }) => {
   const {
     total: totalMagnitude,
@@ -32,19 +38,51 @@ const TotalPartsBarModel = ({
   const valLeft = getBarValue(response, spec.left);
   const valRight = getBarValue(response, spec.right);
 
-  // THE FINAL FIX: Ignore editable placeholders!
+  // Helper to get Feedback status
+  const getFeedbackStatus = (boxKey) => {
+    if (!isAttempted || boxKey !== targetField) return null;
+    return isCorrect ? "correct" : "wrong";
+  };
+
   const isUnk = (val, boxSpec) => {
-    if (!boxSpec) return false;
+    if (!boxSpec || boxSpec.editable) return false;
+    return String(val || "").trim() === "?";
+  };
 
-    // 1. If the student is supposed to type into this box, keep it solid!
-    // (This stops the Mod 1 placeholders from getting dashed)
-    if (boxSpec.editable) return false;
+  // We need this helper here too to prevent inline-style conflicts
+  const getBoxStyle = (box, hashed, widthPercent, status) => {
+    const style = widthPercent ? { width: `${widthPercent}%` } : {};
 
-    // 2. If the box is locked and displays a "?", it's the true unknown. Dash it!
-    const cleanVal = String(val || "").trim();
-    if (cleanVal === "?") return true;
+    // 1. Check for feedback colors first
+    if (status === "correct")
+      return {
+        ...style,
+        backgroundColor: "#f0fdf4",
+        border: "2px solid #4ade80",
+      };
+    if (status === "wrong")
+      return {
+        ...style,
+        backgroundColor: "#fef2f2",
+        border: "2px solid #f87171",
+      };
 
-    return false;
+    // 2. Fallback to normal hashed/colored logic
+    if (hashed) {
+      return {
+        ...style,
+        backgroundColor: "white",
+        backgroundImage: `repeating-linear-gradient(-45deg, transparent, transparent 8px, rgba(148, 163, 184, 0.15) 8px, rgba(148, 163, 184, 0.15) 10px)`,
+        border: "2px dashed #94a3b8",
+      };
+    }
+    const colors = {
+      green: "#f0fdf4",
+      blue: "#eff6ff",
+      orange: "#fff7ed",
+      red: "#fef2f2",
+    };
+    return { ...style, backgroundColor: colors[box?.color] || "white" };
   };
 
   return (
@@ -57,7 +95,13 @@ const TotalPartsBarModel = ({
             value={valTotal}
             active={activeField === spec.total.key}
             onClick={() => setActiveField(spec.total.key)}
-            className={`bar-box--wide ${isUnk(valTotal, spec.total) ? "is-missing-value" : ""}`}
+            className={`bar-box--wide ${getFeedbackStatus(spec.total.key) === "correct" ? "is-correct" : getFeedbackStatus(spec.total.key) === "wrong" ? "is-wrong" : ""}`}
+            style={getBoxStyle(
+              spec.total,
+              isUnk(valTotal, spec.total),
+              null,
+              getFeedbackStatus(spec.total.key),
+            )}
           />
         </div>
       )}
@@ -69,8 +113,13 @@ const TotalPartsBarModel = ({
           value={valLeft}
           active={activeField === spec.left.key}
           onClick={() => setActiveField(spec.left.key)}
-          className={`bar-box--segment ${isUnk(valLeft, spec.left) ? "is-missing-value" : ""}`}
-          style={{ width: `${percentages.first}%` }}
+          className={`bar-box--segment ${getFeedbackStatus(spec.left.key) === "correct" ? "is-correct" : getFeedbackStatus(spec.left.key) === "wrong" ? "is-wrong" : ""}`}
+          style={getBoxStyle(
+            spec.left,
+            isUnk(valLeft, spec.left),
+            percentages.first,
+            getFeedbackStatus(spec.left.key),
+          )}
         />
         <BarBox
           box={spec.right}
@@ -78,8 +127,13 @@ const TotalPartsBarModel = ({
           value={valRight}
           active={activeField === spec.right.key}
           onClick={() => setActiveField(spec.right.key)}
-          className={`bar-box--segment ${isUnk(valRight, spec.right) ? "is-missing-value" : ""}`}
-          style={{ width: `${percentages.second}%` }}
+          className={`bar-box--segment ${getFeedbackStatus(spec.right.key) === "correct" ? "is-correct" : getFeedbackStatus(spec.right.key) === "wrong" ? "is-wrong" : ""}`}
+          style={getBoxStyle(
+            spec.right,
+            isUnk(valRight, spec.right),
+            percentages.second,
+            getFeedbackStatus(spec.right.key),
+          )}
         />
       </div>
     </div>
@@ -95,8 +149,10 @@ const ChangeBarModel = ({
   activeField,
   setActiveField,
   question,
+  isAttempted,
+  isCorrect,
+  targetField,
 }) => {
-  // 1. MATHEMATICAL STRUCTURE DETECTION
   const isSubtraction = (() => {
     const op = question?.operator || question?.equationSpec?.operator;
     if (op === "-") return true;
@@ -108,21 +164,25 @@ const ChangeBarModel = ({
     const endLabel = String(
       spec?.end?.label || spec?.total?.label || "",
     ).toLowerCase();
-    return (
-      label.includes("gave") ||
-      label.includes("ate") ||
-      label.includes("lost") ||
-      label.includes("away") ||
-      label.includes("flew") ||
-      label.includes("spent") ||
-      endLabel.includes("left over") ||
-      endLabel.includes("remaining")
+
+    // ----------------------------  Check for common subtraction keywords (so the total/larger number  is always at top) ----------------------------------------
+    const subWords = [
+      "spent",
+      "flew",
+      "away",
+      "lost",
+      "gave",
+      "left",
+      "remaining",
+      "ate",
+      "sold",
+    ];
+    return subWords.some(
+      (word) => label.includes(word) || endLabel.includes(word),
     );
   })();
 
   const isMod1 = question?.moduleStage === "word_to_bar";
-
-  // 2. BOX MAPPING
   const startBox = spec.start || spec.left;
   const changeBox = spec.change || spec.right;
   const endBox = spec.end || spec.total || spec.result;
@@ -138,28 +198,50 @@ const ChangeBarModel = ({
     b2 = changeBox;
   }
 
-  // 3. THE "ONLY HASH THE UNKNOWN" LOGIC
   const isUnk = (val, boxSpec) => {
     if (!boxSpec) return false;
     const cleanVal = String(val || "").trim();
     return (cleanVal === "?" || boxSpec.value === "?") && !boxSpec.editable;
   };
 
-  // 4. STYLE FIX: White background for hashed boxes, original colors for solid boxes
-  const getBoxStyle = (box, hashed, widthPercent = null) => {
+  // Helper for feedback
+  const getFeedbackStatus = (boxKey) => {
+    if (!isAttempted || boxKey !== targetField) return null;
+    return isCorrect ? "correct" : "wrong";
+  };
+
+  // UPDATED: Handle feedback colors inside the style function
+  const getBoxStyle = (box, hashed, widthPercent, status) => {
     const style = widthPercent ? { width: `${widthPercent}%` } : {};
 
+    // 1. If there is feedback, use those colors (Overriding the rest)
+    if (status === "correct") {
+      return {
+        ...style,
+        backgroundColor: "#f0fdf4",
+        border: "2px solid #4ade80",
+      };
+    }
+    if (status === "wrong") {
+      return {
+        ...style,
+        backgroundColor: "#fef2f2",
+        border: "2px solid #f87171",
+      };
+    }
+
+    // 2. Normal hashing logic
     if (hashed) {
       return {
         ...style,
-        backgroundColor: "white", // Removed background color for hashed boxes
+        backgroundColor: "white",
         backgroundImage: `repeating-linear-gradient(-45deg, transparent, transparent 8px, rgba(148, 163, 184, 0.15) 8px, rgba(148, 163, 184, 0.15) 10px)`,
         border: "2px dashed #94a3b8",
         backgroundClip: "padding-box",
       };
     }
 
-    // Colors only for non-hashed, solid boxes
+    // 3. Normal coloring logic
     const colors = {
       green: "#f0fdf4",
       blue: "#eff6ff",
@@ -172,16 +254,24 @@ const ChangeBarModel = ({
   const vTop = getBarValue(response, topBox);
   const v1 = b1 ? getBarValue(response, b1) : null;
   const v2 = b2 ? getBarValue(response, b2) : null;
-
   const m1 = b1?.magnitude || 50;
   const m2 = b2?.magnitude || 50;
   const total = m1 + m2;
 
+  console.log("--- SUBMIT DEBUG ---");
+  console.log("1. Is Attempted:", question?.isAttempted);
+  console.log("2. Target Field:", question?.targetField);
+  console.log("3. Is Correct:", question?.isCorrect);
+  console.log("--------------------");
+
+  console.log("--- FINDING THE STATE ---");
+  console.log("Full Question Object:", question);
+  console.log("Full Response Object:", response);
+  console.log("-------------------------");
   return (
     <div
       className={`bar-model bar-model--change ${isMod1 ? "is-pill-model" : "is-solid-classic"}`}
     >
-      {/* TOP ROW */}
       <div className="bar-model__top">
         <BarBox
           box={topBox}
@@ -189,12 +279,16 @@ const ChangeBarModel = ({
           value={vTop}
           active={activeField === topBox.key}
           onClick={() => setActiveField(topBox.key)}
-          className={`bar-box--wide ${isMod1 ? "bar-box--top-pill" : ""}`}
-          style={getBoxStyle(topBox, isUnk(vTop, topBox))}
+          className={`bar-box--wide ${isMod1 ? "bar-box--top-pill" : ""} ${getFeedbackStatus(topBox.key) === "correct" ? "is-correct" : getFeedbackStatus(topBox.key) === "wrong" ? "is-wrong" : ""}`}
+          style={getBoxStyle(
+            topBox,
+            isUnk(vTop, topBox),
+            null,
+            getFeedbackStatus(topBox.key),
+          )}
         />
       </div>
 
-      {/* BOTTOM ROW */}
       <div className="bar-model__bottom">
         {b1 && (
           <BarBox
@@ -203,8 +297,13 @@ const ChangeBarModel = ({
             value={v1}
             active={activeField === b1.key}
             onClick={() => setActiveField(b1.key)}
-            className={`bar-box--segment ${isMod1 ? "bar-box--tray-pill token-1" : ""}`}
-            style={getBoxStyle(b1, isUnk(v1, b1), (m1 / total) * 100)}
+            className={`bar-box--segment ${isMod1 ? "bar-box--tray-pill token-1" : ""} ${getFeedbackStatus(b1.key) === "correct" ? "is-correct" : getFeedbackStatus(b1.key) === "wrong" ? "is-wrong" : ""}`}
+            style={getBoxStyle(
+              b1,
+              isUnk(v1, b1),
+              (m1 / total) * 100,
+              getFeedbackStatus(b1.key),
+            )}
           />
         )}
 
@@ -215,14 +314,106 @@ const ChangeBarModel = ({
             value={v2}
             active={activeField === b2.key}
             onClick={() => setActiveField(b2.key)}
-            className={`bar-box--segment ${isMod1 ? "bar-box--tray-pill token-2" : ""}`}
-            style={getBoxStyle(b2, isUnk(v2, b2), (m2 / total) * 100)}
+            className={`bar-box--segment ${isMod1 ? "bar-box--tray-pill token-2" : ""} ${getFeedbackStatus(b2.key) === "correct" ? "is-correct" : getFeedbackStatus(b2.key) === "wrong" ? "is-wrong" : ""}`}
+            style={getBoxStyle(
+              b2,
+              isUnk(v2, b2),
+              (m2 / total) * 100,
+              getFeedbackStatus(b2.key),
+            )}
           />
         )}
       </div>
     </div>
   );
 };
+
+// const TotalPartsBarModel = ({
+//   spec,
+//   response,
+//   activeField,
+//   setActiveField,
+//   question,
+// }) => {
+//   const getFeedbackClass = (boxKey) => {
+//     if (!question?.isAttempted) return "";
+//     return boxKey === question?.targetField
+//       ? question.isCorrect
+//         ? "is-correct"
+//         : "is-wrong"
+//       : "";
+//   };
+//   const {
+//     total: totalMagnitude,
+//     left: leftMagnitude,
+//     right: rightMagnitude,
+//   } = resolveTotalPartsMagnitudes(spec, response);
+//   const percentages = getSegmentPercentages(
+//     leftMagnitude,
+//     rightMagnitude,
+//     totalMagnitude,
+//   );
+
+//   const valTotal = getBarValue(response, spec.total);
+//   const valLeft = getBarValue(response, spec.left);
+//   const valRight = getBarValue(response, spec.right);
+
+//   // THE FINAL FIX: Ignore editable placeholders!
+//   const isUnk = (val, boxSpec) => {
+//     if (!boxSpec) return false;
+
+//     // 1. If the student is supposed to type into this box, keep it solid!
+//     // (This stops the Mod 1 placeholders from getting dashed)
+//     if (boxSpec.editable) return false;
+
+//     // 2. If the box is locked and displays a "?", it's the true unknown. Dash it!
+//     const cleanVal = String(val || "").trim();
+//     if (cleanVal === "?") return true;
+
+//     return false;
+//   };
+
+//   return (
+//     <div className="bar-model bar-model--total-parts">
+//       {!spec.hideTopBar && (
+//         <div className="bar-model__top">
+//           <BarBox
+//             box={spec.total}
+//             label={getBarLabel(spec.total, spec)}
+//             value={valTotal}
+//             active={activeField === spec.total.key}
+//             onClick={() => setActiveField(spec.total.key)}
+//             className={`bar-box--wide ${isUnk(valTotal, spec.total) ? "is-missing-value" : ""} ${getFeedbackClass(spec.total.key)}`}
+//             // className={`bar-box--wide ${isUnk(valTotal, spec.total) ? "is-missing-value" : ""}`}
+//           />
+//         </div>
+//       )}
+
+//       <div className="bar-model__bottom">
+//         <BarBox
+//           box={spec.left}
+//           label={getBarLabel(spec.left, spec)}
+//           value={valLeft}
+//           active={activeField === spec.left.key}
+//           onClick={() => setActiveField(spec.left.key)}
+//           // className={`bar-box--segment ${isUnk(valLeft, spec.left) ? "is-missing-value" : ""}`}
+//           className={`bar-box--segment ${isUnk(valLeft, spec.left) ? "is-missing-value" : ""} ${getFeedbackClass(spec.left.key)}`}
+//           style={{ width: `${percentages.first}%` }}
+//         />
+//         <BarBox
+//           box={spec.right}
+//           label={getBarLabel(spec.right, spec)}
+//           value={valRight}
+//           active={activeField === spec.right.key}
+//           onClick={() => setActiveField(spec.right.key)}
+//           // className={`bar-box--segment ${isUnk(valRight, spec.right) ? "is-missing-value" : ""}`}
+//           className={`bar-box--segment ${isUnk(valRight, spec.right) ? "is-missing-value" : ""} ${getFeedbackClass(spec.right.key)}`}
+//           style={{ width: `${percentages.second}%` }}
+//         />
+//       </div>
+//     </div>
+//   );
+// };
 // const ChangeBarModel = ({
 //   spec,
 //   response,
@@ -230,7 +421,7 @@ const ChangeBarModel = ({
 //   setActiveField,
 //   question,
 // }) => {
-//   // 1. MATHEMATICAL STRUCTURE DETECTION (Unchanged)
+//   // 1. MATHEMATICAL STRUCTURE DETECTION
 //   const isSubtraction = (() => {
 //     const op = question?.operator || question?.equationSpec?.operator;
 //     if (op === "-") return true;
@@ -256,7 +447,7 @@ const ChangeBarModel = ({
 
 //   const isMod1 = question?.moduleStage === "word_to_bar";
 
-//   // 2. BOX MAPPING (Unchanged)
+//   // 2. BOX MAPPING
 //   const startBox = spec.start || spec.left;
 //   const changeBox = spec.change || spec.right;
 //   const endBox = spec.end || spec.total || spec.result;
@@ -272,36 +463,35 @@ const ChangeBarModel = ({
 //     b2 = changeBox;
 //   }
 
-//   // 3. THE "ONLY HASH THE UNKNOWN" LOGIC (Unchanged)
+//   // 3. THE "ONLY HASH THE UNKNOWN" LOGIC
 //   const isUnk = (val, boxSpec) => {
 //     if (!boxSpec) return false;
 //     const cleanVal = String(val || "").trim();
 //     return (cleanVal === "?" || boxSpec.value === "?") && !boxSpec.editable;
 //   };
 
-//   // 4. STYLE FIX: Restoring the softer "earlier" colors
+//   // 4. STYLE FIX: White background for hashed boxes, original colors for solid boxes
 //   const getBoxStyle = (box, hashed, widthPercent = null) => {
 //     const style = widthPercent ? { width: `${widthPercent}%` } : {};
-
-//     // Restored to the softer shades used in the original screenshots
-//     const colors = {
-//       green: "#f0fdf4", // Softer mint
-//       blue: "#eff6ff", // Softer blue
-//       orange: "#fff7ed", // Softer peach
-//       red: "#fef2f2", // Softer red
-//     };
-//     const baseColor = colors[box?.color] || "white";
 
 //     if (hashed) {
 //       return {
 //         ...style,
-//         backgroundColor: baseColor,
+//         backgroundColor: "white", // Removed background color for hashed boxes
 //         backgroundImage: `repeating-linear-gradient(-45deg, transparent, transparent 8px, rgba(148, 163, 184, 0.15) 8px, rgba(148, 163, 184, 0.15) 10px)`,
 //         border: "2px dashed #94a3b8",
 //         backgroundClip: "padding-box",
 //       };
 //     }
-//     return { ...style, backgroundColor: baseColor };
+
+//     // Colors only for non-hashed, solid boxes
+//     const colors = {
+//       green: "#f0fdf4",
+//       blue: "#eff6ff",
+//       orange: "#fff7ed",
+//       red: "#fef2f2",
+//     };
+//     return { ...style, backgroundColor: colors[box?.color] || "white" };
 //   };
 
 //   const vTop = getBarValue(response, topBox);
@@ -311,6 +501,15 @@ const ChangeBarModel = ({
 //   const m1 = b1?.magnitude || 50;
 //   const m2 = b2?.magnitude || 50;
 //   const total = m1 + m2;
+
+//   const getFeedbackClass = (boxKey) => {
+//     if (!question?.isAttempted) return "";
+//     return boxKey === question?.targetField
+//       ? question.isCorrect
+//         ? "is-correct"
+//         : "is-wrong"
+//       : "";
+//   };
 
 //   return (
 //     <div
@@ -324,7 +523,8 @@ const ChangeBarModel = ({
 //           value={vTop}
 //           active={activeField === topBox.key}
 //           onClick={() => setActiveField(topBox.key)}
-//           className={`bar-box--wide ${isMod1 ? "bar-box--top-pill" : ""}`}
+//           // className={`bar-box--wide ${isMod1 ? "bar-box--top-pill" : ""}`}
+//           className={`bar-box--wide ${isMod1 ? "bar-box--top-pill" : ""} ${getFeedbackClass(topBox.key)}`}
 //           style={getBoxStyle(topBox, isUnk(vTop, topBox))}
 //         />
 //       </div>
@@ -338,7 +538,8 @@ const ChangeBarModel = ({
 //             value={v1}
 //             active={activeField === b1.key}
 //             onClick={() => setActiveField(b1.key)}
-//             className={`bar-box--segment ${isMod1 ? "bar-box--tray-pill token-1" : ""}`}
+//             // className={`bar-box--segment ${isMod1 ? "bar-box--tray-pill token-1" : ""}`}
+//             className={`bar-box--segment ${isMod1 ? "bar-box--tray-pill token-1" : ""} ${getFeedbackClass(b1.key)}`}
 //             style={getBoxStyle(b1, isUnk(v1, b1), (m1 / total) * 100)}
 //           />
 //         )}
@@ -350,7 +551,8 @@ const ChangeBarModel = ({
 //             value={v2}
 //             active={activeField === b2.key}
 //             onClick={() => setActiveField(b2.key)}
-//             className={`bar-box--segment ${isMod1 ? "bar-box--tray-pill token-2" : ""}`}
+//             className={`bar-box--segment ${isMod1 ? "bar-box--tray-pill token-2" : ""} ${getFeedbackClass(b2.key)}`}
+//             // className={`bar-box--segment ${isMod1 ? "bar-box--tray-pill token-2" : ""}`}
 //             style={getBoxStyle(b2, isUnk(v2, b2), (m2 / total) * 100)}
 //           />
 //         )}
@@ -553,7 +755,67 @@ export const CompareGuidedAnswerModel = ({ question }) => {
   );
 };
 
-const BarModel = ({ question, response, setResponse }) => {
+// const BarModel = ({ question, response, setResponse }) => {
+//   const spec = question?.barModelSpec;
+//   if (!spec) return null;
+
+//   const setActiveField = (field) =>
+//     setResponse((current) => ({ ...(current || {}), activeField: field }));
+
+//   if (question?.schemaKind === "change" || spec.layout === "change") {
+//     return (
+//       <ChangeBarModel
+//         spec={spec}
+//         response={response}
+//         activeField={response?.activeField}
+//         setActiveField={setActiveField}
+//         question={question}
+//       />
+//     );
+//   }
+
+//   if (
+//     spec.layout === "compare_offset" &&
+//     spec.compareVariant === "fewer_than_gap"
+//   ) {
+//     return (
+//       <CompareGapBarModel
+//         spec={spec}
+//         response={response}
+//         activeField={response?.activeField}
+//         setActiveField={setActiveField}
+//       />
+//     );
+//   }
+
+//   if (spec.layout === "compare_offset") {
+//     return (
+//       <CompareStackedBarModel
+//         spec={spec}
+//         response={response}
+//         activeField={response?.activeField}
+//         setActiveField={setActiveField}
+//       />
+//     );
+//   }
+
+//   return (
+//     <TotalPartsBarModel
+//       spec={spec}
+//       response={response}
+//       activeField={response?.activeField}
+//       setActiveField={setActiveField}
+//     />
+//   );
+// };
+const BarModel = ({
+  question,
+  response,
+  setResponse,
+  isAttempted,
+  isCorrect,
+  targetField,
+}) => {
   const spec = question?.barModelSpec;
   if (!spec) return null;
 
@@ -568,6 +830,9 @@ const BarModel = ({ question, response, setResponse }) => {
         activeField={response?.activeField}
         setActiveField={setActiveField}
         question={question}
+        isAttempted={isAttempted}
+        isCorrect={isCorrect}
+        targetField={targetField}
       />
     );
   }
@@ -603,6 +868,10 @@ const BarModel = ({ question, response, setResponse }) => {
       response={response}
       activeField={response?.activeField}
       setActiveField={setActiveField}
+      question={question}
+      isAttempted={isAttempted}
+      isCorrect={isCorrect}
+      targetField={targetField}
     />
   );
 };

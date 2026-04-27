@@ -1,8 +1,8 @@
 const Concept = require("../models/Concept");
 
 const WINDOW_SIZE = 5;
-const MASTERY_MIN_ATTEMPTS = 3;
-const MASTERY_SCORE_THRESHOLD = 3;
+const MASTERY_MIN_ATTEMPTS = 5;
+const MASTERY_SCORE_THRESHOLD = 5;
 // const WINDOW_SIZE = 3;
 // const MASTERY_MIN_ATTEMPTS = 2;
 // const MASTERY_SCORE_THRESHOLD = 2;
