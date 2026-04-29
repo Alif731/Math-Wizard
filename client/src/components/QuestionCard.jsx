@@ -90,12 +90,12 @@ const QuestionCard = ({
 
   const playSuccessSound = () => {
     audioSuccess.currentTime = 0;
-    audioSuccess.play().catch(() => {});
+    audioSuccess.play().catch(() => { });
   };
 
   const playErrorSound = () => {
     audioFailure.currentTime = 0;
-    audioFailure.play().catch(() => {});
+    audioFailure.play().catch(() => { });
   };
 
   const queueNextProblem = () => {
