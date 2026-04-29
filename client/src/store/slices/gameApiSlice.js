@@ -22,6 +22,25 @@ export const gameApiSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["Leaderboard", "UserStatus", "Activity"],
     }),
+
+    // Jump to a specific concept (used by Student Hub)
+    jumpToConcept: builder.mutation({
+      query: (payload) => ({
+        url: "/learning/jump",
+        method: "POST",
+        body: payload,
+      }),
+      invalidatesTags: ["Problem", "UserStatus"],
+    }),
+
+    switchSection: builder.mutation({
+      query: (payload) => ({
+        url: "/learning/switch-section",
+        method: "POST",
+        body: payload,
+      }),
+      invalidatesTags: ["Problem", "UserStatus"],
+    }),
   }),
   overrideExisting: false, // Prevent errors in hot-reloading
 });
@@ -31,4 +50,6 @@ export const {
   useGetProblemQuery,
   useGetUserStatusQuery,
   useSubmitAnswerMutation,
+  useJumpToConceptMutation,
+  useSwitchSectionMutation,
 } = gameApiSlice;

@@ -67,7 +67,7 @@ const Login = () => {
         }
 
         dispatch(setCredentials({ ...profile }));
-        navigate(getDefaultRouteForRole(profile.role), { replace: true });
+        navigate(getDefaultRouteForRole(profile.role, profile.loginCount), { replace: true });
       } catch (_error) {
         if (!isActive) {
           return;
@@ -110,7 +110,7 @@ const Login = () => {
     dispatch(setCredentials({ ...payload }));
 
     toast.success(`Welcome back, ${payload.username}!`);
-    navigate(getDefaultRouteForRole(payload?.role), { replace: true });
+    navigate(getDefaultRouteForRole(payload?.role, payload?.loginCount), { replace: true });
   };
 
   const handleLogin = async (e) => {
@@ -273,9 +273,9 @@ const Login = () => {
                 ? "Checking session..."
                 : isLoginLoading || isRegisterLoading
                   ? "Loading..."
-                : isLogin
-                  ? "Login"
-                  : "Sign Up"}
+                  : isLogin
+                    ? "Login"
+                    : "Sign Up"}
             </button>
 
             <div className="login__divider">

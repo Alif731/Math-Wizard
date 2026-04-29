@@ -15,12 +15,18 @@ const orderedConcepts = [
   "combine_mod1",
   "combine_mod2",
   "combine_mod3",
+  "combine_mod4",
+  "combine_mod5",
   "change_mod1",
   "change_mod2",
   "change_mod3",
+  "change_mod4",
+  "change_mod5",
   "compare_mod1",
   "compare_mod2",
   "compare_mod3",
+  "compare_mod4",
+  "compare_mod5",
 ];
 
 const expectedPrerequisites = {
@@ -32,12 +38,18 @@ const expectedPrerequisites = {
   combine_mod1: ["missing_part_equations"],
   combine_mod2: ["combine_mod1"],
   combine_mod3: ["combine_mod2"],
-  change_mod1: ["combine_mod3"],
+  combine_mod4: ["combine_mod3"],
+  combine_mod5: ["combine_mod4"],
+  change_mod1: ["combine_mod5"],
   change_mod2: ["change_mod1"],
   change_mod3: ["change_mod2"],
-  compare_mod1: ["change_mod3"],
+  change_mod4: ["change_mod3"],
+  change_mod5: ["change_mod4"],
+  compare_mod1: ["change_mod5"],
   compare_mod2: ["compare_mod1"],
   compare_mod3: ["compare_mod2"],
+  compare_mod4: ["compare_mod3"],
+  compare_mod5: ["compare_mod4"],
 };
 
 const getGivenSlotKeys = (slots = {}) =>
@@ -93,6 +105,30 @@ function assertModuleBundleOrder(concept) {
   }
 }
 
+function assertVariableIdentificationConcept(concept) {
+  assert.equal(concept.questions.length, 15, `${concept.id} should have 15 questions`);
+  for (const question of concept.questions) {
+    assert.equal(question.moduleStage, "schema_variables");
+    assert.equal(question.interactionMode, "variable_identification");
+    assert.ok(question.visualData?.sentences?.length, `${concept.id} should include numbered sentences`);
+    assert.ok(question.visualData?.variables?.length, `${concept.id} should include variable rows`);
+    assert.equal(
+      question.visualData.variables.length,
+      Object.keys(question.validation?.variables || {}).length,
+      `${concept.id} should validate each variable row`,
+    );
+  }
+}
+
+function assertDirectSchemaConcept(concept) {
+  assert.equal(concept.questions.length, 15, `${concept.id} should have 15 questions`);
+  for (const question of concept.questions) {
+    assert.equal(question.moduleStage, "schema_direct_solve");
+    assert.equal(question.interactionMode, "direct_answer");
+    assert.ok(question.validation?.acceptableAnswers?.length);
+  }
+}
+
 async function verify() {
   const mongoServer = await MongoMemoryServer.create();
   await mongoose.connect(mongoServer.getUri());
@@ -113,20 +149,24 @@ async function verify() {
     );
   }
 
-  assert.equal(conceptMap.get("combine_mod1").questions.length, 10);
-  assert.equal(conceptMap.get("combine_mod2").questions.length, 10);
-  assert.equal(conceptMap.get("change_mod1").questions.length, 10);
+  assertVariableIdentificationConcept(conceptMap.get("combine_mod1"));
+  assertDirectSchemaConcept(conceptMap.get("combine_mod5"));
+  assertVariableIdentificationConcept(conceptMap.get("change_mod1"));
+  assertDirectSchemaConcept(conceptMap.get("change_mod5"));
+  assert.equal(conceptMap.get("combine_mod2").questions.length, 15);
+  assert.equal(conceptMap.get("combine_mod3").questions.length, 10);
   assert.equal(conceptMap.get("change_mod2").questions.length, 10);
-  assertModuleBundleOrder(conceptMap.get("combine_mod3"));
-  assertModuleBundleOrder(conceptMap.get("change_mod3"));
+  assert.equal(conceptMap.get("change_mod3").questions.length, 10);
+  assertModuleBundleOrder(conceptMap.get("combine_mod4"));
+  assertModuleBundleOrder(conceptMap.get("change_mod4"));
 
   for (const conceptId of [
-    "combine_mod1",
     "combine_mod2",
     "combine_mod3",
-    "change_mod1",
+    "combine_mod4",
     "change_mod2",
     "change_mod3",
+    "change_mod4",
   ]) {
     assertSchemaQuestionShape(conceptMap.get(conceptId));
   }
@@ -171,7 +211,7 @@ async function verify() {
 
   const finalProblem = await getNextProblem(user);
   await user.save();
-  assert.equal(finalProblem.concept.id, "compare_mod3");
+  assert.equal(finalProblem.concept.id, "compare_mod5");
 
   console.log("SUCCESS: curriculum workflow, schema locking, and KL-UCB progression verified.");
   await mongoose.disconnect();

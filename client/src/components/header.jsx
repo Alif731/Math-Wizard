@@ -19,7 +19,7 @@ export default function Header() {
   const { userInfo } = useSelector((state) => state.auth);
   const isTeacher = userInfo?.role === "teacher";
   const isStudent = userInfo?.role === "student";
-  const defaultRoute = userInfo ? getDefaultRouteForRole(userInfo.role) : "/";
+  const defaultRoute = userInfo ? (userInfo.role === "teacher" ? "/teacher/dashboard" : "/home") : "/";
   const guestAuthLink =
     location.pathname === "/teacher/auth"
       ? { to: "/", label: "Student Login" }

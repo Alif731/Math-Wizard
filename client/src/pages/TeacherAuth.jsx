@@ -52,7 +52,7 @@ const TeacherAuth = () => {
         }
 
         dispatch(setCredentials({ ...profile }));
-        navigate(getDefaultRouteForRole(profile.role), { replace: true });
+        navigate(getDefaultRouteForRole(profile.role, profile.loginCount), { replace: true });
       } catch (_error) {
         if (!isActive) {
           return;
@@ -87,7 +87,7 @@ const TeacherAuth = () => {
     dispatch(setCredentials({ ...payload }));
 
     toast.success(`Welcome to the Dashboard, ${payload.username}!`);
-    navigate(getDefaultRouteForRole(payload?.role), { replace: true });
+    navigate(getDefaultRouteForRole(payload?.role, payload?.loginCount), { replace: true });
   };
 
   const handleLogin = async (e) => {
@@ -251,9 +251,9 @@ const TeacherAuth = () => {
                 ? "Checking session..."
                 : isLoginLoading || isRegisterLoading
                   ? "Loading..."
-                : isLogin
-                  ? "Teacher Login"
-                  : "Teacher Sign Up"}
+                  : isLogin
+                    ? "Teacher Login"
+                    : "Teacher Sign Up"}
             </button>
 
             <p className="login__toggle" onClick={handleModeToggle}>

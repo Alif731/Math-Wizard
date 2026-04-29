@@ -226,6 +226,95 @@ $worksheet-shadow:
   border-radius: 10px;
 }
 
+.variable-identification {
+  display: grid;
+  gap: 1rem;
+}
+
+.variable-identification__sentences,
+.variable-table {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.variable-sentence {
+  display: grid;
+  grid-template-columns: 2rem 1fr;
+  gap: 0.75rem;
+  align-items: start;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid rgba(129, 178, 154, 0.32);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.72);
+
+  span {
+    display: grid;
+    place-items: center;
+    width: 1.65rem;
+    height: 1.65rem;
+    border-radius: 999px;
+    background: rgba(129, 178, 154, 0.18);
+    font-weight: 800;
+    color: #3d405b;
+  }
+
+  p {
+    margin: 0;
+    line-height: 1.45;
+    color: #3d405b;
+  }
+}
+
+.variable-row {
+  display: grid;
+  grid-template-columns: minmax(8rem, 1fr) minmax(7rem, 0.7fr) minmax(7rem, 0.8fr);
+  gap: 0.75rem;
+  align-items: end;
+  padding: 0.75rem;
+  border: 1px solid rgba(61, 64, 91, 0.12);
+  border-radius: 8px;
+  background: #fff;
+
+  label {
+    display: grid;
+    gap: 0.35rem;
+    font-size: 0.78rem;
+    color: $worksheet-text-soft;
+  }
+
+  select,
+  input {
+    min-height: 2.45rem;
+    border: 1px solid rgba(61, 64, 91, 0.18);
+    border-radius: 8px;
+    padding: 0.45rem 0.6rem;
+    color: #3d405b;
+    background: #fffdf9;
+  }
+}
+
+.variable-row__label {
+  font-weight: 800;
+  color: #3d405b;
+}
+
+/* Locked value box for unknown variables (auto-filled with "?") */
+.variable-value--locked {
+  background: #f1f5f9 !important;
+  border-style: dashed !important;
+  border-color: rgba(148, 163, 184, 0.6) !important;
+  color: #94a3b8 !important;
+  cursor: not-allowed;
+  font-weight: 700;
+  text-align: center;
+}
+
+@media (max-width: 720px) {
+  .variable-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 .equation-board {
   display: flex;
   flex-wrap: wrap;

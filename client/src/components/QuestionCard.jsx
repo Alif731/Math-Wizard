@@ -207,8 +207,10 @@ const QuestionCard = ({
     "equations",
     "bar_to_equation",
     "schema_bar_model",
+    "schema_direct_solve",
     "schema_equation",
     "schema_solve",
+    "schema_variables",
     "word_to_bar",
   ].includes(problem?.question?.moduleStage);
   const showTelemetry = Boolean(problem?.adaptiveState) && import.meta.env.DEV;
@@ -266,26 +268,26 @@ const QuestionCard = ({
         </div>
       </div>
       <div className="question-shell__main">
+        {/* Confetti rendered outside question__card to avoid clipping */}
+        {isSuccess && (
+          <Confetti
+            key={`success-confetti-${statAnim.key}`}
+            width={viewportSize.width}
+            height={viewportSize.height}
+            recycle={false}
+            numberOfPieces={360}
+            gravity={0.48}
+            tweenDuration={700}
+            className="success-confetti"
+            style={{
+              position: "fixed",
+              inset: 0,
+              pointerEvents: "none",
+              zIndex: 9999,
+            }}
+          />
+        )}
         <div className="question__card">
-          {isSuccess && (
-            <Confetti
-              key={`success-confetti-${statAnim.key}`}
-              width={viewportSize.width}
-              height={viewportSize.height}
-              recycle={false}
-              numberOfPieces={360}
-              gravity={0.48}
-              tweenDuration={700}
-              className="success-confetti"
-              style={{
-                position: "fixed",
-                inset: 0,
-                pointerEvents: "none",
-                zIndex: 9999,
-              }}
-            />
-          )}
-
           {isWorksheetDriven ? (
             <SchemaQuestion
               question={problem.question}

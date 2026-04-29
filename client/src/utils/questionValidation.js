@@ -8,6 +8,10 @@ export const isCompareAnswerInputQuestion = (question) =>
   question?.schemaKind === "compare" &&
   question?.barModelSpec?.compareVariant === "fewer_than_gap";
 
+export const isVariableIdentificationQuestion = (question) =>
+  question?.interactionMode === "variable_identification" ||
+  question?.moduleStage === "schema_variables";
+
 export const getEditableEquationItems = (question) =>
   (question?.equationSpec?.template || []).filter(
     (item) => item.type === "slot" && item.editable !== false,
@@ -47,6 +51,27 @@ export const createInitialResponse = (question) => {
   if (isCompareAnswerInputQuestion(question)) {
     return {
       slots: {},
+      activeField: null,
+      operator: "",
+      textAnswer: "",
+    };
+  }
+
+  if (isVariableIdentificationQuestion(question)) {
+    const variables = question?.visualData?.variables || [];
+    const expectedVars = question?.validation?.variables || {};
+    return {
+      variables: Object.fromEntries(
+        variables.map((variable) => [
+          variable.key,
+          {
+            sentence: "",
+            // Pre-fill "?" for unknown variables so students
+            // don't need to type it — their value box will be locked.
+            value: expectedVars[variable.key]?.value === "?" ? "?" : "",
+          },
+        ]),
+      ),
       activeField: null,
       operator: "",
       textAnswer: "",
@@ -99,6 +124,24 @@ export const isQuestionResponseReady = (question, response) => {
     return normalizeString(response?.textAnswer) !== "";
   }
 
+  if (isVariableIdentificationQuestion(question)) {
+    const variables = question?.visualData?.variables || [];
+    const expectedVars = question?.validation?.variables || {};
+    return variables.every((variable) => {
+      const answer = response?.variables?.[variable.key] || {};
+      const isUnknown = expectedVars[variable.key]?.value === "?";
+      // Unknown variables only need a sentence selection (value is auto "?").
+      // Known variables need both sentence and value.
+      if (isUnknown) {
+        return normalizeString(answer.sentence) !== "";
+      }
+      return (
+        normalizeString(answer.sentence) !== "" &&
+        normalizeString(answer.value) !== ""
+      );
+    });
+  }
+
   if (inputMode === "keypad_single_blank") {
     return normalizeString(response?.slots?.answer) !== "";
   }
@@ -148,6 +191,12 @@ export const buildSubmissionResponse = (question, response) => {
         ...(question?.validation?.slots || {}),
         [question?.unknownSlot || "smaller"]: response?.textAnswer || "",
       },
+    };
+  }
+
+  if (isVariableIdentificationQuestion(question)) {
+    return {
+      variables: { ...(response?.variables || {}) },
     };
   }
 
