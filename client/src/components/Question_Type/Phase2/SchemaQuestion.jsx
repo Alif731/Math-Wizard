@@ -286,6 +286,9 @@ const SchemaQuestion = ({
                 question={question}
                 response={response}
                 setResponse={setResponse}
+                isAttempted={Boolean(feedback)}
+                isCorrect={feedback?.isCorrect}
+                targetField={response?.activeField}
               />
             )}
           <EquationBoard
@@ -335,19 +338,51 @@ const SchemaQuestion = ({
             question={question}
             response={response}
             setResponse={setResponse}
+            isAttempted={Boolean(feedback)}
+            isCorrect={feedback?.isCorrect}
+            targetField={response?.activeField}
           />
         ))}
 
       {question?.moduleStage === "schema_solve" && (
+        // <div className="worksheet-solve">
+        //   <div className="worksheet-solve__equation">
+        //     {question?.validation?.displayEquation ||
+        //       question?.equationSpec?.displayEquation}
+        //   </div>
+
+        //   <label className="worksheet-answer-field">
+        //     <input
+        //       type="text"
+        //       inputMode="numeric"
+        //       value={getDisplayedTextAnswer(response) || ""}
+        //       onChange={(event) =>
+        //         !hasFeedback &&
+        //         !isSubmitting &&
+        //         setResponse((current) => ({
+        //           ...(current || {}),
+        //           textAnswer: event.target.value,
+        //         }))
+        //       }
+        //       disabled={hasFeedback || isSubmitting}
+        //       placeholder="Your answer"
+        //     />
+        //   </label>
         <div className="worksheet-solve">
-          <div className="worksheet-solve__equation">
+          {/* Added dynamic classes to the equation for the pulse/glow effect */}
+          <div
+            className={`worksheet-solve__equation ${hasFeedback ? (feedback?.isCorrect ? "is-correct" : "is-wrong") : ""}`}
+          >
             {question?.validation?.displayEquation ||
               question?.equationSpec?.displayEquation}
           </div>
 
-          <label className="worksheet-answer-field">
+          {/* Added dynamic classes to the label to trigger the icons and input borders */}
+          <label
+            className={`worksheet-answer-field ${hasFeedback ? (feedback?.isCorrect ? "is-correct" : "is-wrong") : ""}`}
+          >
             <input
-              type="text"
+              type="number"
               inputMode="numeric"
               value={getDisplayedTextAnswer(response) || ""}
               onChange={(event) =>
@@ -364,7 +399,7 @@ const SchemaQuestion = ({
           </label>
 
           <Keypad
-            title="Type your answer."
+            title="Enter your answer."
             showUnknown={false}
             showOperatorPad={false}
             disabled={hasFeedback || isSubmitting}
@@ -412,7 +447,7 @@ const SchemaQuestion = ({
         />
       )}
 
-      {feedback && (
+      {/* {feedback && (
         <div
           className={`worksheet-feedback ${feedback.isCorrect ? "is-success" : "is-error"}`}
         >
@@ -420,7 +455,7 @@ const SchemaQuestion = ({
             ? feedback?.explanation || "Good Job!"
             : `Try again next time. Correct answer: ${feedback?.correctAnswer ?? ""}`}
         </div>
-      )}
+      )} */}
 
       {/* {feedback?.isCorrect && question?.moduleStage === "schema_solve" && (
         <VerificationPanel question={question} />
