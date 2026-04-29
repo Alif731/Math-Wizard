@@ -9,6 +9,7 @@ const QUESTION_TYPES = Object.freeze([
   "equation_builder",
   "bar_model_builder",
   "full_model",
+  "variable_identification",
 ]);
 
 const SCHEMA_KINDS = Object.freeze([
@@ -24,6 +25,7 @@ const INTERACTION_MODES = Object.freeze([
   "equation_builder",
   "bar_model_builder",
   "full_model",
+  "variable_identification",
 ]);
 
 const MODULE_STAGES = Object.freeze([
@@ -31,8 +33,10 @@ const MODULE_STAGES = Object.freeze([
   "equations",
   "bar_to_equation",
   "schema_bar_model",
+  "schema_direct_solve",
   "schema_equation",
   "schema_solve",
+  "schema_variables",
   "word_to_bar",
 ]);
 
@@ -254,6 +258,20 @@ const validateFullModel = (question, response) => {
 
 const validateQuestionResponse = (question, response) => {
   const mode = question?.interactionMode || "direct_answer";
+
+  if (mode === "variable_identification") {
+    const expectedVariables = question?.validation?.variables || {};
+    const submittedVariables = response?.variables || {};
+
+    return Object.entries(expectedVariables).every(([key, expected]) => {
+      const submitted = submittedVariables[key] || {};
+      return (
+        normalizeString(submitted.sentence) ===
+          normalizeString(expected.sentence) &&
+        normalizeString(submitted.value) === normalizeString(expected.value)
+      );
+    });
+  }
 
   if (mode === "equation_builder") {
     return validateEquationBuilder(question, response);
@@ -591,6 +609,7 @@ const createQuestionEnvelope = ({
   equationSpec,
   barModelSpec,
   validation,
+  visualData,
   moduleStage = "practice",
   practiceMode = null,
   promptTitle = "",
@@ -614,6 +633,7 @@ const createQuestionEnvelope = ({
   equationSpec,
   barModelSpec,
   validation,
+  visualData,
   moduleStage,
   practiceMode,
   promptTitle,

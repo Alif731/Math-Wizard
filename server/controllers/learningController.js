@@ -1,6 +1,6 @@
 const Concept = require("../models/Concept");
 const Attempt = require("../models/Attempt");
-const { getNextProblem, updateMastery } = require("../utils/learningEngine");
+const { getNextProblem, updateMastery, jumpToConcept } = require("../utils/learningEngine");
 const {
   serializeResponse,
   validateQuestionResponse,
@@ -152,3 +152,50 @@ exports.getUserStatus = async (req, res) => {
 //     res.status(500).json({ error: "Server error" });
 //   }
 // };
+
+/**
+ * Jump the student to a specific concept, mastering all prerequisites.
+ * Used by the Student Hub to let students skip practice and go directly
+ * to word problems.
+ */
+exports.jumpToConcept = async (req, res) => {
+  try {
+    const { conceptId } = req.body;
+    const user = req.user;
+
+    if (!conceptId) {
+      return res.status(400).json({ error: "conceptId is required" });
+    }
+
+    await jumpToConcept(user, conceptId);
+    await user.save();
+
+    res.json({ success: true, zpdNodes: user.zpdNodes });
+  } catch (error) {
+    console.error("jumpToConcept error:", error);
+    res.status(500).json({ error: error.message || "Server error" });
+  }
+};
+
+/**
+ * Switch the active section for the student.
+ */
+exports.switchSection = async (req, res) => {
+  try {
+    const { sectionId } = req.body;
+    const user = req.user;
+
+    if (!sectionId) {
+      return res.status(400).json({ error: "sectionId is required" });
+    }
+
+    const { switchSection } = require("../utils/learningEngine");
+    await switchSection(user, sectionId);
+    await user.save();
+
+    res.json({ success: true, zpdNodes: user.zpdNodes });
+  } catch (error) {
+    console.error("switchSection error:", error);
+    res.status(500).json({ error: error.message || "Server error" });
+  }
+};

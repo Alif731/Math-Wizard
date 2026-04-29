@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   getDisplayedTextAnswer,
   isCompareAnswerInputQuestion,
   isQuestionResponseReady,
+  isVariableIdentificationQuestion,
 } from "../../../utils/questionValidation";
 import {
   joinSlotValue,
@@ -20,6 +21,111 @@ import {
 } from "./WorksheetParts";
 import BarModel, { CompareGuidedAnswerModel } from "./BarModelRenderer";
 
+// Deterministic shuffle using a simple seed derived from question text.
+// Ensures the same question always shows the same shuffled order,
+// but prevents students from seeing variables in the story-order.
+const seededShuffle = (array, seed) => {
+  const result = [...array];
+  let s = seed;
+  for (let i = result.length - 1; i > 0; i--) {
+    s = (s * 16807 + 11) % 2147483647;
+    const j = s % (i + 1);
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+};
+
+const hashString = (str) =>
+  (str || "").split("").reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+
+const VariableIdentificationPanel = ({
+  question,
+  response,
+  setResponse,
+  disabled,
+}) => {
+  const sentences = question?.visualData?.sentences || [];
+  const variables = question?.visualData?.variables || [];
+  const expectedVars = question?.validation?.variables || {};
+
+  // Shuffle variable rows so they don't match the story order
+  const shuffledVariables = useMemo(
+    () => seededShuffle(variables, hashString(question?.text)),
+    [variables, question?.text],
+  );
+
+  const updateVariable = (key, field, value) => {
+    if (disabled) return;
+    setResponse((current) => ({
+      ...(current || {}),
+      variables: {
+        ...(current?.variables || {}),
+        [key]: {
+          ...(current?.variables?.[key] || {}),
+          [field]: value,
+        },
+      },
+    }));
+  };
+
+  return (
+    <div className="variable-identification">
+      <div className="variable-identification__sentences">
+        {sentences.map((sentence, index) => (
+          <div className="variable-sentence" key={`${index}-${sentence}`}>
+            <span>{index + 1}</span>
+            <p>{sentence}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="variable-table">
+        {shuffledVariables.map((variable) => {
+          const answer = response?.variables?.[variable.key] || {};
+          const isUnknown = expectedVars[variable.key]?.value === "?";
+          return (
+            <div className="variable-row" key={variable.key}>
+              <div className="variable-row__label">{variable.label}</div>
+              <label>
+                <span>Sentence</span>
+                <select
+                  value={answer.sentence || ""}
+                  disabled={disabled}
+                  onChange={(event) =>
+                    updateVariable(variable.key, "sentence", event.target.value)
+                  }
+                >
+                  <option value="">Select</option>
+                  {sentences.map((sentence, index) => (
+                    <option value={String(index + 1)} key={sentence}>
+                      {index + 1}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span>Value</span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={isUnknown ? "?" : answer.value || ""}
+                  disabled={disabled || isUnknown}
+                  placeholder="?"
+                  className={isUnknown ? "variable-value--locked" : ""}
+                  onChange={(event) =>
+                    !isUnknown &&
+                    updateVariable(variable.key, "value", event.target.value)
+                  }
+                />
+              </label>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 const SchemaQuestion = ({
   question,
   response,
@@ -34,10 +140,10 @@ const SchemaQuestion = ({
     isQuestionResponseReady(question, response) &&
     !isSubmitting &&
     !hasFeedback;
-  const isSchemaStage = String(question?.moduleStage || "").startsWith(
-    "schema_",
-  );
+  const isSchemaStage = question?.stageTotal === 3;
   const isCompareAnswerInput = isCompareAnswerInputQuestion(question);
+  const isVariableIdentification = isVariableIdentificationQuestion(question);
+  const isDirectSchemaSolve = question?.moduleStage === "schema_direct_solve";
   const showPromptStrip = !["practice", "equations"].includes(
     question?.moduleStage,
   );
@@ -344,7 +450,16 @@ const SchemaQuestion = ({
           />
         ))}
 
-      {question?.moduleStage === "schema_solve" && (
+      {isVariableIdentification && (
+        <VariableIdentificationPanel
+          question={question}
+          response={response}
+          setResponse={setResponse}
+          disabled={hasFeedback || isSubmitting}
+        />
+      )}
+
+      {(question?.moduleStage === "schema_solve" || isDirectSchemaSolve) && (
         // <div className="worksheet-solve">
         //   <div className="worksheet-solve__equation">
         //     {question?.validation?.displayEquation ||
@@ -370,12 +485,15 @@ const SchemaQuestion = ({
         //   </label>
         <div className="worksheet-solve">
           {/* Added dynamic classes to the equation for the pulse/glow effect */}
-          <div
-            className={`worksheet-solve__equation ${hasFeedback ? (feedback?.isCorrect ? "is-correct" : "is-wrong") : ""}`}
-          >
-            {question?.validation?.displayEquation ||
-              question?.equationSpec?.displayEquation}
-          </div>
+          {(question?.validation?.displayEquation ||
+            question?.equationSpec?.displayEquation) && (
+            <div
+              className={`worksheet-solve__equation ${hasFeedback ? (feedback?.isCorrect ? "is-correct" : "is-wrong") : ""}`}
+            >
+              {question?.validation?.displayEquation ||
+                question?.equationSpec?.displayEquation}
+            </div>
+          )}
 
           {/* Added dynamic classes to the label to trigger the icons and input borders */}
           <label
@@ -473,7 +591,7 @@ const SchemaQuestion = ({
             disabled={!canCheck}
             onClick={triggerCheck}
           >
-            {question?.moduleStage === "schema_solve"
+            {question?.moduleStage === "schema_solve" || isDirectSchemaSolve
               ? "Check answer →"
               : "Submit ✓"}
           </button>

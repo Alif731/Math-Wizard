@@ -25,12 +25,12 @@ const getValidatedSlots = (schemaKind, slots) =>
   schemaKind === "compare"
     ? stringifySlots(slots)
     : stringifySlots(
-        Object.fromEntries(
-          Object.entries(slots).filter(
-            ([, value]) => String(value).trim() !== "?",
-          ),
+      Object.fromEntries(
+        Object.entries(slots).filter(
+          ([, value]) => String(value).trim() !== "?",
         ),
-      );
+      ),
+    );
 
 const withUnknownSlot = (values, unknownSlot) =>
   Object.fromEntries(
@@ -182,45 +182,45 @@ const createEquationFromBarQuestion = ({
   const keys =
     schemaKind === "compare"
       ? {
-          left: {
-            key: "leftTerm",
-            label: labels.left,
-            role: "smaller",
-            value: equationDisplayValues.leftTerm,
-          },
-          right: {
-            key: "rightTerm",
-            label: labels.right,
-            role: "difference",
-            value: equationDisplayValues.rightTerm,
-          },
-          result: {
-            key: "result",
-            label: labels.result,
-            role: "bigger",
-            value: equationDisplayValues.result,
-          },
-        }
+        left: {
+          key: "leftTerm",
+          label: labels.left,
+          role: "smaller",
+          value: equationDisplayValues.leftTerm,
+        },
+        right: {
+          key: "rightTerm",
+          label: labels.right,
+          role: "difference",
+          value: equationDisplayValues.rightTerm,
+        },
+        result: {
+          key: "result",
+          label: labels.result,
+          role: "bigger",
+          value: equationDisplayValues.result,
+        },
+      }
       : {
-          left: {
-            key: "leftTerm",
-            label: labels.left,
-            role: schemaKind === "change" ? "start" : "partA",
-            value: equationDisplayValues.leftTerm,
-          },
-          right: {
-            key: "rightTerm",
-            label: labels.right,
-            role: schemaKind === "change" ? "change" : "partB",
-            value: equationDisplayValues.rightTerm,
-          },
-          result: {
-            key: "result",
-            label: labels.result,
-            role: schemaKind === "change" ? "end" : "total",
-            value: equationDisplayValues.result,
-          },
-        };
+        left: {
+          key: "leftTerm",
+          label: labels.left,
+          role: schemaKind === "change" ? "start" : "partA",
+          value: equationDisplayValues.leftTerm,
+        },
+        right: {
+          key: "rightTerm",
+          label: labels.right,
+          role: schemaKind === "change" ? "change" : "partB",
+          value: equationDisplayValues.rightTerm,
+        },
+        result: {
+          key: "result",
+          label: labels.result,
+          role: schemaKind === "change" ? "end" : "total",
+          value: equationDisplayValues.result,
+        },
+      };
 
   const equationSpec = {
     operator,
@@ -547,6 +547,64 @@ const createSchemaSolveQuestion = ({
     },
   });
 
+const createVariableIdentificationQuestion = ({
+  concept,
+  text,
+  schemaKind,
+  sentences,
+  variables,
+  difficulty,
+}) =>
+  createQuestionEnvelope({
+    text,
+    concept,
+    type: "variable_identification",
+    difficulty,
+    correctAnswer: "variables-identified",
+    schemaKind,
+    interactionMode: "variable_identification",
+    moduleStage: "schema_variables",
+    promptTitle: "identify variables",
+    inputMode: "text_answer",
+    helperText: "Choose the sentence and value for each variable. Use ? for the unknown.",
+    visualData: {
+      sentences,
+      variables: variables.map(({ key, label }) => ({ key, label })),
+    },
+    validation: {
+      variables: Object.fromEntries(
+        variables.map(({ key, sentence, value }) => [
+          key,
+          { sentence: String(sentence), value: String(value) },
+        ]),
+      ),
+    },
+  });
+
+const createDirectSchemaQuestion = ({
+  concept,
+  text,
+  schemaKind,
+  answer,
+  difficulty,
+}) =>
+  createQuestionEnvelope({
+    text,
+    concept,
+    type: "direct",
+    difficulty,
+    correctAnswer: answer,
+    schemaKind,
+    interactionMode: "direct_answer",
+    moduleStage: "schema_direct_solve",
+    promptTitle: "solve the problem",
+    inputMode: "text_answer",
+    helperText: "Solve the story problem directly and enter the answer.",
+    validation: {
+      acceptableAnswers: [String(answer)],
+    },
+  });
+
 const createCombineBarModelQuestion = ({
   concept,
   text,
@@ -608,33 +666,33 @@ const createCombineEquationQuestion = ({
   const question =
     moduleStage === "schema_equation"
       ? createSchemaEquationQuestion({
-          concept,
-          text,
-          schemaKind: "combine",
-          values: displayValues,
-          displayBarValues: displayValues,
-          scaleValues: values,
-          labels: equationLabels,
-          unknownSlot,
-          equationValues: equationSlots,
-          validationSlots: equationSlots,
-          alternateSlots,
-          operator: "+",
-          difficulty,
-        })
+        concept,
+        text,
+        schemaKind: "combine",
+        values: displayValues,
+        displayBarValues: displayValues,
+        scaleValues: values,
+        labels: equationLabels,
+        unknownSlot,
+        equationValues: equationSlots,
+        validationSlots: equationSlots,
+        alternateSlots,
+        operator: "+",
+        difficulty,
+      })
       : createEquationFromBarQuestion({
-          concept,
-          text,
-          schemaKind: "combine",
-          barValues: displayValues,
-          scaleValues: values,
-          labels: equationLabels,
-          equationDisplayValues: equationSlots,
-          validationSlots: equationSlots,
-          alternateSlots,
-          operator: "+",
-          difficulty,
-        });
+        concept,
+        text,
+        schemaKind: "combine",
+        barValues: displayValues,
+        scaleValues: values,
+        labels: equationLabels,
+        equationDisplayValues: equationSlots,
+        validationSlots: equationSlots,
+        alternateSlots,
+        operator: "+",
+        difficulty,
+      });
 
   return question;
 };
@@ -663,19 +721,48 @@ const createCombineSolveQuestion = ({
   });
 };
 
-const createCombineFullBundle = (item) => [
+const createCombineFullBundle = (item, concept = "combine_mod4") => [
   createCombineBarModelQuestion({
     ...item,
-    concept: "combine_mod3",
+    concept,
     moduleStage: "schema_bar_model",
   }),
   createCombineEquationQuestion({
     ...item,
-    concept: "combine_mod3",
+    concept,
     moduleStage: "schema_equation",
   }),
-  createCombineSolveQuestion({ ...item, concept: "combine_mod3" }),
+  createCombineSolveQuestion({ ...item, concept }),
 ];
+
+const createSchemaVariableQuestionFromItem = ({
+  item,
+  concept,
+  schemaKind,
+  slotKeys,
+}) =>
+  createVariableIdentificationQuestion({
+    concept,
+    text: item.text,
+    schemaKind,
+    sentences: item.sentences,
+    difficulty: item.difficulty,
+    variables: slotKeys.map((key) => ({
+      key,
+      label: item.labels[key],
+      sentence: item.variableSentences[key],
+      value: key === item.unknownSlot ? "?" : item.values[key],
+    })),
+  });
+
+const createDirectQuestionFromItem = ({ item, concept, schemaKind }) =>
+  createDirectSchemaQuestion({
+    concept,
+    text: item.text,
+    schemaKind,
+    answer: item.values[item.unknownSlot],
+    difficulty: item.difficulty,
+  });
 
 const combineMod1Items = [
   {
@@ -931,6 +1018,404 @@ const combineMod3Items = [
   },
 ];
 
+const combineVariableItems = [
+  {
+    text: "There are 18 cows and 7 sheep in a field. How many animals are in the field?",
+    sentences: [
+      "There are 18 cows and 7 sheep in a field.",
+      "How many animals are in the field?",
+    ],
+    values: { partA: 18, partB: 7, total: 25 },
+    labels: { partA: "cows", partB: "sheep", total: "animals" },
+    variableSentences: { partA: 1, partB: 1, total: 2 },
+    unknownSlot: "total",
+    difficulty: 2,
+  },
+  {
+    text: "A basket has 24 fruits. 9 are apples and the rest are oranges. How many oranges are in the basket?",
+    sentences: [
+      "A basket has 24 fruits.",
+      "9 are apples and the rest are oranges.",
+      "How many oranges are in the basket?",
+    ],
+    values: { partA: 9, partB: 15, total: 24 },
+    labels: { partA: "apples", partB: "oranges", total: "fruits" },
+    variableSentences: { partA: 2, partB: 3, total: 1 },
+    unknownSlot: "partB",
+    difficulty: 2,
+  },
+  {
+    text: "A class has 31 students. 16 are boys and the rest are girls. How many girls are in the class?",
+    sentences: [
+      "A class has 31 students.",
+      "16 are boys and the rest are girls.",
+      "How many girls are in the class?",
+    ],
+    values: { partA: 16, partB: 15, total: 31 },
+    labels: { partA: "boys", partB: "girls", total: "students" },
+    variableSentences: { partA: 2, partB: 3, total: 1 },
+    unknownSlot: "partB",
+    difficulty: 2,
+  },
+  {
+    text: "Nina has 14 red beads and 11 blue beads. How many beads does Nina have altogether?",
+    sentences: [
+      "Nina has 14 red beads and 11 blue beads.",
+      "How many beads does Nina have altogether?",
+    ],
+    values: { partA: 14, partB: 11, total: 25 },
+    labels: { partA: "red beads", partB: "blue beads", total: "beads" },
+    variableSentences: { partA: 1, partB: 1, total: 2 },
+    unknownSlot: "total",
+    difficulty: 2,
+  },
+  {
+    text: "A shelf has 40 books. 23 are storybooks and the rest are comics. How many comics are on the shelf?",
+    sentences: [
+      "A shelf has 40 books.",
+      "23 are storybooks and the rest are comics.",
+      "How many comics are on the shelf?",
+    ],
+    values: { partA: 23, partB: 17, total: 40 },
+    labels: { partA: "storybooks", partB: "comics", total: "books" },
+    variableSentences: { partA: 2, partB: 3, total: 1 },
+    unknownSlot: "partB",
+    difficulty: 3,
+  },
+  {
+    text: "A jar has 28 marbles. 10 are glass marbles and the rest are clay marbles. How many clay marbles are in the jar?",
+    sentences: [
+      "A jar has 28 marbles.",
+      "10 are glass marbles and the rest are clay marbles.",
+      "How many clay marbles are in the jar?",
+    ],
+    values: { partA: 10, partB: 18, total: 28 },
+    labels: { partA: "glass marbles", partB: "clay marbles", total: "marbles" },
+    variableSentences: { partA: 2, partB: 3, total: 1 },
+    unknownSlot: "partB",
+    difficulty: 2,
+  },
+  {
+    text: "A team scored 19 points in the first half and 22 points in the second half. How many points did the team score in all?",
+    sentences: [
+      "A team scored 19 points in the first half and 22 points in the second half.",
+      "How many points did the team score in all?",
+    ],
+    values: { partA: 19, partB: 22, total: 41 },
+    labels: { partA: "first half", partB: "second half", total: "points" },
+    variableSentences: { partA: 1, partB: 1, total: 2 },
+    unknownSlot: "total",
+    difficulty: 3,
+  },
+  {
+    text: "A tray has 36 snacks. 14 are crackers and the rest are cookies. How many cookies are on the tray?",
+    sentences: [
+      "A tray has 36 snacks.",
+      "14 are crackers and the rest are cookies.",
+      "How many cookies are on the tray?",
+    ],
+    values: { partA: 14, partB: 22, total: 36 },
+    labels: { partA: "crackers", partB: "cookies", total: "snacks" },
+    variableSentences: { partA: 2, partB: 3, total: 1 },
+    unknownSlot: "partB",
+    difficulty: 3,
+  },
+  {
+    text: "Liam packed 12 pencils and 8 erasers. How many school supplies did Liam pack?",
+    sentences: [
+      "Liam packed 12 pencils and 8 erasers.",
+      "How many school supplies did Liam pack?",
+    ],
+    values: { partA: 12, partB: 8, total: 20 },
+    labels: { partA: "pencils", partB: "erasers", total: "supplies" },
+    variableSentences: { partA: 1, partB: 1, total: 2 },
+    unknownSlot: "total",
+    difficulty: 2,
+  },
+  {
+    text: "There are 27 flowers in a garden. 15 are tulips and the rest are roses. How many roses are in the garden?",
+    sentences: [
+      "There are 27 flowers in a garden.",
+      "15 are tulips and the rest are roses.",
+      "How many roses are in the garden?",
+    ],
+    values: { partA: 15, partB: 12, total: 27 },
+    labels: { partA: "tulips", partB: "roses", total: "flowers" },
+    variableSentences: { partA: 2, partB: 3, total: 1 },
+    unknownSlot: "partB",
+    difficulty: 2,
+  },
+  {
+    text: "A store sold 45 drinks. 18 were juice boxes and the rest were water bottles. How many water bottles were sold?",
+    sentences: [
+      "A store sold 45 drinks.",
+      "18 were juice boxes and the rest were water bottles.",
+      "How many water bottles were sold?",
+    ],
+    values: { partA: 18, partB: 27, total: 45 },
+    labels: { partA: "juice boxes", partB: "water bottles", total: "drinks" },
+    variableSentences: { partA: 2, partB: 3, total: 1 },
+    unknownSlot: "partB",
+    difficulty: 3,
+  },
+  {
+    text: "A desk has 13 markers and 9 crayons. How many art tools are on the desk?",
+    sentences: [
+      "A desk has 13 markers and 9 crayons.",
+      "How many art tools are on the desk?",
+    ],
+    values: { partA: 13, partB: 9, total: 22 },
+    labels: { partA: "markers", partB: "crayons", total: "art tools" },
+    variableSentences: { partA: 1, partB: 1, total: 2 },
+    unknownSlot: "total",
+    difficulty: 2,
+  },
+  {
+    text: "A box has 50 tickets. 32 are adult tickets and the rest are child tickets. How many child tickets are in the box?",
+    sentences: [
+      "A box has 50 tickets.",
+      "32 are adult tickets and the rest are child tickets.",
+      "How many child tickets are in the box?",
+    ],
+    values: { partA: 32, partB: 18, total: 50 },
+    labels: { partA: "adult tickets", partB: "child tickets", total: "tickets" },
+    variableSentences: { partA: 2, partB: 3, total: 1 },
+    unknownSlot: "partB",
+    difficulty: 3,
+  },
+  {
+    text: "Maya saved 26 dollars in March and 14 dollars in April. How much money did Maya save altogether?",
+    sentences: [
+      "Maya saved 26 dollars in March and 14 dollars in April.",
+      "How much money did Maya save altogether?",
+    ],
+    values: { partA: 26, partB: 14, total: 40 },
+    labels: { partA: "March savings", partB: "April savings", total: "money saved" },
+    variableSentences: { partA: 1, partB: 1, total: 2 },
+    unknownSlot: "total",
+    difficulty: 3,
+  },
+  {
+    text: "A bin has 33 blocks. 20 are square blocks and the rest are triangle blocks. How many triangle blocks are in the bin?",
+    sentences: [
+      "A bin has 33 blocks.",
+      "20 are square blocks and the rest are triangle blocks.",
+      "How many triangle blocks are in the bin?",
+    ],
+    values: { partA: 20, partB: 13, total: 33 },
+    labels: { partA: "square blocks", partB: "triangle blocks", total: "blocks" },
+    variableSentences: { partA: 2, partB: 3, total: 1 },
+    unknownSlot: "partB",
+    difficulty: 2,
+  },
+];
+
+const changeVariableItems = [
+  {
+    text: "Leo had 20 cookies. He ate 6 cookies. How many cookies does Leo have left?",
+    sentences: [
+      "Leo had 20 cookies.",
+      "He ate 6 cookies.",
+      "How many cookies does Leo have left?",
+    ],
+    values: { start: 20, change: 6, end: 14 },
+    labels: { start: "start", change: "ate", end: "left" },
+    variableSentences: { start: 1, change: 2, end: 3 },
+    unknownSlot: "end",
+    difficulty: 2,
+  },
+  {
+    text: "A tree had 24 leaves. The wind blew some leaves away. Now there are 15 leaves left. How many leaves blew away?",
+    sentences: [
+      "A tree had 24 leaves.",
+      "The wind blew some leaves away.",
+      "Now there are 15 leaves left.",
+      "How many leaves blew away?",
+    ],
+    values: { start: 24, change: 9, end: 15 },
+    labels: { start: "start", change: "blew away", end: "left" },
+    variableSentences: { start: 1, change: 4, end: 3 },
+    unknownSlot: "change",
+    difficulty: 2,
+  },
+  {
+    text: "Sam had some money. He spent 18 dollars on a toy. He has 32 dollars left. How much money did Sam start with?",
+    sentences: [
+      "Sam had some money.",
+      "He spent 18 dollars on a toy.",
+      "He has 32 dollars left.",
+      "How much money did Sam start with?",
+    ],
+    values: { start: 50, change: 18, end: 32 },
+    labels: { start: "start", change: "spent", end: "left" },
+    variableSentences: { start: 4, change: 2, end: 3 },
+    unknownSlot: "start",
+    difficulty: 3,
+  },
+  {
+    text: "Twelve birds were on a fence. Five birds flew away. How many birds are still on the fence?",
+    sentences: [
+      "Twelve birds were on a fence.",
+      "Five birds flew away.",
+      "How many birds are still on the fence?",
+    ],
+    values: { start: 12, change: 5, end: 7 },
+    labels: { start: "start", change: "flew away", end: "still on fence" },
+    variableSentences: { start: 1, change: 2, end: 3 },
+    unknownSlot: "end",
+    difficulty: 1,
+  },
+  {
+    text: "Emma had some candies. She gave 15 candies to her friends. Now she has 20 candies left. How many candies did she start with?",
+    sentences: [
+      "Emma had some candies.",
+      "She gave 15 candies to her friends.",
+      "Now she has 20 candies left.",
+      "How many candies did she start with?",
+    ],
+    values: { start: 35, change: 15, end: 20 },
+    labels: { start: "start", change: "gave", end: "left" },
+    variableSentences: { start: 4, change: 2, end: 3 },
+    unknownSlot: "start",
+    difficulty: 3,
+  },
+  {
+    text: "Mia had some stickers. She got 4 more stickers. Now Mia has 10 stickers. How many stickers did Mia start with?",
+    sentences: [
+      "Mia had some stickers.",
+      "She got 4 more stickers.",
+      "Now Mia has 10 stickers.",
+      "How many stickers did Mia start with?",
+    ],
+    values: { start: 6, change: 4, end: 10 },
+    labels: { start: "start", change: "got", end: "now" },
+    variableSentences: { start: 4, change: 2, end: 3 },
+    unknownSlot: "start",
+    difficulty: 2,
+  },
+  {
+    text: "Jorge had 52 dollars. He earned 16 dollars babysitting. How much money does Jorge have now?",
+    sentences: [
+      "Jorge had 52 dollars.",
+      "He earned 16 dollars babysitting.",
+      "How much money does Jorge have now?",
+    ],
+    values: { start: 52, change: 16, end: 68 },
+    labels: { start: "start", change: "earned", end: "now" },
+    variableSentences: { start: 1, change: 2, end: 3 },
+    unknownSlot: "end",
+    difficulty: 2,
+  },
+  {
+    text: "Sam had 20 baseball cards. He bought 15 more cards. How many cards does Sam have now?",
+    sentences: [
+      "Sam had 20 baseball cards.",
+      "He bought 15 more cards.",
+      "How many cards does Sam have now?",
+    ],
+    values: { start: 20, change: 15, end: 35 },
+    labels: { start: "start", change: "bought", end: "now" },
+    variableSentences: { start: 1, change: 2, end: 3 },
+    unknownSlot: "end",
+    difficulty: 2,
+  },
+  {
+    text: "Maya had already read some pages. She read 8 more pages. She finished page 20. What page had Maya reached before reading more?",
+    sentences: [
+      "Maya had already read some pages.",
+      "She read 8 more pages.",
+      "She finished page 20.",
+      "What page had Maya reached before reading more?",
+    ],
+    values: { start: 12, change: 8, end: 20 },
+    labels: { start: "before", change: "read more", end: "finished" },
+    variableSentences: { start: 4, change: 2, end: 3 },
+    unknownSlot: "start",
+    difficulty: 1,
+  },
+  {
+    text: "The team had 45 points. They scored 10 more points. How many points did the team have then?",
+    sentences: [
+      "The team had 45 points.",
+      "They scored 10 more points.",
+      "How many points did the team have then?",
+    ],
+    values: { start: 45, change: 10, end: 55 },
+    labels: { start: "start", change: "scored", end: "then" },
+    variableSentences: { start: 1, change: 2, end: 3 },
+    unknownSlot: "end",
+    difficulty: 3,
+  },
+  {
+    text: "A bus had 38 passengers. Fourteen passengers got off. How many passengers stayed on the bus?",
+    sentences: [
+      "A bus had 38 passengers.",
+      "Fourteen passengers got off.",
+      "How many passengers stayed on the bus?",
+    ],
+    values: { start: 38, change: 14, end: 24 },
+    labels: { start: "start", change: "got off", end: "stayed" },
+    variableSentences: { start: 1, change: 2, end: 3 },
+    unknownSlot: "end",
+    difficulty: 3,
+  },
+  {
+    text: "A box had some pencils. The teacher added 17 pencils. Now the box has 42 pencils. How many pencils were in the box at first?",
+    sentences: [
+      "A box had some pencils.",
+      "The teacher added 17 pencils.",
+      "Now the box has 42 pencils.",
+      "How many pencils were in the box at first?",
+    ],
+    values: { start: 25, change: 17, end: 42 },
+    labels: { start: "at first", change: "added", end: "now" },
+    variableSentences: { start: 4, change: 2, end: 3 },
+    unknownSlot: "start",
+    difficulty: 3,
+  },
+  {
+    text: "A game had 63 players at noon. Some players left. There were 48 players after lunch. How many players left?",
+    sentences: [
+      "A game had 63 players at noon.",
+      "Some players left.",
+      "There were 48 players after lunch.",
+      "How many players left?",
+    ],
+    values: { start: 63, change: 15, end: 48 },
+    labels: { start: "at noon", change: "left", end: "after lunch" },
+    variableSentences: { start: 1, change: 4, end: 3 },
+    unknownSlot: "change",
+    difficulty: 3,
+  },
+  {
+    text: "A baker had 29 cupcakes. She baked 18 more cupcakes. How many cupcakes does the baker have now?",
+    sentences: [
+      "A baker had 29 cupcakes.",
+      "She baked 18 more cupcakes.",
+      "How many cupcakes does the baker have now?",
+    ],
+    values: { start: 29, change: 18, end: 47 },
+    labels: { start: "start", change: "baked", end: "now" },
+    variableSentences: { start: 1, change: 2, end: 3 },
+    unknownSlot: "end",
+    difficulty: 3,
+  },
+  {
+    text: "A library shelf had some books. Students borrowed 21 books. There are 34 books left. How many books were on the shelf at first?",
+    sentences: [
+      "A library shelf had some books.",
+      "Students borrowed 21 books.",
+      "There are 34 books left.",
+      "How many books were on the shelf at first?",
+    ],
+    values: { start: 55, change: 21, end: 34 },
+    labels: { start: "at first", change: "borrowed", end: "left" },
+    variableSentences: { start: 4, change: 2, end: 3 },
+    unknownSlot: "start",
+    difficulty: 3,
+  },
+];
+
 const conceptsData = [
   // ---------------------------a, Standard Arithmetic (Prerequisite)--------------------
   {
@@ -1181,28 +1666,57 @@ const conceptsData = [
   // ============================================================================
   {
     id: "combine_mod1",
-    title: "Combine: Word to Bar",
-    description: "Read the combine story and build the bar model.",
+    title: "Combine: Read and Identify Variables",
+    description: "Read the combine story and identify the variables.",
     prerequisites: ["missing_part_equations"],
-    questions: combineMod1Items.map((item) =>
-      createCombineBarModelQuestion({ ...item, concept: "combine_mod1" }),
+    questions: combineVariableItems.map((item) =>
+      createSchemaVariableQuestionFromItem({
+        item,
+        concept: "combine_mod1",
+        schemaKind: "combine",
+        slotKeys: ["partA", "partB", "total"],
+      }),
     ),
   },
   {
     id: "combine_mod2",
-    title: "Combine: Bar to Eq",
-    description: "Translate Combine bar models into equations.",
+    title: "Combine: Word Problem to Bar Model",
+    description: "Read the combine story and build the bar model.",
     prerequisites: ["combine_mod1"],
-    questions: combineMod2Items.map((item) =>
-      createCombineEquationQuestion({ ...item, concept: "combine_mod2" }),
+    questions: combineMod1Items.map((item) =>
+      createCombineBarModelQuestion({ ...item, concept: "combine_mod2" }),
     ),
   },
   {
     id: "combine_mod3",
-    title: "Combine: Solve",
-    description: "Build the bar model, write the equation, and solve.",
+    title: "Combine: Bar Model to Equation",
+    description: "Translate Combine bar models into equations.",
     prerequisites: ["combine_mod2"],
-    questions: combineMod3Items.flatMap(createCombineFullBundle),
+    questions: combineMod2Items.map((item) =>
+      createCombineEquationQuestion({ ...item, concept: "combine_mod3" }),
+    ),
+  },
+  {
+    id: "combine_mod4",
+    title: "Combine: Full Integration",
+    description: "Build the bar model, write the equation, and solve.",
+    prerequisites: ["combine_mod3"],
+    questions: combineMod3Items.flatMap((item) =>
+      createCombineFullBundle(item, "combine_mod4"),
+    ),
+  },
+  {
+    id: "combine_mod5",
+    title: "Combine: Direct Problem Solving",
+    description: "Solve combine story problems directly.",
+    prerequisites: ["combine_mod4"],
+    questions: combineVariableItems.map((item) =>
+      createDirectQuestionFromItem({
+        item,
+        concept: "combine_mod5",
+        schemaKind: "combine",
+      }),
+    ),
   },
 
   // ============================================================================
@@ -1210,14 +1724,28 @@ const conceptsData = [
   // ============================================================================
   {
     id: "change_mod1",
-    title: "Change: Word to Bar",
+    title: "Change: Read and Identify Variables",
+    description: "Read the change story and identify the variables.",
+    prerequisites: ["combine_mod5"],
+    questions: changeVariableItems.map((item) =>
+      createSchemaVariableQuestionFromItem({
+        item,
+        concept: "change_mod1",
+        schemaKind: "change",
+        slotKeys: ["start", "change", "end"],
+      }),
+    ),
+  },
+  {
+    id: "change_mod2",
+    title: "Change: Word Problem to Bar Model",
     description: "Read the change story and build the bar model.",
-    prerequisites: ["combine_mod3"],
+    prerequisites: ["change_mod1"],
     questions: [
       // -------------------------------Subtraction-------------------------------
       // Subtraction 1: Cookies
       createSchemaRecognitionQuestion({
-        concept: "change_mod1",
+        concept: "change_mod2",
         text: "Leo had 20 cookies. He ate 6 of them. How many cookies does Leo have left?",
         schemaKind: "change",
         values: { start: 20, change: 6, end: 14 },
@@ -1230,7 +1758,7 @@ const conceptsData = [
       }),
       // Subtraction 2: Finding the change
       createSchemaRecognitionQuestion({
-        concept: "change_mod1",
+        concept: "change_mod2",
         text: "A tree had 24 leaves. The wind blew some away, and now there are 15 leaves left. How many leaves blew away?",
         schemaKind: "change",
         values: { start: 24, change: 9, end: 15 },
@@ -1243,7 +1771,7 @@ const conceptsData = [
       }),
       // Subtraction 3: Finding the start
       createSchemaRecognitionQuestion({
-        concept: "change_mod1",
+        concept: "change_mod2",
         text: "Sam had some money. He spent $18 on a toy and has $32 left. How much money did Sam start with?",
         schemaKind: "change",
         values: { start: 50, change: 18, end: 32 },
@@ -1256,7 +1784,7 @@ const conceptsData = [
       }),
       // Subtraction 4: Finding the end
       createSchemaRecognitionQuestion({
-        concept: "change_mod1",
+        concept: "change_mod2",
         text: "12 birds were sitting on a fence. 5 birds flew away. How many birds are still on the fence?",
         schemaKind: "change",
         values: { start: 12, change: 5, end: 7 },
@@ -1269,7 +1797,7 @@ const conceptsData = [
       }),
       // Subtraction 5: Finding the start
       createSchemaRecognitionQuestion({
-        concept: "change_mod1",
+        concept: "change_mod2",
         text: "Emma had some candies. She gave 15 to her friends and now has 20 left. How many candies did she start with?",
         schemaKind: "change",
         values: { start: 35, change: 15, end: 20 },
@@ -1282,7 +1810,7 @@ const conceptsData = [
       }),
       //------------------------------- Addition -------------------------------
       createSchemaRecognitionQuestion({
-        concept: "change_mod1",
+        concept: "change_mod2",
         text: "Mia had some stickers. She got 4 more and now has 10.",
         schemaKind: "change",
         values: { start: 6, change: 4, end: 10 },
@@ -1294,7 +1822,7 @@ const conceptsData = [
         difficulty: 2,
       }),
       createSchemaRecognitionQuestion({
-        concept: "change_mod1",
+        concept: "change_mod2",
         text: "Jorge had some money. Then he earned $16 babysitting. Now Jorge has $68.",
         schemaKind: "change",
         values: { start: 52, change: 16, end: 68 },
@@ -1306,7 +1834,7 @@ const conceptsData = [
         difficulty: 2,
       }),
       createSchemaRecognitionQuestion({
-        concept: "change_mod1",
+        concept: "change_mod2",
         text: "Sam had some baseball cards. He bought 15 more, and now he has 35.",
         schemaKind: "change",
         values: { start: 20, change: 15, end: 35 },
@@ -1318,7 +1846,7 @@ const conceptsData = [
         difficulty: 2,
       }),
       createSchemaRecognitionQuestion({
-        concept: "change_mod1",
+        concept: "change_mod2",
         text: "Maya had already read some pages. She read 8 more pages and finished page 20.",
         schemaKind: "change",
         values: { start: 12, change: 8, end: 20 },
@@ -1330,7 +1858,7 @@ const conceptsData = [
         difficulty: 1,
       }),
       createSchemaRecognitionQuestion({
-        concept: "change_mod1",
+        concept: "change_mod2",
         text: "The team had some points. They scored 10 more to reach a total of 55 points.",
         schemaKind: "change",
         values: { start: 45, change: 10, end: 55 },
@@ -1344,15 +1872,15 @@ const conceptsData = [
     ],
   },
   {
-    id: "change_mod2",
-    title: "Change: Bar to Eq",
+    id: "change_mod3",
+    title: "Change: Bar Model to Equation",
     description: "Translate Change bar models into equations.",
-    prerequisites: ["change_mod1"],
+    prerequisites: ["change_mod2"],
     questions: [
       // -------------------------------Subtraction-------------------------------
       // Subtraction 1: Ballon flew
       createEquationFromBarQuestion({
-        concept: "change_mod2",
+        concept: "change_mod3",
         text: "There were 15 balloons. Some balloons flew away, and now 11 balloons are left. How many balloons flew away?",
         schemaKind: "change",
         barValues: { start: "15", change: "?", end: "11" },
@@ -1373,7 +1901,7 @@ const conceptsData = [
       }),
       // Subtraction 2: Finding the start
       createEquationFromBarQuestion({
-        concept: "change_mod2",
+        concept: "change_mod3",
         text: "Sam had some money. He spent $18 on a toy and has $32 left. How much money did Sam start with?",
         schemaKind: "change",
         barValues: { start: "?", change: "18", end: "32" },
@@ -1394,7 +1922,7 @@ const conceptsData = [
       }),
       // Subtraction 3: Finding the end
       createEquationFromBarQuestion({
-        concept: "change_mod2",
+        concept: "change_mod3",
         text: "12 birds were sitting on a fence. 5 birds flew away. How many birds are still on the fence?",
         schemaKind: "change",
         barValues: { start: "12", change: "5", end: "?" },
@@ -1415,7 +1943,7 @@ const conceptsData = [
       }),
       // Subtraction 4: Finding the start
       createEquationFromBarQuestion({
-        concept: "change_mod2",
+        concept: "change_mod3",
         text: "Emma had some candies. She gave 15 to her friends and now has 20 left. How many candies did she start with?",
         schemaKind: "change",
         barValues: { start: "?", change: "15", end: "20" },
@@ -1436,7 +1964,7 @@ const conceptsData = [
       }),
       // Subtraction 5: Finding the end (left over)
       createEquationFromBarQuestion({
-        concept: "change_mod2",
+        concept: "change_mod3",
         text: "There were 8 slices of pizza. 3 slices were eaten. How many slices are left?",
         schemaKind: "change",
         barValues: { start: "8", change: "3", end: "?" },
@@ -1457,7 +1985,7 @@ const conceptsData = [
       }),
       // -------------------------------Addition-------------------------------
       createEquationFromBarQuestion({
-        concept: "change_mod2",
+        concept: "change_mod3",
         text: "Mia had some stickers. She got 4 more and now has 10 stickers. How many stickers did Mia start with?",
         schemaKind: "change",
         barValues: { start: "?", change: "4", end: "10" },
@@ -1477,7 +2005,7 @@ const conceptsData = [
         difficulty: 2,
       }),
       createEquationFromBarQuestion({
-        concept: "change_mod2",
+        concept: "change_mod3",
         text: "Jorge had some money. Then he earned $16 babysitting. Now Jorge has $68. How much money did Jorge start with?",
         schemaKind: "change",
         barValues: { start: "?", change: "16", end: "68" },
@@ -1497,7 +2025,7 @@ const conceptsData = [
         difficulty: 2,
       }),
       createEquationFromBarQuestion({
-        concept: "change_mod2",
+        concept: "change_mod3",
         text: "Sam had some baseball cards. He bought 15 more, and now he has 35 cards. How many cards did Sam start with?",
         schemaKind: "change",
         barValues: { start: "?", change: "15", end: "35" },
@@ -1517,7 +2045,7 @@ const conceptsData = [
         difficulty: 2,
       }),
       createEquationFromBarQuestion({
-        concept: "change_mod2",
+        concept: "change_mod3",
         text: "Maya had already read some pages. She read 8 more pages and finished page 20. What page had Maya reached before reading more?",
         schemaKind: "change",
         barValues: { start: "?", change: "8", end: "20" },
@@ -1537,7 +2065,7 @@ const conceptsData = [
         difficulty: 1,
       }),
       createEquationFromBarQuestion({
-        concept: "change_mod2",
+        concept: "change_mod3",
         text: "The team had some points. They scored 10 more to reach a total of 55 points. How many points did the team have before scoring more?",
         schemaKind: "change",
         barValues: { start: "?", change: "10", end: "55" },
@@ -1559,15 +2087,15 @@ const conceptsData = [
     ],
   },
   {
-    id: "change_mod3",
-    title: "Change: Solve",
+    id: "change_mod4",
+    title: "Change: Full Integration",
     description: "Build the bar model, write the equation, and solve.",
-    prerequisites: ["change_mod2"],
+    prerequisites: ["change_mod3"],
     questions: [
       // --------------------- Subtraction -------------------------------
       // Problem 1
       createSchemaBarQuestion({
-        concept: "change_mod3",
+        concept: "change_mod4",
         text: "Sarah had $45. She spent $12 on a new book. How much money does she have now?",
         schemaKind: "change",
         values: { start: 45, change: 12, end: 33 },
@@ -1579,7 +2107,7 @@ const conceptsData = [
         difficulty: 3,
       }),
       createSchemaEquationQuestion({
-        concept: "change_mod3",
+        concept: "change_mod4",
         text: "Sarah had $45. She spent $12 on a new book. How much money does she have now?",
         schemaKind: "change",
         values: { start: "45", change: "12", end: "?" },
@@ -1600,7 +2128,7 @@ const conceptsData = [
         difficulty: 3,
       }),
       createSchemaSolveQuestion({
-        concept: "change_mod3",
+        concept: "change_mod4",
         text: "Sarah had $45. She spent $12 on a new book. How much money does she have now?",
         schemaKind: "change",
         answer: 33,
@@ -1613,7 +2141,7 @@ const conceptsData = [
       // Problem 2: Leaves (Finding the change)
       // ----------------------------------------------------
       createSchemaBarQuestion({
-        concept: "change_mod3",
+        concept: "change_mod4",
         text: "A tree had 24 leaves. The wind blew some away, and now there are 15 leaves left. How many leaves blew away?",
         schemaKind: "change",
         values: { start: 24, change: 9, end: 15 },
@@ -1625,7 +2153,7 @@ const conceptsData = [
         difficulty: 2,
       }),
       createSchemaEquationQuestion({
-        concept: "change_mod3",
+        concept: "change_mod4",
         text: "A tree had 24 leaves. The wind blew some away, and now there are 15 leaves left. How many leaves blew away?",
         schemaKind: "change",
         values: { start: "24", change: "?", end: "15" },
@@ -1647,7 +2175,7 @@ const conceptsData = [
         difficulty: 2,
       }),
       createSchemaSolveQuestion({
-        concept: "change_mod3",
+        concept: "change_mod4",
         text: "A tree had 24 leaves. The wind blew some away, and now there are 15 leaves left. How many leaves blew away?",
         schemaKind: "change",
         answer: 9,
@@ -1661,7 +2189,7 @@ const conceptsData = [
       // Problem 3: Sam's Money (Finding the start)
       // ----------------------------------------------------
       createSchemaBarQuestion({
-        concept: "change_mod3",
+        concept: "change_mod4",
         text: "Sam had some money. He spent $18 on a toy and has $32 left. How much money did Sam start with?",
         schemaKind: "change",
         values: { start: 50, change: 18, end: 32 },
@@ -1673,7 +2201,7 @@ const conceptsData = [
         difficulty: 3,
       }),
       createSchemaEquationQuestion({
-        concept: "change_mod3",
+        concept: "change_mod4",
         text: "Sam had some money. He spent $18 on a toy and has $32 left. How much money did Sam start with?",
         schemaKind: "change",
         values: { start: "?", change: "18", end: "32" },
@@ -1695,7 +2223,7 @@ const conceptsData = [
         difficulty: 3,
       }),
       createSchemaSolveQuestion({
-        concept: "change_mod3",
+        concept: "change_mod4",
         text: "Sam had some money. He spent $18 on a toy and has $32 left. How much money did Sam start with?",
         schemaKind: "change",
         answer: 50,
@@ -1709,7 +2237,7 @@ const conceptsData = [
       // Problem 4: Birds (Finding the end)
       // ----------------------------------------------------
       createSchemaBarQuestion({
-        concept: "change_mod3",
+        concept: "change_mod4",
         text: "12 birds were sitting on a fence. 5 birds flew away. How many birds are still on the fence?",
         schemaKind: "change",
         values: { start: 12, change: 5, end: 7 },
@@ -1721,7 +2249,7 @@ const conceptsData = [
         difficulty: 1,
       }),
       createSchemaEquationQuestion({
-        concept: "change_mod3",
+        concept: "change_mod4",
         text: "12 birds were sitting on a fence. 5 birds flew away. How many birds are still on the fence?",
         schemaKind: "change",
         values: { start: "12", change: "5", end: "?" },
@@ -1743,7 +2271,7 @@ const conceptsData = [
         difficulty: 1,
       }),
       createSchemaSolveQuestion({
-        concept: "change_mod3",
+        concept: "change_mod4",
         text: "12 birds were sitting on a fence. 5 birds flew away. How many birds are still on the fence?",
         schemaKind: "change",
         answer: 7,
@@ -1757,7 +2285,7 @@ const conceptsData = [
       // Problem 5: Emma's Candies (Finding the start)
       // ----------------------------------------------------
       createSchemaBarQuestion({
-        concept: "change_mod3",
+        concept: "change_mod4",
         text: "Emma had some candies. She gave 15 to her friends and now has 20 left. How many candies did she start with?",
         schemaKind: "change",
         values: { start: 35, change: 15, end: 20 },
@@ -1769,7 +2297,7 @@ const conceptsData = [
         difficulty: 3,
       }),
       createSchemaEquationQuestion({
-        concept: "change_mod3",
+        concept: "change_mod4",
         text: "Emma had some candies. She gave 15 to her friends and now has 20 left. How many candies did she start with?",
         schemaKind: "change",
         values: { start: "?", change: "15", end: "20" },
@@ -1791,7 +2319,7 @@ const conceptsData = [
         difficulty: 3,
       }),
       createSchemaSolveQuestion({
-        concept: "change_mod3",
+        concept: "change_mod4",
         text: "Emma had some candies. She gave 15 to her friends and now has 20 left. How many candies did she start with?",
         schemaKind: "change",
         answer: 35,
@@ -1803,7 +2331,7 @@ const conceptsData = [
       // Addition
       // Problem 1 (Stamps)
       createSchemaBarQuestion({
-        concept: "change_mod3",
+        concept: "change_mod4",
         text: "Lina had some stamps. She found 4 more and now has 10.",
         schemaKind: "change",
         values: { start: 6, change: 4, end: 10 },
@@ -1815,7 +2343,7 @@ const conceptsData = [
         difficulty: 3,
       }),
       createSchemaEquationQuestion({
-        concept: "change_mod3",
+        concept: "change_mod4",
         text: "Lina had some stamps. She found 4 more and now has 10.",
         schemaKind: "change",
         values: { start: "?", change: "4", end: "10" },
@@ -1837,7 +2365,7 @@ const conceptsData = [
         difficulty: 3,
       }),
       createSchemaSolveQuestion({
-        concept: "change_mod3",
+        concept: "change_mod4",
         text: "Lina had some stamps. She found 4 more and now has 10.",
         schemaKind: "change",
         answer: 6,
@@ -1849,7 +2377,7 @@ const conceptsData = [
 
       // Problem 2 (Bonus Points)
       createSchemaBarQuestion({
-        concept: "change_mod3",
+        concept: "change_mod4",
         text: "Tara had some points. She earned 16 bonus points and now has 68.",
         schemaKind: "change",
         values: { start: 52, change: 16, end: 68 },
@@ -1861,7 +2389,7 @@ const conceptsData = [
         difficulty: 3,
       }),
       createSchemaEquationQuestion({
-        concept: "change_mod3",
+        concept: "change_mod4",
         text: "Tara had some points. She earned 16 bonus points and now has 68.",
         schemaKind: "change",
         values: { start: "?", change: "16", end: "68" },
@@ -1883,7 +2411,7 @@ const conceptsData = [
         difficulty: 3,
       }),
       createSchemaSolveQuestion({
-        concept: "change_mod3",
+        concept: "change_mod4",
         text: "Tara had some points. She earned 16 bonus points and now has 68.",
         schemaKind: "change",
         answer: 52,
@@ -1895,7 +2423,7 @@ const conceptsData = [
 
       // Problem 3 (Club Members)
       createSchemaBarQuestion({
-        concept: "change_mod3",
+        concept: "change_mod4",
         text: "A club had some members. 15 new members joined, and now there are 35.",
         schemaKind: "change",
         values: { start: 20, change: 15, end: 35 },
@@ -1907,7 +2435,7 @@ const conceptsData = [
         difficulty: 2,
       }),
       createSchemaEquationQuestion({
-        concept: "change_mod3",
+        concept: "change_mod4",
         text: "A club had some members. 15 new members joined, and now there are 35.",
         schemaKind: "change",
         values: { start: "?", change: "15", end: "35" },
@@ -1929,7 +2457,7 @@ const conceptsData = [
         difficulty: 2,
       }),
       createSchemaSolveQuestion({
-        concept: "change_mod3",
+        concept: "change_mod4",
         text: "A club had some members. 15 new members joined, and now there are 35.",
         schemaKind: "change",
         answer: 20,
@@ -1941,7 +2469,7 @@ const conceptsData = [
 
       // Problem 4 (Puzzles)
       createSchemaBarQuestion({
-        concept: "change_mod3",
+        concept: "change_mod4",
         text: "Rina had already solved some puzzles. She solved 8 more and finished 20.",
         schemaKind: "change",
         values: { start: 12, change: 8, end: 20 },
@@ -1953,7 +2481,7 @@ const conceptsData = [
         difficulty: 1,
       }),
       createSchemaEquationQuestion({
-        concept: "change_mod3",
+        concept: "change_mod4",
         text: "Rina had already solved some puzzles. She solved 8 more and finished 20.",
         schemaKind: "change",
         values: { start: "?", change: "8", end: "20" },
@@ -1975,7 +2503,7 @@ const conceptsData = [
         difficulty: 1,
       }),
       createSchemaSolveQuestion({
-        concept: "change_mod3",
+        concept: "change_mod4",
         text: "Rina had already solved some puzzles. She solved 8 more and finished 20.",
         schemaKind: "change",
         answer: 12,
@@ -1987,7 +2515,7 @@ const conceptsData = [
 
       // Problem 5 (Tokens)
       createSchemaBarQuestion({
-        concept: "change_mod3",
+        concept: "change_mod4",
         text: "A class had some tokens. They earned 10 more to reach 55 tokens.",
         schemaKind: "change",
         values: { start: 45, change: 10, end: 55 },
@@ -1999,7 +2527,7 @@ const conceptsData = [
         difficulty: 3,
       }),
       createSchemaEquationQuestion({
-        concept: "change_mod3",
+        concept: "change_mod4",
         text: "A class had some tokens. They earned 10 more to reach 55 tokens.",
         schemaKind: "change",
         values: { start: "?", change: "10", end: "55" },
@@ -2021,7 +2549,7 @@ const conceptsData = [
         difficulty: 3,
       }),
       createSchemaSolveQuestion({
-        concept: "change_mod3",
+        concept: "change_mod4",
         text: "A class had some tokens. They earned 10 more to reach 55 tokens.",
         schemaKind: "change",
         answer: 45,
@@ -2032,18 +2560,38 @@ const conceptsData = [
       }),
     ],
   },
+  {
+    id: "change_mod5",
+    title: "Change: Direct Problem Solving",
+    description: "Solve change story problems directly.",
+    prerequisites: ["change_mod4"],
+    questions: changeVariableItems.map((item) =>
+      createDirectQuestionFromItem({
+        item,
+        concept: "change_mod5",
+        schemaKind: "change",
+      }),
+    ),
+  },
 
   // ============================================================================
   // TRACK 3: THE COMPARE SCHEMA
   // ============================================================================
   {
     id: "compare_mod1",
-    title: "Compare: Word to Bar",
+    title: "Compare: Read and Identify Variables",
+    description: "Placeholder for the compare variable-identification module.",
+    prerequisites: ["change_mod5"],
+    questions: [],
+  },
+  {
+    id: "compare_mod2",
+    title: "Compare: Word Problem to Bar Model",
     description: "Read the compare story and build the bar model.",
-    prerequisites: ["change_mod3"],
+    prerequisites: ["compare_mod1"],
     questions: [
       createSchemaRecognitionQuestion({
-        concept: "compare_mod1",
+        concept: "compare_mod2",
         text: "Darnell has 234 fewer marbles than Delilah. Delilah has 362 marbles. How many does Darnell have?",
         schemaKind: "compare",
         values: { bigger: 362, smaller: 128, difference: 234 },
@@ -2054,7 +2602,7 @@ const conceptsData = [
         difficulty: 4,
       }),
       createSchemaRecognitionQuestion({
-        concept: "compare_mod1",
+        concept: "compare_mod2",
         text: "Tabitha wrote 110 words. Sasha wrote 25 fewer words than Tabitha. How many words did Sasha write?",
         schemaKind: "compare",
         values: { bigger: 110, smaller: 85, difference: 25 },
@@ -2065,7 +2613,7 @@ const conceptsData = [
         difficulty: 3,
       }),
       createSchemaRecognitionQuestion({
-        concept: "compare_mod1",
+        concept: "compare_mod2",
         text: "The Oak tree is 45 feet tall. The Pine tree is 15 feet shorter. How tall is the Pine tree?",
         schemaKind: "compare",
         values: { bigger: 45, smaller: 30, difference: 15 },
@@ -2076,7 +2624,7 @@ const conceptsData = [
         difficulty: 2,
       }),
       createSchemaRecognitionQuestion({
-        concept: "compare_mod1",
+        concept: "compare_mod2",
         text: "Sam has $80. Alex has $30 less than Sam. How much money does Alex have?",
         schemaKind: "compare",
         values: { bigger: 80, smaller: 50, difference: 30 },
@@ -2087,7 +2635,7 @@ const conceptsData = [
         difficulty: 2,
       }),
       createSchemaRecognitionQuestion({
-        concept: "compare_mod1",
+        concept: "compare_mod2",
         text: "Max the dog weighs 60 lbs. Bella the cat is 40 lbs lighter. How much does Bella weigh?",
         schemaKind: "compare",
         values: { bigger: 60, smaller: 20, difference: 40 },
@@ -2101,13 +2649,13 @@ const conceptsData = [
   },
 
   {
-    id: "compare_mod2",
-    title: "Compare: Bar to Eq",
+    id: "compare_mod3",
+    title: "Compare: Bar Model to Equation",
     description: "Translate Compare bar models into equations.",
-    prerequisites: ["compare_mod1"],
+    prerequisites: ["compare_mod2"],
     questions: [
       createEquationFromBarQuestion({
-        concept: "compare_mod2",
+        concept: "compare_mod3",
         text: "Build the equation for Delilah and Darnell's marbles.",
         schemaKind: "compare",
         barValues: { bigger: "362", smaller: "?", difference: "234" },
@@ -2131,7 +2679,7 @@ const conceptsData = [
         difficulty: 3,
       }),
       createEquationFromBarQuestion({
-        concept: "compare_mod2",
+        concept: "compare_mod3",
         text: "Build the equation for Tabitha and Sasha's words.",
         schemaKind: "compare",
         barValues: { bigger: "110", smaller: "?", difference: "25" },
@@ -2155,7 +2703,7 @@ const conceptsData = [
         difficulty: 3,
       }),
       createEquationFromBarQuestion({
-        concept: "compare_mod2",
+        concept: "compare_mod3",
         text: "Build the equation for the Oak and Pine heights.",
         schemaKind: "compare",
         barValues: { bigger: "45", smaller: "?", difference: "15" },
@@ -2175,7 +2723,7 @@ const conceptsData = [
         difficulty: 2,
       }),
       createEquationFromBarQuestion({
-        concept: "compare_mod2",
+        concept: "compare_mod3",
         text: "Build the equation for Sam and Alex's money.",
         schemaKind: "compare",
         barValues: { bigger: "80", smaller: "?", difference: "30" },
@@ -2195,7 +2743,7 @@ const conceptsData = [
         difficulty: 2,
       }),
       createEquationFromBarQuestion({
-        concept: "compare_mod2",
+        concept: "compare_mod3",
         text: "Build the equation for Max and Bella's weights.",
         schemaKind: "compare",
         barValues: { bigger: "60", smaller: "?", difference: "40" },
@@ -2218,14 +2766,14 @@ const conceptsData = [
   },
 
   {
-    id: "compare_mod3",
-    title: "Compare: Solve",
+    id: "compare_mod4",
+    title: "Compare: Full Integration",
     description: "Build the bar model, write the equation, and solve.",
-    prerequisites: ["compare_mod2"],
+    prerequisites: ["compare_mod3"],
     questions: [
       // Problem 1 (Seats)
       createSchemaBarQuestion({
-        concept: "compare_mod3",
+        concept: "compare_mod4",
         text: "The main hall has 362 seats. The balcony has 234 fewer seats than the main hall. How many seats does the balcony have?",
         schemaKind: "compare",
         values: { bigger: 362, smaller: 128, difference: 234 },
@@ -2247,7 +2795,7 @@ const conceptsData = [
         difficulty: 4,
       }),
       createSchemaEquationQuestion({
-        concept: "compare_mod3",
+        concept: "compare_mod4",
         text: "The main hall has 362 seats. The balcony has 234 fewer seats than the main hall. How many seats does the balcony have?",
         schemaKind: "compare",
         values: { bigger: "362", smaller: "?", difference: "234" },
@@ -2275,7 +2823,7 @@ const conceptsData = [
         difficulty: 4,
       }),
       createSchemaSolveQuestion({
-        concept: "compare_mod3",
+        concept: "compare_mod4",
         text: "The main hall has 362 seats. The balcony has 234 fewer seats than the main hall. How many seats does the balcony have?",
         schemaKind: "compare",
         answer: 128,
@@ -2287,7 +2835,7 @@ const conceptsData = [
 
       // Problem 2 (Typed Words)
       createSchemaBarQuestion({
-        concept: "compare_mod3",
+        concept: "compare_mod4",
         text: "Ruby typed 110 words. Omar typed 25 fewer words than Ruby. How many words did Omar type?",
         schemaKind: "compare",
         values: { bigger: 110, smaller: 85, difference: 25 },
@@ -2305,7 +2853,7 @@ const conceptsData = [
         difficulty: 3,
       }),
       createSchemaEquationQuestion({
-        concept: "compare_mod3",
+        concept: "compare_mod4",
         text: "Ruby typed 110 words. Omar typed 25 fewer words than Ruby. How many words did Omar type?",
         schemaKind: "compare",
         values: { bigger: "110", smaller: "?", difference: "25" },
@@ -2333,7 +2881,7 @@ const conceptsData = [
         difficulty: 3,
       }),
       createSchemaSolveQuestion({
-        concept: "compare_mod3",
+        concept: "compare_mod4",
         text: "Ruby typed 110 words. Omar typed 25 fewer words than Ruby. How many words did Omar type?",
         schemaKind: "compare",
         answer: 85,
@@ -2345,7 +2893,7 @@ const conceptsData = [
 
       // Problem 3 (Maple/Cedar Trees)
       createSchemaBarQuestion({
-        concept: "compare_mod3",
+        concept: "compare_mod4",
         text: "The Maple tree is 45 feet tall. The Cedar tree is 15 feet shorter. How tall is the Cedar tree?",
         schemaKind: "compare",
         values: { bigger: 45, smaller: 30, difference: 15 },
@@ -2363,7 +2911,7 @@ const conceptsData = [
         difficulty: 2,
       }),
       createSchemaEquationQuestion({
-        concept: "compare_mod3",
+        concept: "compare_mod4",
         text: "The Maple tree is 45 feet tall. The Cedar tree is 15 feet shorter. How tall is the Cedar tree?",
         schemaKind: "compare",
         values: { bigger: "45", smaller: "?", difference: "15" },
@@ -2391,7 +2939,7 @@ const conceptsData = [
         difficulty: 2,
       }),
       createSchemaSolveQuestion({
-        concept: "compare_mod3",
+        concept: "compare_mod4",
         text: "The Maple tree is 45 feet tall. The Cedar tree is 15 feet shorter. How tall is the Cedar tree?",
         schemaKind: "compare",
         answer: 30,
@@ -2403,7 +2951,7 @@ const conceptsData = [
 
       // Problem 4 (Maya/Leo Money)
       createSchemaBarQuestion({
-        concept: "compare_mod3",
+        concept: "compare_mod4",
         text: "Maya has $80. Leo has $30 less than Maya. How much money does Leo have?",
         schemaKind: "compare",
         values: { bigger: 80, smaller: 50, difference: 30 },
@@ -2421,7 +2969,7 @@ const conceptsData = [
         difficulty: 2,
       }),
       createSchemaEquationQuestion({
-        concept: "compare_mod3",
+        concept: "compare_mod4",
         text: "Maya has $80. Leo has $30 less than Maya. How much money does Leo have?",
         schemaKind: "compare",
         values: { bigger: "80", smaller: "?", difference: "30" },
@@ -2449,7 +2997,7 @@ const conceptsData = [
         difficulty: 2,
       }),
       createSchemaSolveQuestion({
-        concept: "compare_mod3",
+        concept: "compare_mod4",
         text: "Maya has $80. Leo has $30 less than Maya. How much money does Leo have?",
         schemaKind: "compare",
         answer: 50,
@@ -2461,7 +3009,7 @@ const conceptsData = [
 
       // Problem 5 (Suitcase/Backpack Weight)
       createSchemaBarQuestion({
-        concept: "compare_mod3",
+        concept: "compare_mod4",
         text: "A suitcase weighs 60 lbs. A backpack is 40 lbs lighter. How much does the backpack weigh?",
         schemaKind: "compare",
         values: { bigger: 60, smaller: 20, difference: 40 },
@@ -2483,7 +3031,7 @@ const conceptsData = [
         difficulty: 2,
       }),
       createSchemaEquationQuestion({
-        concept: "compare_mod3",
+        concept: "compare_mod4",
         text: "A suitcase weighs 60 lbs. A backpack is 40 lbs lighter. How much does the backpack weigh?",
         schemaKind: "compare",
         values: { bigger: "60", smaller: "?", difference: "40" },
@@ -2511,7 +3059,7 @@ const conceptsData = [
         difficulty: 2,
       }),
       createSchemaSolveQuestion({
-        concept: "compare_mod3",
+        concept: "compare_mod4",
         text: "A suitcase weighs 60 lbs. A backpack is 40 lbs lighter. How much does the backpack weigh?",
         schemaKind: "compare",
         answer: 20,
@@ -2521,6 +3069,13 @@ const conceptsData = [
         difficulty: 2,
       }),
     ],
+  },
+  {
+    id: "compare_mod5",
+    title: "Compare: Direct Problem Solving",
+    description: "Placeholder for the compare direct-problem-solving module.",
+    prerequisites: ["compare_mod4"],
+    questions: [],
   },
 ];
 
@@ -2598,15 +3153,19 @@ const seedData = async () => {
 
     // "missing_part_equations" -> Phase 1: Algebraic Bridge
     // ---------- Main Modules -------------
-    // "combine_mod1"           -> Combine: Word to Bar
-    // "combine_mod2"           -> Combine: Bar to Equation
-    // "combine_mod3"           -> Combine: Full 3-Tab Solve
+    // "combine_mod1"           -> Combine: Read and Identify Variables
+    // "combine_mod2"           -> Combine: Word to Bar
+    // "combine_mod3"           -> Combine: Bar to Equation
+    // "combine_mod4"           -> Combine: Full 3-Tab Solve
+    // "combine_mod5"           -> Combine: Direct Problem Solving
 
-    // "change_mod1"            -> Change: Word to Bar
-    // "change_mod2"            -> Change: Bar to Equation
-    // "change_mod3"            -> Change: Full 3-Tab Solve
+    // "change_mod1"            -> Change: Read and Identify Variables
+    // "change_mod2"            -> Change: Word to Bar
+    // "change_mod3"            -> Change: Bar to Equation
+    // "change_mod4"            -> Change: Full 3-Tab Solve
+    // "change_mod5"            -> Change: Direct Problem Solving
 
-    const testStage = "combine_mod3"; // CHANGE THIS TO JUMP
+    const testStage = "combine_mod2"; // CHANGE THIS TO JUMP
     // const testStage = "change_mod1"; // CHANGE THIS TO JUMP
 
     // 3. Create the test user with ONLY that stage active
@@ -2654,3 +3213,5 @@ const seedData = async () => {
 };
 
 module.exports = seedData;
+
+
