@@ -20,6 +20,7 @@ import {
   EquationBoard,
 } from "./WorksheetParts";
 import BarModel, { CompareGuidedAnswerModel } from "./BarModelRenderer";
+import CustomSelect from "../../CustomSelect";
 
 // Deterministic shuffle using a simple seed derived from question text.
 // Ensures the same question always shows the same shuffled order,
@@ -43,12 +44,12 @@ const VariableIdentificationPanel = ({
   response,
   setResponse,
   disabled,
+  hasFeedback,
 }) => {
   const sentences = question?.visualData?.sentences || [];
   const variables = question?.visualData?.variables || [];
   const expectedVars = question?.validation?.variables || {};
 
-  // Shuffle variable rows so they don't match the story order
   const shuffledVariables = useMemo(
     () => seededShuffle(variables, hashString(question?.text)),
     [variables, question?.text],
@@ -68,6 +69,14 @@ const VariableIdentificationPanel = ({
     }));
   };
 
+  // 🔥 1. Format the sentences for the CustomSelect
+  const sentenceOptions = useMemo(() => {
+    return sentences.map((sentence, index) => ({
+      value: String(index + 1),
+      label: String(index + 1),
+    }));
+  }, [sentences]);
+
   return (
     <div className="variable-identification">
       <div className="variable-identification__sentences">
@@ -83,33 +92,59 @@ const VariableIdentificationPanel = ({
         {shuffledVariables.map((variable) => {
           const answer = response?.variables?.[variable.key] || {};
           const isUnknown = expectedVars[variable.key]?.value === "?";
+
+          // 1. Add logic to determine row state (Success / Error)
+          let rowStateClass = "";
+
+          if (hasFeedback) {
+            const isRowComplete =
+              answer.sentence && (answer.value || isUnknown);
+            if (isRowComplete) {
+              // Compare the student's answer to the expected variables
+              const expected = expectedVars[variable.key];
+              const isSentenceCorrect =
+                String(answer.sentence) === String(expected.sentence);
+
+              // If it's the unknown variable (?), we only check the sentence.
+              // If it's a known variable, we check both sentence and value.
+              const isValueCorrect =
+                isUnknown || String(answer.value) === String(expected.value);
+
+              if (isSentenceCorrect && isValueCorrect) {
+                rowStateClass = "is-correct"; // Turns Emerald Green
+              } else {
+                rowStateClass = "is-wrong"; // Turns Rose Red & Shakes
+              }
+            }
+          }
+
           return (
-            <div className="variable-row" key={variable.key}>
+            // 2. Inject the rowStateClass here into the wrapper div
+            <div className={`variable-row ${rowStateClass}`} key={variable.key}>
               <div className="variable-row__label">{variable.label}</div>
+
               <label>
                 <span>Sentence</span>
-                <select
+                <CustomSelect
+                  options={sentenceOptions}
                   value={answer.sentence || ""}
-                  disabled={disabled}
-                  onChange={(event) =>
-                    updateVariable(variable.key, "sentence", event.target.value)
+                  disabled={disabled || rowStateClass === "is-correct"} // Locks if correct
+                  onChange={(selectedValue) =>
+                    updateVariable(variable.key, "sentence", selectedValue)
                   }
-                >
-                  <option value="">Select</option>
-                  {sentences.map((sentence, index) => (
-                    <option value={String(index + 1)} key={sentence}>
-                      {index + 1}
-                    </option>
-                  ))}
-                </select>
+                  placeholder="Select"
+                />
               </label>
+
               <label>
                 <span>Value</span>
                 <input
                   type="text"
                   inputMode="numeric"
                   value={isUnknown ? "?" : answer.value || ""}
-                  disabled={disabled || isUnknown}
+                  disabled={
+                    disabled || isUnknown || rowStateClass === "is-correct"
+                  } // Locks if correct
                   placeholder="?"
                   className={isUnknown ? "variable-value--locked" : ""}
                   onChange={(event) =>
@@ -125,7 +160,6 @@ const VariableIdentificationPanel = ({
     </div>
   );
 };
-
 const SchemaQuestion = ({
   question,
   response,
@@ -164,10 +198,17 @@ const SchemaQuestion = ({
     Object.values(question?.validation?.slots || {}).some(
       (value) => String(value).trim() === "?",
     );
+
+  // const showOperatorPad =
+  //   question?.inputMode === "keypad_equation" &&
+  //   question?.equationSpec?.operatorEditable &&
+  //   response?.activeField === "__operator__";
   const showOperatorPad =
     question?.inputMode === "keypad_equation" &&
     question?.equationSpec?.operatorEditable &&
-    response?.activeField === "__operator__";
+    response?.activeField === "__operator__" &&
+    question?.schemaKind !== "combine";
+
   const activeInputLabel = isCompareAnswerInput
     ? ""
     : getActiveInputLabel(question, response?.activeField);
@@ -194,6 +235,13 @@ const SchemaQuestion = ({
   };
 
   const handleBackspace = () => {
+    if (hasFeedback) return;
+    // Block backspace if the field is the forced operator
+    if (
+      response?.activeField === "__operator__" &&
+      question?.schemaKind === "combine"
+    )
+      return;
     if (hasFeedback || response?.activeField === "__operator__") return;
     const targetField = response?.activeField;
     if (!targetField) return;
@@ -205,20 +253,60 @@ const SchemaQuestion = ({
       },
     }));
   };
-
   const handleClear = () => {
     if (hasFeedback) return;
-    if (response?.activeField === "__operator__") {
-      setResponse((current) => ({ ...(current || {}), operator: "" }));
-      return;
-    }
+
     const targetField = response?.activeField;
     if (!targetField) return;
-    setResponse((current) => ({
-      ...(current || {}),
-      slots: { ...(current?.slots || {}), [targetField]: "" },
-    }));
+
+    // Prevent clearing the operator in a combine schema
+    if (targetField === "__operator__" && question?.schemaKind === "combine") {
+      return;
+    }
+
+    setResponse((current) => {
+      if (targetField === "__operator__") {
+        return { ...current, operator: "" };
+      }
+      return {
+        ...current,
+        slots: { ...current?.slots, [targetField]: "" },
+      };
+    });
   };
+
+  useEffect(() => {
+    // 1. Safety check
+    if (!question || hasFeedback || isSubmitting) return;
+
+    // 2. Identify the schema
+    const isCombine = question?.schemaKind?.toLowerCase() === "combine";
+
+    if (isCombine) {
+      // 3. Force the operator state if it's missing or wrong
+      if (response?.operator !== "+") {
+        setResponse((current) => ({
+          ...(current || {}),
+          operator: "+",
+        }));
+      }
+
+      // 4. Force focus to the first number box if nothing is selected
+      if (!response?.activeField) {
+        setResponse((current) => ({
+          ...(current || {}),
+          activeField: "leftTerm", // Or "slot1" based on your data
+        }));
+      }
+    }
+  }, [
+    question?.id,
+    response?.operator,
+    response?.activeField,
+    hasFeedback,
+    isSubmitting,
+    setResponse,
+  ]);
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -283,33 +371,8 @@ const SchemaQuestion = ({
     showUnknownButton,
   ]);
 
-  useEffect(() => {
-    if (
-      hasFeedback ||
-      isSubmitting ||
-      question?.inputMode === "text_answer" ||
-      isCompareAnswerInput ||
-      response?.activeField
-    )
-      return;
-    const defaultField = getDefaultActiveField(question);
-    if (!defaultField) return;
-    setResponse((current) => ({
-      ...(current || {}),
-      activeField: defaultField,
-    }));
-  }, [
-    hasFeedback,
-    isSubmitting,
-    question,
-    isCompareAnswerInput,
-    response?.activeField,
-    setResponse,
-  ]);
-
-  const [showHint, setShowHint] = useState(false);
-
   // Automatically hide the hint again when the question changes
+  const [showHint, setShowHint] = useState(false);
   useEffect(() => {
     setShowHint(false);
   }, [question]);
@@ -456,33 +519,11 @@ const SchemaQuestion = ({
           response={response}
           setResponse={setResponse}
           disabled={hasFeedback || isSubmitting}
+          hasFeedback={hasFeedback}
         />
       )}
 
       {(question?.moduleStage === "schema_solve" || isDirectSchemaSolve) && (
-        // <div className="worksheet-solve">
-        //   <div className="worksheet-solve__equation">
-        //     {question?.validation?.displayEquation ||
-        //       question?.equationSpec?.displayEquation}
-        //   </div>
-
-        //   <label className="worksheet-answer-field">
-        //     <input
-        //       type="text"
-        //       inputMode="numeric"
-        //       value={getDisplayedTextAnswer(response) || ""}
-        //       onChange={(event) =>
-        //         !hasFeedback &&
-        //         !isSubmitting &&
-        //         setResponse((current) => ({
-        //           ...(current || {}),
-        //           textAnswer: event.target.value,
-        //         }))
-        //       }
-        //       disabled={hasFeedback || isSubmitting}
-        //       placeholder="Your answer"
-        //     />
-        //   </label>
         <div className="worksheet-solve">
           {/* Added dynamic classes to the equation for the pulse/glow effect */}
           {(question?.validation?.displayEquation ||
@@ -512,7 +553,7 @@ const SchemaQuestion = ({
                 }))
               }
               disabled={hasFeedback || isSubmitting}
-              placeholder="Your answer"
+              placeholder="Type Here"
             />
           </label>
 

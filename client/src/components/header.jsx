@@ -19,7 +19,11 @@ export default function Header() {
   const { userInfo } = useSelector((state) => state.auth);
   const isTeacher = userInfo?.role === "teacher";
   const isStudent = userInfo?.role === "student";
-  const defaultRoute = userInfo ? (userInfo.role === "teacher" ? "/teacher/dashboard" : "/home") : "/";
+  const defaultRoute = userInfo
+    ? userInfo.role === "teacher"
+      ? "/teacher/dashboard"
+      : "/home"
+    : "/";
   const guestAuthLink =
     location.pathname === "/teacher/auth"
       ? { to: "/", label: "Student Login" }
@@ -62,9 +66,13 @@ export default function Header() {
 
   return (
     <nav id="navbarParent">
-      <ul className={isNavExpanded ? "navbar" : "navbar expanded"}>
+      {/* <ul className={isNavExpanded ? "navbar" : "navbar expanded"}> */}
+      <ul
+        className={`navbar ${!isNavExpanded ? "expanded" : ""} ${userInfo ? "logged-in" : ""}`}
+      >
         <li className="navbar__item">
           <Link to={defaultRoute} className="navbar__item__title">
+            {/* <Link to={"/student-hub"} className="navbar__item__title"> */}
             Maths Wizard
           </Link>
           <div className="navbar__item__icon" onClick={navBarExpandHandler}>
@@ -73,31 +81,6 @@ export default function Header() {
         </li>
         {userInfo ? (
           <>
-            {/* {isTeacher ? (
-              <li
-                className={
-                  isNavExpanded
-                    ? "navbar__item navbar__item--nav"
-                    : "navbar__item navbar__item--nav expanded"
-                }
-              >
-                <Link to="/teacher/dashboard" className="navbar__item__link">
-                  Teacher Dashboard
-                </Link>
-              </li>
-            ) : (
-              <li
-                className={
-                  isNavExpanded
-                    ? "navbar__item navbar__item--nav"
-                    : "navbar__item navbar__item--nav expanded"
-                }
-              >
-                <Link to="/home" className="navbar__item__link">
-                  Home
-                </Link>
-              </li>
-            )} */}
             {isTeacher && (
               <li
                 className={
@@ -108,6 +91,21 @@ export default function Header() {
               >
                 <Link to="/teacher/dashboard" className="navbar__item__link">
                   Teacher Dashboard
+                </Link>
+              </li>
+            )}
+
+            {/* Topics Link  */}
+            {isStudent && (
+              <li
+                className={
+                  isNavExpanded
+                    ? "navbar__item navbar__item--nav"
+                    : "navbar__item navbar__item--nav expanded"
+                }
+              >
+                <Link to="/student-hub" className="navbar__item__link">
+                  Topics
                 </Link>
               </li>
             )}

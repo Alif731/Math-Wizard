@@ -77,7 +77,11 @@ export default function Profile() {
               <span className="highlight1">S</span>tudent{" "}
             </>
           )}
-          <span className="highlight2">P</span>rofile: {currentUsername}
+          <span className="highlight2" style={{ marginLeft: "7px" }}>
+            {" "}
+            P
+          </span>
+          rofile: {currentUsername}
           <span className="avatar-preview" style={{ marginLeft: "10px" }}>
             <UserAvatar
               name={userInfo?.avatarSeed}
