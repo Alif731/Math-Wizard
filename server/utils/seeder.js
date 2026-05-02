@@ -25,12 +25,12 @@ const getValidatedSlots = (schemaKind, slots) =>
   schemaKind === "compare"
     ? stringifySlots(slots)
     : stringifySlots(
-      Object.fromEntries(
-        Object.entries(slots).filter(
-          ([, value]) => String(value).trim() !== "?",
+        Object.fromEntries(
+          Object.entries(slots).filter(
+            ([, value]) => String(value).trim() !== "?",
+          ),
         ),
-      ),
-    );
+      );
 
 const withUnknownSlot = (values, unknownSlot) =>
   Object.fromEntries(
@@ -182,45 +182,45 @@ const createEquationFromBarQuestion = ({
   const keys =
     schemaKind === "compare"
       ? {
-        left: {
-          key: "leftTerm",
-          label: labels.left,
-          role: "smaller",
-          value: equationDisplayValues.leftTerm,
-        },
-        right: {
-          key: "rightTerm",
-          label: labels.right,
-          role: "difference",
-          value: equationDisplayValues.rightTerm,
-        },
-        result: {
-          key: "result",
-          label: labels.result,
-          role: "bigger",
-          value: equationDisplayValues.result,
-        },
-      }
+          left: {
+            key: "leftTerm",
+            label: labels.left,
+            role: "smaller",
+            value: equationDisplayValues.leftTerm,
+          },
+          right: {
+            key: "rightTerm",
+            label: labels.right,
+            role: "difference",
+            value: equationDisplayValues.rightTerm,
+          },
+          result: {
+            key: "result",
+            label: labels.result,
+            role: "bigger",
+            value: equationDisplayValues.result,
+          },
+        }
       : {
-        left: {
-          key: "leftTerm",
-          label: labels.left,
-          role: schemaKind === "change" ? "start" : "partA",
-          value: equationDisplayValues.leftTerm,
-        },
-        right: {
-          key: "rightTerm",
-          label: labels.right,
-          role: schemaKind === "change" ? "change" : "partB",
-          value: equationDisplayValues.rightTerm,
-        },
-        result: {
-          key: "result",
-          label: labels.result,
-          role: schemaKind === "change" ? "end" : "total",
-          value: equationDisplayValues.result,
-        },
-      };
+          left: {
+            key: "leftTerm",
+            label: labels.left,
+            role: schemaKind === "change" ? "start" : "partA",
+            value: equationDisplayValues.leftTerm,
+          },
+          right: {
+            key: "rightTerm",
+            label: labels.right,
+            role: schemaKind === "change" ? "change" : "partB",
+            value: equationDisplayValues.rightTerm,
+          },
+          result: {
+            key: "result",
+            label: labels.result,
+            role: schemaKind === "change" ? "end" : "total",
+            value: equationDisplayValues.result,
+          },
+        };
 
   const equationSpec = {
     operator,
@@ -566,7 +566,8 @@ const createVariableIdentificationQuestion = ({
     moduleStage: "schema_variables",
     promptTitle: "identify variables",
     inputMode: "text_answer",
-    helperText: "Choose the sentence and value for each variable. Use ? for the unknown.",
+    helperText:
+      "Choose the sentence and value for each variable. Use ? for the unknown.",
     visualData: {
       sentences,
       variables: variables.map(({ key, label }) => ({ key, label })),
@@ -666,33 +667,33 @@ const createCombineEquationQuestion = ({
   const question =
     moduleStage === "schema_equation"
       ? createSchemaEquationQuestion({
-        concept,
-        text,
-        schemaKind: "combine",
-        values: displayValues,
-        displayBarValues: displayValues,
-        scaleValues: values,
-        labels: equationLabels,
-        unknownSlot,
-        equationValues: equationSlots,
-        validationSlots: equationSlots,
-        alternateSlots,
-        operator: "+",
-        difficulty,
-      })
+          concept,
+          text,
+          schemaKind: "combine",
+          values: displayValues,
+          displayBarValues: displayValues,
+          scaleValues: values,
+          labels: equationLabels,
+          unknownSlot,
+          equationValues: equationSlots,
+          validationSlots: equationSlots,
+          alternateSlots,
+          operator: "+",
+          difficulty,
+        })
       : createEquationFromBarQuestion({
-        concept,
-        text,
-        schemaKind: "combine",
-        barValues: displayValues,
-        scaleValues: values,
-        labels: equationLabels,
-        equationDisplayValues: equationSlots,
-        validationSlots: equationSlots,
-        alternateSlots,
-        operator: "+",
-        difficulty,
-      });
+          concept,
+          text,
+          schemaKind: "combine",
+          barValues: displayValues,
+          scaleValues: values,
+          labels: equationLabels,
+          equationDisplayValues: equationSlots,
+          validationSlots: equationSlots,
+          alternateSlots,
+          operator: "+",
+          difficulty,
+        });
 
   return question;
 };
@@ -1178,7 +1179,11 @@ const combineVariableItems = [
       "How many child tickets are in the box?",
     ],
     values: { partA: 32, partB: 18, total: 50 },
-    labels: { partA: "adult tickets", partB: "child tickets", total: "tickets" },
+    labels: {
+      partA: "adult tickets",
+      partB: "child tickets",
+      total: "tickets",
+    },
     variableSentences: { partA: 2, partB: 3, total: 1 },
     unknownSlot: "partB",
     difficulty: 3,
@@ -1190,7 +1195,11 @@ const combineVariableItems = [
       "How much money did Maya save altogether?",
     ],
     values: { partA: 26, partB: 14, total: 40 },
-    labels: { partA: "March savings", partB: "April savings", total: "money saved" },
+    labels: {
+      partA: "March savings",
+      partB: "April savings",
+      total: "money saved",
+    },
     variableSentences: { partA: 1, partB: 1, total: 2 },
     unknownSlot: "total",
     difficulty: 3,
@@ -1203,7 +1212,11 @@ const combineVariableItems = [
       "How many triangle blocks are in the bin?",
     ],
     values: { partA: 20, partB: 13, total: 33 },
-    labels: { partA: "square blocks", partB: "triangle blocks", total: "blocks" },
+    labels: {
+      partA: "square blocks",
+      partB: "triangle blocks",
+      total: "blocks",
+    },
     variableSentences: { partA: 2, partB: 3, total: 1 },
     unknownSlot: "partB",
     difficulty: 2,
@@ -3152,6 +3165,7 @@ const seedData = async () => {
     // "multi_sub"             -> Phase 1: Basic Math
 
     // "missing_part_equations" -> Phase 1: Algebraic Bridge
+
     // ---------- Main Modules -------------
     // "combine_mod1"           -> Combine: Read and Identify Variables
     // "combine_mod2"           -> Combine: Word to Bar
@@ -3165,7 +3179,7 @@ const seedData = async () => {
     // "change_mod4"            -> Change: Full 3-Tab Solve
     // "change_mod5"            -> Change: Direct Problem Solving
 
-    const testStage = "combine_mod2"; // CHANGE THIS TO JUMP
+    const testStage = "combine_mod1"; // CHANGE THIS TO JUMP
     // const testStage = "change_mod1"; // CHANGE THIS TO JUMP
 
     // 3. Create the test user with ONLY that stage active
@@ -3213,5 +3227,3 @@ const seedData = async () => {
 };
 
 module.exports = seedData;
-
-

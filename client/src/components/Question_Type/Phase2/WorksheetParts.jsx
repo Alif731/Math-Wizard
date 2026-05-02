@@ -146,8 +146,11 @@ export const EquationBoard = ({
     question?.moduleStage,
   );
 
+  const isCombine = question?.schemaKind === "combine";
   return (
-    <div className={`equation-board ${isBarStage ? "equation-board--bar-stage" : ""}`}>
+    <div
+      className={`equation-board ${isBarStage ? "equation-board--bar-stage" : ""}`}
+    >
       {(question?.equationSpec?.template || []).map((item, index) => {
         if (item.type === "symbol") {
           return (
@@ -157,21 +160,51 @@ export const EquationBoard = ({
           );
         }
 
+        // if (item.type === "operator") {
+        //   const operatorValue =
+        //     response?.operator || (item.editable ? "" : item.value) || "?";
+        //   const displayOperator =
+        //     item.editable && String(operatorValue || "").trim() === "?"
+        //       ? ""
+        //       : operatorValue;
+        //   return (
+        //     <button
+        //       type="button"
+        //       key="operator"
+        //       // 2. NEW: Add validationClass here (only if it was an editable operator)
+        //       className={`equation-box equation-box--operator ${!item.editable ? "is-fixed" : ""} ${response?.activeField === "__operator__" ? "is-active" : ""} ${locked ? "is-locked" : ""} ${item.editable ? validationClass : ""}`}
+        //       onClick={() => item.editable && setActiveField("__operator__")}
+        //       disabled={locked || !item.editable}
+        //     >
+        //       <strong>
+        //         {displayOperator || <span className="hide-on-focus">?</span>}
+        //       </strong>{" "}
+        //       <span>{item.label || "operator"}</span>
+        //     </button>
+        //   );
+        // }
         if (item.type === "operator") {
-          const operatorValue =
-            response?.operator || (item.editable ? "" : item.value) || "?";
+          // 🔥 2. Force the value to "+" if it's a Combine Schema
+          const operatorValue = isCombine
+            ? "+"
+            : response?.operator || (item.editable ? "" : item.value) || "?";
+
           const displayOperator =
             item.editable && String(operatorValue || "").trim() === "?"
               ? ""
               : operatorValue;
+
           return (
             <button
               type="button"
               key="operator"
-              // 2. NEW: Add validationClass here (only if it was an editable operator)
-              className={`equation-box equation-box--operator ${!item.editable ? "is-fixed" : ""} ${response?.activeField === "__operator__" ? "is-active" : ""} ${locked ? "is-locked" : ""} ${item.editable ? validationClass : ""}`}
-              onClick={() => item.editable && setActiveField("__operator__")}
-              disabled={locked || !item.editable}
+              // 🔥 3. Add 'is-fixed' class and disable interactions if isCombine is true
+              className={`equation-box equation-box--operator ${!item.editable || isCombine ? "is-fixed" : ""} ${response?.activeField === "__operator__" ? "is-active" : ""} ${locked ? "is-locked" : ""} ${item.editable && !isCombine ? validationClass : ""}`}
+              onClick={() =>
+                !isCombine && item.editable && setActiveField("__operator__")
+              }
+              disabled={locked || !item.editable || isCombine}
+              style={isCombine ? { cursor: "default" } : {}}
             >
               <strong>
                 {displayOperator || <span className="hide-on-focus">?</span>}
@@ -184,11 +217,13 @@ export const EquationBoard = ({
         const isEditable = item.editable !== false;
         const slotValue = getSlotDisplayValue(response, item.key);
         const displayValue =
-          isEditable && String(slotValue || "").trim() !== "?"
-            ? slotValue || <span className="hide-on-focus">?</span>
-            : isEditable
-              ? <span className="hide-on-focus">?</span>
-              : getEquationFixedValue(item);
+          isEditable && String(slotValue || "").trim() !== "?" ? (
+            slotValue || <span className="hide-on-focus">?</span>
+          ) : isEditable ? (
+            <span className="hide-on-focus">?</span>
+          ) : (
+            getEquationFixedValue(item)
+          );
         const displayLabel = getLearnerFacingLabel(question, item);
 
         return (
@@ -276,8 +311,8 @@ export const Keypad = ({
           onClick={showUnknown ? onUnknown : onClear}
           disabled={disabled}
         >
-          {/* {showUnknown ? "?" : "Clr"} */}
-          {showUnknown ? "AC" : "AC"}
+          {showUnknown ? "?" : "AC"}
+          {/* {showUnknown ? "AC" : "AC"} */}
         </button>
       </div>
     )}

@@ -1,37 +1,42 @@
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { useJumpToConceptMutation } from "../store/slices/gameApiSlice";
+import { useSwitchSectionMutation } from "../store/slices/gameApiSlice";
+import { Calculator, Variable, BookOpen, Loader2 } from "lucide-react";
 import "../sass/page/studentHub.scss";
 
 const PATHWAYS = [
   {
     id: "practice",
-    title: "Start with Practice",
+    title: "Arithmetic",
     description:
-      "Build your foundation with arithmetic and algebraic thinking before tackling word problems.",
-    icon: "",
-    recommended: true,
-    // No jump needed — this is the default flow starting from single_add
-    targetConcept: null,
+      "Build your foundation with arithmetic and algebraic thinking.",
+    icon: <Calculator size={28} strokeWidth={2.5} />,
+    bannerText1: "START HERE",
+    bannerText2: "START",
+    theme: "sage", // Used to color the banner/button
+    sectionId: "practice",
   },
   {
     id: "equations",
-    title: "Missing Number Practice",
+    title: "Equations",
     description:
-      "Practice finding the missing number in equations to sharpen your algebraic skills.",
-    icon: "",
-    recommended: true,
-    targetConcept: "missing_part_equations",
+      "Practice finding the missing number to sharpen algebraic skills.",
+    icon: <Variable size={28} strokeWidth={2.5} />,
+    bannerText1: "Basics",
+    bannerText2: "START",
+    theme: "sage",
+    sectionId: "equations",
   },
   {
     id: "schemas",
-    title: "Word Problems",
-    description:
-      "Jump straight into solving word problems using schemas. Best if you're already comfortable with arithmetic.",
-    icon: "",
-    recommended: false,
-    targetConcept: "combine_mod1",
+    title: "Word Probs",
+    description: "Jump straight into solving word problems using schemas.",
+    icon: <BookOpen size={28} strokeWidth={2.5} />,
+    bannerText1: "SKIP AHEAD",
+    bannerText2: "HARD",
+    theme: "coral", // 🔥 ADDED THIS HERE
+    sectionId: "schemas",
   },
 ];
 
@@ -39,67 +44,93 @@ const StudentHub = () => {
   const { userInfo } = useSelector((state) => state.auth);
   const username = userInfo?.username;
   const navigate = useNavigate();
-  const [jumpToConcept, { isLoading }] = useJumpToConceptMutation();
+
+  const [switchSection, { isLoading }] = useSwitchSectionMutation();
   const [selectedId, setSelectedId] = useState(null);
 
   const handleSelect = async (pathway) => {
     setSelectedId(pathway.id);
 
-    if (!pathway.targetConcept) {
-      // Default flow — just go to /home
-      navigate("/home");
-      return;
-    }
-
     try {
-      await jumpToConcept({ conceptId: pathway.targetConcept }).unwrap();
+      await switchSection({ sectionId: pathway.sectionId }).unwrap();
       navigate("/home");
     } catch (err) {
-      console.error("Jump failed:", err);
+      console.error("Switch failed:", err);
       setSelectedId(null);
     }
   };
 
-  if (!username) return <div className="loading-state">Loading...</div>;
+  if (!username) {
+    return (
+      <div
+        className="loading-state"
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          marginTop: "100px",
+        }}
+      >
+        <Loader2
+          className="spinner"
+          size={40}
+          style={{ animation: "spin 1s linear infinite", color: "#81b29a" }}
+        />
+      </div>
+    );
+  }
 
   return (
-    <div className="student-hub">
-      <header className="student-hub__header">
-        <h1>
-          Welcome, <span className="highlight-name">{username}</span>!
-        </h1>
-        <p className="student-hub__subtitle">
-          Choose how you'd like to start your learning journey.
-        </p>
-      </header>
+    <div className="student-hub-wrapper">
+      <div className="student-hub">
+        <header className="student-hub__header">
+          <h1>
+            Welcome, <span className="highlight-name">{username}</span>!
+          </h1>
+          <p className="student-hub__subtitle">
+            Choose your starting point to begin your journey.
+          </p>
+        </header>
 
-      <div className="student-hub__pathways">
-        {PATHWAYS.map((pathway) => (
-          <button
-            key={pathway.id}
-            className={`pathway-card ${pathway.recommended ? "pathway-card--recommended" : "pathway-card--skip"} ${selectedId === pathway.id ? "pathway-card--loading" : ""}`}
-            onClick={() => handleSelect(pathway)}
-            disabled={isLoading}
-          >
-            <span className="pathway-card__icon">{pathway.icon}</span>
-            <h2 className="pathway-card__title">{pathway.title}</h2>
-            <p className="pathway-card__desc">{pathway.description}</p>
-            {pathway.recommended && (
-              <span className="pathway-card__badge">✨ Recommended</span>
-            )}
-            {!pathway.recommended && (
-              <span className="pathway-card__badge pathway-card__badge--skip">
-                Skip ahead
+        <div className="student-hub__pathways">
+          {PATHWAYS.map((pathway) => (
+            <button
+              key={pathway.id}
+              className={`brutal-card theme-${pathway.theme} `}
+              onClick={() => handleSelect(pathway)}
+              disabled={isLoading}
+            >
+              <div
+                className={`banner ${pathway.theme === "coral" ? "banner__skip" : ""}`}
+              >
+                <span className="banner-text">{pathway.bannerText1}</span>
+                <span className="banner-text">{pathway.bannerText2}</span>
+              </div>
+
+              {/* Card Content */}
+              <span className="card__title">
+                {pathway.icon} {pathway.title}
               </span>
-            )}
-          </button>
-        ))}
-      </div>
+              <p className="card__subtitle">{pathway.description}</p>
 
-      <p className="student-hub__hint">
-        💡 We recommend starting with practice sections to build a strong
-        foundation before moving to word problems.
-      </p>
+              <div className="card__form">
+                <div className="sign-up">
+                  {selectedId === pathway.id ? (
+                    <Loader2 className="spinner" size={20} />
+                  ) : (
+                    "SELECT"
+                  )}
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+
+        <div className="student-hub__hint">
+          <strong>TIP:</strong> Start with{" "}
+          <b className="highlight2">Arithmetic</b> to build a strong foundation
+          before word problems.
+        </div>
+      </div>
     </div>
   );
 };

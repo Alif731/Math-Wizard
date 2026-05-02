@@ -3,9 +3,11 @@ const Concept = require("../models/Concept");
 // const WINDOW_SIZE = 5;
 // const MASTERY_MIN_ATTEMPTS = 5;
 // const MASTERY_SCORE_THRESHOLD = 5;
+
 const WINDOW_SIZE = 3;
 const MASTERY_MIN_ATTEMPTS = 2;
 const MASTERY_SCORE_THRESHOLD = 2;
+
 const CHANGE_POINT_FALSE_POSITIVE_RATE = Math.exp(-MASTERY_SCORE_THRESHOLD);
 const BANDIT_PRIORS = Object.freeze({
   guessAlpha: 20,
@@ -196,9 +198,9 @@ function normalizeAdaptiveState(adaptiveState, fallback = {}) {
       BANDIT_HISTORY_LIMIT,
     ).length
       ? normalizeBooleanList(
-        adaptiveState?.correctnessRecord,
-        BANDIT_HISTORY_LIMIT,
-      )
+          adaptiveState?.correctnessRecord,
+          BANDIT_HISTORY_LIMIT,
+        )
       : fallbackRecord,
     changePointLog: normalizeNumberList(
       adaptiveState?.changePointLog,
@@ -883,7 +885,7 @@ async function switchSection(user, sectionId) {
       await jumpToConcept(user, "combine_mod1");
       return;
     }
-    
+
     const schemaNodes = [];
     for (const [id, mEntry] of user.mastery.entries()) {
       if (!PATHWAYS.practice.includes(id) && !PATHWAYS.equations.includes(id)) {
@@ -892,15 +894,15 @@ async function switchSection(user, sectionId) {
         }
       }
     }
-    
+
     if (schemaNodes.length > 0) {
       user.zpdNodes = schemaNodes;
     } else {
       const target = "combine_mod1";
       const mEntry = user.mastery.get(target);
       if (mEntry) {
-          mEntry.status = "unlocked";
-          persistMasteryEntry(user, target, mEntry);
+        mEntry.status = "unlocked";
+        persistMasteryEntry(user, target, mEntry);
       }
       user.zpdNodes = [target];
     }
@@ -909,10 +911,14 @@ async function switchSection(user, sectionId) {
 
   const concepts = PATHWAYS[sectionId];
   if (!concepts) throw new Error("Invalid section");
-  
+
   for (const conceptId of concepts) {
     const entry = user.mastery.get(conceptId);
-    if (entry && entry.status === "mastered" && entry.adaptiveState.timesPlayed === 0) {
+    if (
+      entry &&
+      entry.status === "mastered" &&
+      entry.adaptiveState.timesPlayed === 0
+    ) {
       entry.status = "unlocked";
       entry.attemptCount = 0;
       entry.successCount = 0;
@@ -928,7 +934,7 @@ async function switchSection(user, sectionId) {
       break;
     }
   }
-  
+
   if (!targetConceptId) {
     targetConceptId = concepts[concepts.length - 1];
     const entry = user.mastery.get(targetConceptId);
@@ -940,7 +946,7 @@ async function switchSection(user, sectionId) {
     status: "unlocked",
     timeAdded: getTotalInteractionCount(user),
   });
-  
+
   if (targetEntry.status === "locked") {
     targetEntry.status = "unlocked";
     persistMasteryEntry(user, targetConceptId, targetEntry);

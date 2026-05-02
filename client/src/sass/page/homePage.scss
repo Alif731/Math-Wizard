@@ -129,6 +129,7 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     background: linear-gradient(180deg, #f8fcf8 0%, #eef7f0 100%);
     border-color: rgba(129, 178, 154, 0.52);
     color: #44735f;
+    margin: auto;
   }
 
   &.loading {
@@ -193,7 +194,8 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   .player-badge {
     width: 100%;
     align-items: flex-start;
-    flex-direction: column;
+    // flex-direction: column;
+    flex-direction: row;
   }
 
   .practice-summary {
