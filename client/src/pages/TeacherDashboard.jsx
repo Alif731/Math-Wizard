@@ -109,10 +109,14 @@ const TeacherDashboard = () => {
     }
   };
 
-  const { data: classroomData, isLoading: isLoadingStats } =
+  const { data: classroomRaw, isLoading: isLoadingStats } =
     useGetClassroomStatsQuery(undefined, {
       pollingInterval: 3000, //  Add this to sync every 3 seconds
     });
+
+  // API now returns { classroomData, masteryConfig }
+  const classroomData = classroomRaw?.classroomData;
+  const teacherMasteryConfig = classroomRaw?.masteryConfig;
 
   const strugglingAlerts = useMemo(() => {
     if (!classroomData) return [];
@@ -369,7 +373,7 @@ const TeacherDashboard = () => {
             </div>
           </section>
           <Heatmap classroomData={classroomData} />
-          <StudentMasteryRoster classroomData={classroomData} />
+          <StudentMasteryRoster classroomData={classroomData} masteryConfig={teacherMasteryConfig} />
         </div>
       )}
 

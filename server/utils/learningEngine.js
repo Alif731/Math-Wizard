@@ -1,19 +1,20 @@
 const Concept = require("../models/Concept");
 
-// const WINDOW_SIZE = 5;
-// const MASTERY_MIN_ATTEMPTS = 5;
-// const MASTERY_SCORE_THRESHOLD = 5;
+const WINDOW_SIZE = 5;
+const MASTERY_MIN_ATTEMPTS = 5;
+const MASTERY_SCORE_THRESHOLD = 5;
+const MASTERY_SUCCESS_RATE = 0.8; // 80% — student must get 4/5, 8/10, etc.
 
-const WINDOW_SIZE = 3;
-const MASTERY_MIN_ATTEMPTS = 2;
-const MASTERY_SCORE_THRESHOLD = 2;
+
+// const WINDOW_SIZE = 3;
+// const MASTERY_MIN_ATTEMPTS = 2;
+// const MASTERY_SCORE_THRESHOLD = 2;
+// const MASTERY_SUCCESS_RATE = 0.8; // 80% — student must get 4/5, 8/10, etc.
 
 const CHANGE_POINT_FALSE_POSITIVE_RATE = Math.exp(-MASTERY_SCORE_THRESHOLD);
 const BANDIT_PRIORS = Object.freeze({
-  guessAlpha: 20,
-  guessBeta: 160,
-  slipAlpha: 20,
-  slipBeta: 160,
+  guessProbability: 0.10,
+  slipProbability: 0.10,
 });
 const BANDIT_HISTORY_LIMIT = 25;
 const EPSILON = 1e-9;
@@ -67,45 +68,6 @@ function normalizeNumberList(values, limit) {
     .map(Number);
 }
 
-function sampleStandardNormal() {
-  const u1 = 1 - Math.random();
-  const u2 = 1 - Math.random();
-  return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
-}
-
-function sampleGamma(shape) {
-  if (shape < 1) {
-    const uniform = 1 - Math.random();
-    return sampleGamma(shape + 1) * Math.pow(uniform, 1 / shape);
-  }
-
-  const d = shape - 1 / 3;
-  const c = 1 / Math.sqrt(9 * d);
-
-  while (true) {
-    const x = sampleStandardNormal();
-    const v = Math.pow(1 + c * x, 3);
-
-    if (v <= 0) {
-      continue;
-    }
-
-    const uniform = Math.random();
-    if (uniform < 1 - 0.0331 * Math.pow(x, 4)) {
-      return d * v;
-    }
-
-    if (Math.log(uniform) < 0.5 * x * x + d * (1 - v + Math.log(v))) {
-      return d * v;
-    }
-  }
-}
-
-function sampleBeta(alpha, beta) {
-  const x = sampleGamma(alpha);
-  const y = sampleGamma(beta);
-  return x / (x + y);
-}
 
 function cloneMasteryEntry(entry) {
   if (!entry) {
@@ -179,12 +141,12 @@ function normalizeAdaptiveState(adaptiveState, fallback = {}) {
       fallback.timeAdded || 0,
     ),
     guessProbability: clampProbability(
-      adaptiveState?.guessProbability,
-      sampleBeta(BANDIT_PRIORS.guessAlpha, BANDIT_PRIORS.guessBeta),
+      adaptiveState?.guessProbability || BANDIT_PRIORS.guessProbability,
+      BANDIT_PRIORS.guessProbability
     ),
     slipProbability: clampProbability(
-      adaptiveState?.slipProbability,
-      sampleBeta(BANDIT_PRIORS.slipAlpha, BANDIT_PRIORS.slipBeta),
+      adaptiveState?.slipProbability || BANDIT_PRIORS.slipProbability,
+      BANDIT_PRIORS.slipProbability
     ),
     changePointScore: Number.isFinite(Number(adaptiveState?.changePointScore))
       ? Number(adaptiveState.changePointScore)
@@ -639,6 +601,32 @@ function getQuestionForConcept(concept, masteryEntry, user) {
     const finalIndex = randomizedBundle * BUNDLE_SIZE + stepInsideBundle;
 
     return questions[finalIndex];
+  } else if (concept.id === "missing_part_equations") {
+    // ==========================================
+    // MISSING PART EQUATIONS: Proportion Logic
+    // 20% Diff1 Add, 20% Diff1 Sub, 60% Diff2 Mix
+    // ==========================================
+    const diff1Add = questions.filter((q) => q.difficulty === 1 && q.equationSpec?.operator === "+");
+    const diff1Sub = questions.filter((q) => q.difficulty === 1 && q.equationSpec?.operator === "-");
+    const diff2 = questions.filter((q) => q.difficulty === 2);
+
+    const cycleIndex = timesPlayed % 5;
+    let selectedPool;
+
+    if (cycleIndex === 0) {
+      selectedPool = diff1Add.length ? diff1Add : questions;
+    } else if (cycleIndex === 1) {
+      selectedPool = diff1Sub.length ? diff1Sub : questions;
+    } else {
+      selectedPool = diff2.length ? diff2 : questions;
+    }
+
+    let step = 7;
+    if (selectedPool.length % step === 0) step = 11;
+    if (selectedPool.length % step === 0) step = 3;
+
+    const poolIndex = (salt + timesPlayed * step) % selectedPool.length;
+    return selectedPool[poolIndex];
   } else {
     // ==========================================
     // MOD 1 & 2 LOGIC: Standard Randomization
@@ -765,6 +753,9 @@ async function getNextConcept(user) {
 // }
 
 // Critical Bug Fix (Stop ZPD from jumping from module 3 without completing)
+// Bundle-aware scoring: Module 4 steps are grouped into bundles of 3.
+// attemptCount/successCount only update when a bundle completes.
+// If a step fails mid-bundle, remaining steps are skipped (padded).
 async function updateMastery(user, conceptId, isCorrect) {
   const graph = await loadConceptGraph();
   const masteryEntry = ensureMasteryEntry(user, conceptId, {
@@ -772,33 +763,103 @@ async function updateMastery(user, conceptId, isCorrect) {
     timeAdded: getTotalInteractionCount(user),
   });
 
-  masteryEntry.lastAttempts = normalizeBooleanList(
-    [...masteryEntry.lastAttempts, isCorrect],
-    WINDOW_SIZE,
-  );
-  masteryEntry.attemptCount += 1;
-  if (isCorrect) {
-    masteryEntry.successCount += 1;
+  const isFullIntegration = isFullIntegrationConceptId(conceptId);
+
+  // Step 1: Always update adaptive state first (increments timesPlayed)
+  updateAdaptiveState(masteryEntry.adaptiveState, Boolean(isCorrect));
+
+  // Step 2: Update mastery-level counts (bundle-aware for Module 4)
+  let bundleJustCompleted = false;
+  let bundleCorrect = false;
+
+  if (isFullIntegration) {
+    // ==========================================
+    // BUNDLE-AWARE SCORING for Module 4
+    // ==========================================
+    const tp = masteryEntry.adaptiveState.timesPlayed; // already incremented
+
+    if (!isCorrect) {
+      // Step failed mid-bundle: pad timesPlayed to next multiple of 3
+      // so the student moves on to a fresh question bundle
+      const remainder = tp % 3;
+      if (remainder !== 0) {
+        const padding = 3 - remainder;
+        masteryEntry.adaptiveState.timesPlayed += padding;
+        for (let i = 0; i < padding; i++) {
+          masteryEntry.adaptiveState.correctnessRecord.push(false);
+        }
+        masteryEntry.adaptiveState.correctnessRecord = normalizeBooleanList(
+          masteryEntry.adaptiveState.correctnessRecord,
+          BANDIT_HISTORY_LIMIT,
+        );
+        masteryEntry.adaptiveState.estimate =
+          masteryEntry.adaptiveState.correctnessSum /
+          masteryEntry.adaptiveState.timesPlayed;
+      }
+      // Bundle complete via failure: 1 attempt, 0 success
+      bundleJustCompleted = true;
+      bundleCorrect = false;
+      masteryEntry.attemptCount += 1;
+      masteryEntry.lastAttempts = normalizeBooleanList(
+        [...masteryEntry.lastAttempts, false],
+        WINDOW_SIZE,
+      );
+    } else if (tp % 3 === 0) {
+      // Correct AND bundle just completed naturally (3rd step done)
+      bundleJustCompleted = true;
+      const record = masteryEntry.adaptiveState.correctnessRecord;
+      const last3 = record.slice(-3);
+      bundleCorrect = last3.length === 3 && last3.every(Boolean);
+
+      masteryEntry.attemptCount += 1;
+      if (bundleCorrect) {
+        masteryEntry.successCount += 1;
+      }
+      masteryEntry.lastAttempts = normalizeBooleanList(
+        [...masteryEntry.lastAttempts, bundleCorrect],
+        WINDOW_SIZE,
+      );
+    }
+    // else: correct but mid-bundle -> don't update mastery counts yet
+  } else {
+    // ==========================================
+    // STANDARD per-step scoring (Modules 1-3, 5-6)
+    // ==========================================
+    bundleJustCompleted = true;
+    bundleCorrect = isCorrect;
+
+    masteryEntry.lastAttempts = normalizeBooleanList(
+      [...masteryEntry.lastAttempts, isCorrect],
+      WINDOW_SIZE,
+    );
+    masteryEntry.attemptCount += 1;
+    if (isCorrect) {
+      masteryEntry.successCount += 1;
+    }
   }
 
-  updateAdaptiveState(masteryEntry.adaptiveState, Boolean(isCorrect));
   persistMasteryEntry(user, conceptId, masteryEntry);
 
-  // ==========================================
-  // THE FIX: Check if they are allowed to graduate
-  // ==========================================
-  const isFullIntegration = isFullIntegrationConceptId(conceptId);
-  // Full-integration modules must complete bar -> equation -> solve bundles.
-  // Other modules are always "bundle complete" after a single question.
+  // Step 3: Check for mastery graduation
+  // For full-integration, timesPlayed (not attemptCount) tracks bundle boundaries
   const isBundleComplete = isFullIntegration
-    ? masteryEntry.attemptCount % 3 === 0
+    ? masteryEntry.adaptiveState.timesPlayed % 3 === 0
     : true;
+
+  // Success rate check: student must achieve >= MASTERY_SUCCESS_RATE (80%) over the recent window
+  const windowAttempts = masteryEntry.lastAttempts || [];
+  const recentSuccesses = windowAttempts.filter(Boolean).length;
+  const recentSuccessRate =
+    windowAttempts.length > 0 ? recentSuccesses / windowAttempts.length : 0;
+
+  const hasRequiredSuccessRate = recentSuccessRate >= MASTERY_SUCCESS_RATE;
 
   if (
     masteryEntry.status !== "mastered" &&
     masteryEntry.attemptCount >= MASTERY_MIN_ATTEMPTS &&
     hasMasteryChangePoint(masteryEntry.adaptiveState) &&
-    isBundleComplete // <--- Blocks graduation until the Solve step is done!
+    hasRequiredSuccessRate &&
+    isBundleComplete
   ) {
     masteryEntry.status = "mastered";
     persistMasteryEntry(user, conceptId, masteryEntry);
@@ -815,7 +876,7 @@ async function updateMastery(user, conceptId, isCorrect) {
     ),
   );
 
-  return masteryEntry;
+  return { masteryEntry, bundleJustCompleted, bundleCorrect };
 }
 
 /**
@@ -851,8 +912,6 @@ async function jumpToConcept(user, targetConceptId) {
       timeAdded,
     });
     entry.status = "mastered";
-    entry.attemptCount = Math.max(entry.attemptCount, MASTERY_MIN_ATTEMPTS);
-    entry.successCount = Math.max(entry.successCount, MASTERY_MIN_ATTEMPTS);
     persistMasteryEntry(user, conceptId, entry);
   }
 
@@ -914,15 +973,20 @@ async function switchSection(user, sectionId) {
 
   for (const conceptId of concepts) {
     const entry = user.mastery.get(conceptId);
-    if (
-      entry &&
-      entry.status === "mastered" &&
-      entry.adaptiveState.timesPlayed === 0
-    ) {
-      entry.status = "unlocked";
-      entry.attemptCount = 0;
-      entry.successCount = 0;
-      persistMasteryEntry(user, conceptId, entry);
+    if (entry && entry.status === "mastered") {
+      const windowAttempts = entry.lastAttempts || [];
+      const recentSuccesses = windowAttempts.filter(Boolean).length;
+      const recentSuccessRate = windowAttempts.length > 0 ? recentSuccesses / windowAttempts.length : 0;
+      
+      const trulyMastered = 
+        entry.attemptCount >= MASTERY_MIN_ATTEMPTS && 
+        recentSuccessRate >= MASTERY_SUCCESS_RATE &&
+        hasMasteryChangePoint(entry.adaptiveState);
+        
+      if (!trulyMastered) {
+        entry.status = "unlocked";
+        persistMasteryEntry(user, conceptId, entry);
+      }
     }
   }
 
@@ -961,4 +1025,9 @@ module.exports = {
   getNextProblem,
   jumpToConcept,
   switchSection,
+  isFullIntegrationConceptId,
+  MASTERY_MIN_ATTEMPTS,
+  MASTERY_SCORE_THRESHOLD,
+  MASTERY_SUCCESS_RATE,
+  WINDOW_SIZE,
 };
