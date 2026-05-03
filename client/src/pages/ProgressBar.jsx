@@ -310,11 +310,31 @@ const ProgressBar = () => {
     ...data,
   }));
 
-  const calculateHonestProgress = (entry) => {
-    const threshold = 8;
-    const score = entry.adaptiveState?.changePointScore || 0;
-    return (Math.min(score / threshold, 1) * 100).toFixed(0);
+  // Read mastery config from API — single source of truth
+  const cfg = status.masteryConfig || {};
+  const minAttempts = cfg.masteryMinAttempts || 5;
+  const scoreThreshold = cfg.masteryScoreThreshold || 5;
+  const windowSize = cfg.windowSize || 5;
+
+  const calculateHonestProgress = (entry, trulyMastered) => {
+    if (entry.status === "mastered" && trulyMastered) return 100;
+    
+    const isSkipped = entry.status === "mastered" && !trulyMastered && entry.attemptCount === 0 && (entry.adaptiveState?.timesPlayed || 0) === 0;
+    if (isSkipped) return 0;
+
+    const recentAttempts = entry.lastAttempts || [];
+    const recentSuccesses = recentAttempts.filter(Boolean).length;
+    const targetSuccesses = Math.ceil(windowSize * (cfg.masterySuccessRate || 0.8));
+    
+    return Math.min((recentSuccesses / targetSuccesses) * 100, 100).toFixed(0);
   };
+
+  const curriculumOrder = [
+    "single_add", "single_sub", "multi_add", "multi_sub",
+    "missing_part_equations",
+    "combine_mod1", "combine_mod2", "combine_mod3", "combine_mod4", "combine_mod5",
+    "change_mod1", "change_mod2", "change_mod3", "change_mod4", "change_mod5"
+  ];
 
   const practiceIds = ["single_add", "single_sub", "multi_add", "multi_sub"];
   const equationIds = ["missing_part_equations"];
@@ -373,35 +393,40 @@ const ProgressBar = () => {
   };
 
   const renderNodes = (sectionNodes) => {
-    if (sectionNodes.length === 0) {
-      return (
-        <div
-          className="no-data"
-          style={{ marginTop: "20px", color: "#94a3b8", textAlign: "center" }}
-        >
-          Not started yet.
-        </div>
-      );
-    }
+    const sortedNodes = [...sectionNodes].sort((a, b) => {
+       const aIdx = curriculumOrder.indexOf(a.id);
+       const bIdx = curriculumOrder.indexOf(b.id);
+       return (aIdx === -1 ? 999 : aIdx) - (bIdx === -1 ? 999 : bIdx);
+    });
 
     return (
       <div className="wizard-nodes-grid" style={{ marginTop: "20px" }}>
-        {sectionNodes.map((node) => {
-          const progress = calculateHonestProgress(node);
-          const proficiency = (node.adaptiveState?.estimate * 100 || 0).toFixed(
-            0,
-          );
-          const record = node.adaptiveState?.correctnessRecord || [];
+        {sortedNodes.map((node) => {
+          const record = node.lastAttempts || node.adaptiveState?.correctnessRecord || [];
+          const recentSuccesses = record.filter(Boolean).length;
+          const recentSuccessRate = record.length > 0 ? recentSuccesses / record.length : 0;
+          
+          const trulyMastered = 
+            node.attemptCount >= minAttempts && 
+            recentSuccessRate >= (cfg.masterySuccessRate || 0.8) &&
+            (node.adaptiveState?.changePointScore >= scoreThreshold);
+            
+          const progress = calculateHonestProgress(node, trulyMastered);
+          const proficiency = node.attemptCount > 0 ? ((node.successCount || 0) / node.attemptCount * 100).toFixed(0) : 0;
           const isLocked = node.status === "locked";
+          const isSkipped = node.status === "mastered" && !trulyMastered && node.attemptCount === 0 && (node.adaptiveState?.timesPlayed || 0) === 0;
+          const displayStatus = (node.status === "mastered" && !trulyMastered && !isSkipped) ? "unlocked" : node.status;
 
           return (
-            <div key={node.id} className={`wizard-card ${node.status}`}>
+            <div key={node.id} className={`wizard-card ${displayStatus}`}>
               <div className="card-header">
                 <span className="node-name">{node.id.replace(/_/g, " ")}</span>
-                <div className={`status-badge ${node.status}`}>
+                <div className={`status-badge ${isSkipped ? "skipped" : displayStatus}`}>
                   {isLocked ? (
                     <Lock size={12} />
-                  ) : node.status === "mastered" ? (
+                  ) : isSkipped ? (
+                    "Skipped"
+                  ) : displayStatus === "mastered" ? (
                     "Mastered"
                   ) : (
                     "Active"
@@ -432,7 +457,7 @@ const ProgressBar = () => {
 
                     <div className="history-group">
                       <div className="dots">
-                        {record.slice(-5).map((isCorrect, i) => (
+                        {record.slice(-windowSize).map((isCorrect, i) => (
                           <div
                             key={i}
                             className={`dot ${isCorrect ? "green" : "red"}`}
@@ -440,7 +465,7 @@ const ProgressBar = () => {
                         ))}
                       </div>
                       <span className="attempts">
-                        Status: {node.attemptCount} / 5
+                        Attempts: {node.attemptCount}
                       </span>
                     </div>
                   </div>
@@ -515,6 +540,7 @@ const ProgressBar = () => {
         <div className="sections-container">
           {sections.map((section) => {
             const isActiveSection = activeSectionId === section.id;
+            const isTouched = section.nodes.some(n => n.attemptCount > 0 || (n.adaptiveState?.timesPlayed || 0) > 0) || isActiveSection;
 
             return (
               <div key={section.id} className="progress-section">
@@ -550,7 +576,14 @@ const ProgressBar = () => {
                 </div>
 
                 <div className="progress-section__nodes">
-                  {renderNodes(section.nodes)}
+                  {isTouched ? renderNodes(section.nodes) : (
+                    <div
+                      className="no-data"
+                      style={{ marginTop: "20px", color: "#94a3b8", textAlign: "center" }}
+                    >
+                      Not started yet.
+                    </div>
+                  )}
                 </div>
               </div>
             );

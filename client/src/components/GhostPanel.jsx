@@ -2,22 +2,26 @@ import React from "react";
 import { Activity } from "lucide-react";
 import "../sass/components/GhostPanel.scss";
 
-const EngineTelemetry = ({ adaptiveData, conceptId }) => {
+const EngineTelemetry = ({ adaptiveData, conceptId, masteryConfig }) => {
   // If no data is arriving, show a "Waiting" state instead of nothing
   if (!adaptiveData) return null;
 
-  // Constants
-  const threshold = 7.82;
-  const minReq = 5;
+  // Read thresholds from server config (no more hardcoding!)
+  const threshold = masteryConfig?.masteryScoreThreshold || 5;
+  const minReq = masteryConfig?.masteryMinAttempts || 5;
 
   // Extract values with strict fallbacks
   const score = Number(adaptiveData.changePointScore || 0);
+  const displayScore = Math.min(score, threshold);
   const ucb = Number(adaptiveData.ucb || 0);
   const status = adaptiveData.status || "unlocked";
   const sess = adaptiveData.timesPlayed || 0;
   const total = adaptiveData.attemptCount || 0;
+  const success = adaptiveData.successCount || 0;
   const estimate = adaptiveData.estimate || 0;
-  const record = adaptiveData.correctnessRecord || [];
+  const record = adaptiveData.lastAttempts || adaptiveData.correctnessRecord || [];
+
+  const accuracyPercent = total > 0 ? (success / total) * 100 : 0;
 
   // Honest Progress Math
   const scoreWeight = Math.min(score / threshold, 1);
@@ -53,13 +57,13 @@ const EngineTelemetry = ({ adaptiveData, conceptId }) => {
       <div className="ghost-row">
         <label>Mastery Score:</label>
         <span className={score >= threshold ? "mastered" : ""}>
-          {score.toFixed(2)} / {threshold}
+          {displayScore.toFixed(2)} / {threshold}
         </span>
       </div>
 
       <div className="ghost-row">
         <label>Knowledge Est:</label>
-        <span>{(estimate * 100).toFixed(0)}% accuracy</span>
+        <span>{accuracyPercent.toFixed(0)}% accuracy</span>
       </div>
 
       <div className="ghost-row">
@@ -88,17 +92,17 @@ const EngineTelemetry = ({ adaptiveData, conceptId }) => {
       <div className="ghost-row attempts-row">
         <label>Attempts:</label>
         <span>
-          {sess}S / {total}T <small>(Min:{minReq})</small>
+          {total} <small>(Min:{minReq})</small>
         </span>
       </div>
 
       {/* --- FOOTER STATS --- */}
       <div className="ghost-row mini-labels">
         <span>
-          G: {adaptiveData.guessProbability?.toExponential(1) || "0.0e0"}
+          G: {((adaptiveData.guessProbability || 0) * 100).toFixed(0)}%
         </span>
         <span>
-          S: {adaptiveData.slipProbability?.toExponential(1) || "0.0e0"}
+          S: {((adaptiveData.slipProbability || 0) * 100).toFixed(0)}%
         </span>
       </div>
 

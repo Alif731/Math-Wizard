@@ -363,6 +363,7 @@ const QuestionCard = ({
           <GhostPanel
             adaptiveData={problem?.adaptiveState}
             conceptId={problem?.concept?.id}
+            masteryConfig={problem?.masteryConfig}
           />
         </aside>
       )}
