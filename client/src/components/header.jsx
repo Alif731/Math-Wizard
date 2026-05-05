@@ -7,6 +7,8 @@ import { logout } from "../store/slices/authSlice";
 import { apiSlice } from "../store/slices/apiSlice";
 import getDefaultRouteForRole from "../utils/getDefaultRouteForRole";
 import "../sass/components/header.scss";
+import UserAvatar from "./UserAvatar";
+import { toast } from "react-toastify";
 
 export default function Header() {
   const [isNavExpanded, setIsNavExpanded] = useState(true);
@@ -16,7 +18,12 @@ export default function Header() {
 
   const { userInfo } = useSelector((state) => state.auth);
   const isTeacher = userInfo?.role === "teacher";
-  const defaultRoute = userInfo ? getDefaultRouteForRole(userInfo.role) : "/";
+  const isStudent = userInfo?.role === "student";
+  const defaultRoute = userInfo
+    ? userInfo.role === "teacher"
+      ? "/teacher/dashboard"
+      : "/home"
+    : "/";
   const guestAuthLink =
     location.pathname === "/teacher/auth"
       ? { to: "/", label: "Student Login" }
@@ -51,6 +58,7 @@ export default function Header() {
       dispatch(logout());
       dispatch(apiSlice.util.resetApiState());
       navigate("/");
+      toast.success("Logged out successfully.");
     } catch (err) {
       console.error(err);
     }
@@ -58,9 +66,13 @@ export default function Header() {
 
   return (
     <nav id="navbarParent">
-      <ul className={isNavExpanded ? "navbar" : "navbar expanded"}>
+      {/* <ul className={isNavExpanded ? "navbar" : "navbar expanded"}> */}
+      <ul
+        className={`navbar ${!isNavExpanded ? "expanded" : ""} ${userInfo ? "logged-in" : ""}`}
+      >
         <li className="navbar__item">
           <Link to={defaultRoute} className="navbar__item__title">
+            {/* <Link to={"/student-hub"} className="navbar__item__title"> */}
             Maths Wizard
           </Link>
           <div className="navbar__item__icon" onClick={navBarExpandHandler}>
@@ -69,44 +81,96 @@ export default function Header() {
         </li>
         {userInfo ? (
           <>
-            {isTeacher ? (
-              <li className={isNavExpanded ? "navbar__item navbar__item--nav" : "navbar__item navbar__item--nav expanded"}>
+            {isTeacher && (
+              <li
+                className={
+                  isNavExpanded
+                    ? "navbar__item navbar__item--nav"
+                    : "navbar__item navbar__item--nav expanded"
+                }
+              >
                 <Link to="/teacher/dashboard" className="navbar__item__link">
                   Teacher Dashboard
                 </Link>
               </li>
-            ) : (
-              <li className={isNavExpanded ? "navbar__item navbar__item--nav" : "navbar__item navbar__item--nav expanded"}>
-                <Link to="/home" className="navbar__item__link">
-                  Home
+            )}
+
+            {/* Topics Link  */}
+            {isStudent && (
+              <li
+                className={
+                  isNavExpanded
+                    ? "navbar__item navbar__item--nav"
+                    : "navbar__item navbar__item--nav expanded"
+                }
+              >
+                <Link to="/student-hub" className="navbar__item__link">
+                  Topics
                 </Link>
               </li>
             )}
 
-            <li className={isNavExpanded ? "navbar__item navbar__item--nav" : "navbar__item navbar__item--nav expanded"}>
+            {/* Student Progress Map Link  */}
+            {isStudent && (
+              <li
+                className={
+                  isNavExpanded
+                    ? "navbar__item navbar__item--nav"
+                    : "navbar__item navbar__item--nav expanded"
+                }
+              >
+                <Link to="/progress" className="navbar__item__link">
+                  My Progress
+                </Link>
+              </li>
+            )}
+
+            {/* Shared LeaderBoard */}
+            <li
+              className={
+                isNavExpanded
+                  ? "navbar__item navbar__item--nav"
+                  : "navbar__item navbar__item--nav expanded"
+              }
+            >
               <Link to="/leaderboard" className="navbar__item__link">
                 Leaderboard
               </Link>
             </li>
-            <li className={isNavExpanded ? "navbar__item navbar__item--nav" : "navbar__item navbar__item--nav expanded"}>
+            {/* <li className={isNavExpanded ? "navbar__item navbar__item--nav" : "navbar__item navbar__item--nav expanded"}>
               <Link to="/home" className="navbar__item__link">
                 Home
               </Link>
-            </li>
-            
+            </li> */}
+
             {/* RIGHT MOST AVATAR DROPDOWN */}
-            <li className="navbar__item navbar__item--avatar user-dropdown-container" ref={dropdownRef}>
+            <li
+              className="navbar__item navbar__item--avatar user-dropdown-container"
+              ref={dropdownRef}
+            >
               <div className="avatar-trigger" onClick={toggleDropdown}>
-                <span className="header-avatar">{userInfo.avatar || "🐱"}</span>
+                <UserAvatar
+                  name={userInfo.avatarSeed}
+                  variant={userInfo.avatar}
+                  size={50}
+                />
               </div>
 
               {showDropdown && (
                 <div className="dropdown-menu">
-                  <Link to="/profile" className="dropdown-item" onClick={() => setShowDropdown(false)}>
+                  <Link
+                    to="/profile"
+                    className="dropdown-item"
+                    onClick={() => setShowDropdown(false)}
+                  >
                     Profile
                   </Link>
                   <div className="dropdown-divider"></div>
-                  <a onClick={logoutHandler} className="dropdown-item" style={{ cursor: "pointer" }}>
+                  <a
+                    onClick={logoutHandler}
+                    className="dropdown-item"
+                    style={{ cursor: "pointer" }}
+                  >
                     Logout
                   </a>
                 </div>
@@ -114,7 +178,13 @@ export default function Header() {
             </li>
           </>
         ) : (
-          <li className={isNavExpanded ? "navbar__item navbar__item--nav" : "navbar__item navbar__item--nav expanded"}>
+          <li
+            className={
+              isNavExpanded
+                ? "navbar__item navbar__item--nav"
+                : "navbar__item navbar__item--nav expanded"
+            }
+          >
             <Link to={guestAuthLink.to} className="navbar__item__link">
               {guestAuthLink.label}
             </Link>

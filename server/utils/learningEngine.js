@@ -1,16 +1,26 @@
 const Concept = require("../models/Concept");
 
-const WINDOW_SIZE = 10;
-const MASTERY_MIN_ATTEMPTS = 15;
-const CHANGE_POINT_FALSE_POSITIVE_RATE = 0.0004;
+const WINDOW_SIZE = 5;
+const MASTERY_MIN_ATTEMPTS = 5;
+const MASTERY_SCORE_THRESHOLD = 5;
+const MASTERY_SUCCESS_RATE = 0.8; // 80% — student must get 4/5, 8/10, etc.
+
+
+// const WINDOW_SIZE = 3;
+// const MASTERY_MIN_ATTEMPTS = 2;
+// const MASTERY_SCORE_THRESHOLD = 2;
+// const MASTERY_SUCCESS_RATE = 0.8; // 80% — student must get 4/5, 8/10, etc.
+
+const CHANGE_POINT_FALSE_POSITIVE_RATE = Math.exp(-MASTERY_SCORE_THRESHOLD);
 const BANDIT_PRIORS = Object.freeze({
-  guessAlpha: 20,
-  guessBeta: 160,
-  slipAlpha: 20,
-  slipBeta: 160,
+  guessProbability: 0.10,
+  slipProbability: 0.10,
 });
 const BANDIT_HISTORY_LIMIT = 25;
 const EPSILON = 1e-9;
+
+const isFullIntegrationConceptId = (conceptId) =>
+  String(conceptId || "").endsWith("_mod4");
 
 function clampProbability(value, fallback = 0.5) {
   const numericValue = Number(value);
@@ -58,45 +68,6 @@ function normalizeNumberList(values, limit) {
     .map(Number);
 }
 
-function sampleStandardNormal() {
-  const u1 = 1 - Math.random();
-  const u2 = 1 - Math.random();
-  return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
-}
-
-function sampleGamma(shape) {
-  if (shape < 1) {
-    const uniform = 1 - Math.random();
-    return sampleGamma(shape + 1) * Math.pow(uniform, 1 / shape);
-  }
-
-  const d = shape - 1 / 3;
-  const c = 1 / Math.sqrt(9 * d);
-
-  while (true) {
-    const x = sampleStandardNormal();
-    const v = Math.pow(1 + c * x, 3);
-
-    if (v <= 0) {
-      continue;
-    }
-
-    const uniform = Math.random();
-    if (uniform < 1 - 0.0331 * Math.pow(x, 4)) {
-      return d * v;
-    }
-
-    if (Math.log(uniform) < 0.5 * x * x + d * (1 - v + Math.log(v))) {
-      return d * v;
-    }
-  }
-}
-
-function sampleBeta(alpha, beta) {
-  const x = sampleGamma(alpha);
-  const y = sampleGamma(beta);
-  return x / (x + y);
-}
 
 function cloneMasteryEntry(entry) {
   if (!entry) {
@@ -132,7 +103,10 @@ function getTotalInteractionCount(user) {
 
 function normalizeAdaptiveState(adaptiveState, fallback = {}) {
   const fallbackTimesPlayed = clampNonNegativeInteger(fallback.timesPlayed, 0);
-  const fallbackCorrectnessSum = clampNonNegativeInteger(fallback.correctnessSum, 0);
+  const fallbackCorrectnessSum = clampNonNegativeInteger(
+    fallback.correctnessSum,
+    0,
+  );
   const fallbackRecord = normalizeBooleanList(
     fallback.correctnessRecord,
     BANDIT_HISTORY_LIMIT,
@@ -143,35 +117,52 @@ function normalizeAdaptiveState(adaptiveState, fallback = {}) {
     fallbackTimesPlayed,
   );
   const safeCorrectnessSum = Math.min(
-    clampNonNegativeInteger(adaptiveState?.correctnessSum, fallbackCorrectnessSum),
+    clampNonNegativeInteger(
+      adaptiveState?.correctnessSum,
+      fallbackCorrectnessSum,
+    ),
     safeTimesPlayed,
   );
-  const estimateFallback = safeTimesPlayed > 0 ? safeCorrectnessSum / safeTimesPlayed : 0;
+  const estimateFallback =
+    safeTimesPlayed > 0 ? safeCorrectnessSum / safeTimesPlayed : 0;
 
   return {
     timesPlayed: safeTimesPlayed,
     correctnessSum: safeCorrectnessSum,
     estimate: clampUnitInterval(adaptiveState?.estimate, estimateFallback),
-    ucb: Number.isFinite(Number(adaptiveState?.ucb)) ? Number(adaptiveState.ucb) : 0,
-    lcb: Number.isFinite(Number(adaptiveState?.lcb)) ? Number(adaptiveState.lcb) : 0,
-    timeAdded: clampNonNegativeInteger(adaptiveState?.timeAdded, fallback.timeAdded || 0),
+    ucb: Number.isFinite(Number(adaptiveState?.ucb))
+      ? Number(adaptiveState.ucb)
+      : 0,
+    lcb: Number.isFinite(Number(adaptiveState?.lcb))
+      ? Number(adaptiveState.lcb)
+      : 0,
+    timeAdded: clampNonNegativeInteger(
+      adaptiveState?.timeAdded,
+      fallback.timeAdded || 0,
+    ),
     guessProbability: clampProbability(
-      adaptiveState?.guessProbability,
-      sampleBeta(BANDIT_PRIORS.guessAlpha, BANDIT_PRIORS.guessBeta),
+      adaptiveState?.guessProbability || BANDIT_PRIORS.guessProbability,
+      BANDIT_PRIORS.guessProbability
     ),
     slipProbability: clampProbability(
-      adaptiveState?.slipProbability,
-      sampleBeta(BANDIT_PRIORS.slipAlpha, BANDIT_PRIORS.slipBeta),
+      adaptiveState?.slipProbability || BANDIT_PRIORS.slipProbability,
+      BANDIT_PRIORS.slipProbability
     ),
     changePointScore: Number.isFinite(Number(adaptiveState?.changePointScore))
       ? Number(adaptiveState.changePointScore)
       : 0,
-    changePointIndex: clampNonNegativeInteger(adaptiveState?.changePointIndex, 0),
+    changePointIndex: clampNonNegativeInteger(
+      adaptiveState?.changePointIndex,
+      0,
+    ),
     correctnessRecord: normalizeBooleanList(
       adaptiveState?.correctnessRecord,
       BANDIT_HISTORY_LIMIT,
     ).length
-      ? normalizeBooleanList(adaptiveState?.correctnessRecord, BANDIT_HISTORY_LIMIT)
+      ? normalizeBooleanList(
+          adaptiveState?.correctnessRecord,
+          BANDIT_HISTORY_LIMIT,
+        )
       : fallbackRecord,
     changePointLog: normalizeNumberList(
       adaptiveState?.changePointLog,
@@ -180,14 +171,21 @@ function normalizeAdaptiveState(adaptiveState, fallback = {}) {
   };
 }
 
-function ensureMasteryEntry(user, conceptId, { status = "locked", timeAdded = 0 } = {}) {
+function ensureMasteryEntry(
+  user,
+  conceptId,
+  { status = "locked", timeAdded = 0 } = {},
+) {
   const existingEntry = cloneMasteryEntry(user.mastery.get(conceptId));
   const attemptCount = clampNonNegativeInteger(existingEntry?.attemptCount, 0);
   const successCount = Math.min(
     clampNonNegativeInteger(existingEntry?.successCount, 0),
     attemptCount,
   );
-  const lastAttempts = normalizeBooleanList(existingEntry?.lastAttempts, WINDOW_SIZE);
+  const lastAttempts = normalizeBooleanList(
+    existingEntry?.lastAttempts,
+    WINDOW_SIZE,
+  );
 
   const normalizedEntry = {
     status: existingEntry?.status || status,
@@ -229,7 +227,9 @@ function buildConceptGraph(concepts) {
   }
 
   const rootIds = concepts
-    .filter((concept) => !concept.prerequisites || concept.prerequisites.length === 0)
+    .filter(
+      (concept) => !concept.prerequisites || concept.prerequisites.length === 0,
+    )
     .map((concept) => concept.id);
 
   return { conceptMap, childrenById, rootIds };
@@ -333,7 +333,9 @@ function normalizeFrontier(user, conceptMap, rootIds) {
 
 function arePrerequisitesMastered(user, concept) {
   return (concept.prerequisites || []).every((prerequisiteId) => {
-    const prerequisiteEntry = cloneMasteryEntry(user.mastery.get(prerequisiteId));
+    const prerequisiteEntry = cloneMasteryEntry(
+      user.mastery.get(prerequisiteId),
+    );
     return prerequisiteEntry?.status === "mastered";
   });
 }
@@ -363,7 +365,9 @@ async function unlockChildren(user, parentId, graph) {
     }
   }
 
-  user.zpdNodes = dedupeIds(user.zpdNodes.filter((conceptId) => conceptId !== parentId));
+  user.zpdNodes = dedupeIds(
+    user.zpdNodes.filter((conceptId) => conceptId !== parentId),
+  );
 }
 
 function klBernoulli(p, q) {
@@ -437,7 +441,76 @@ function updateBanditBounds(masteryEntry, totalPlays) {
   return adaptiveState.ucb;
 }
 
+// function chooseNextConceptId(user, frontier) {
+//   for (const conceptId of frontier) {
+//     const masteryEntry = ensureMasteryEntry(user, conceptId, {
+//       status: "unlocked",
+//       timeAdded: getTotalInteractionCount(user),
+//     });
+
+//     if (masteryEntry.adaptiveState.timesPlayed === 0) {
+//       masteryEntry.adaptiveState.ucb = 1;
+//       masteryEntry.adaptiveState.lcb = 0;
+//       persistMasteryEntry(user, conceptId, masteryEntry);
+//       return conceptId;
+//     }
+//   }
+
+//   const totalPlays = frontier.reduce((sum, conceptId) => {
+//     const masteryEntry = ensureMasteryEntry(user, conceptId, {
+//       status: "unlocked",
+//       timeAdded: getTotalInteractionCount(user),
+//     });
+//     return sum + masteryEntry.adaptiveState.timesPlayed;
+//   }, 0);
+
+//   let bestConceptId = frontier[0];
+//   let bestScore = -Infinity;
+
+//   for (const conceptId of frontier) {
+//     const masteryEntry = ensureMasteryEntry(user, conceptId, {
+//       status: "unlocked",
+//       timeAdded: getTotalInteractionCount(user),
+//     });
+//     const score = updateBanditBounds(masteryEntry, totalPlays);
+
+//     persistMasteryEntry(user, conceptId, masteryEntry);
+
+//     if (score > bestScore) {
+//       bestScore = score;
+//       bestConceptId = conceptId;
+//     }
+//   }
+
+//   return bestConceptId;
+// }
 function chooseNextConceptId(user, frontier) {
+  // ==========================================
+  // 1. THE FULL-INTEGRATION BUNDLE LOCK-IN CHECK
+  // ==========================================
+  for (const conceptId of frontier) {
+    // If the concept is a full-integration module...
+    if (isFullIntegrationConceptId(conceptId)) {
+      const masteryEntry = ensureMasteryEntry(user, conceptId, {
+        status: "unlocked",
+        timeAdded: getTotalInteractionCount(user),
+      });
+
+      // If timesPlayed is not a multiple of 3, they are mid-bundle!
+      // (e.g., timesPlayed is 1 or 2, meaning they finished Bar or Eq but not Solve)
+      if (
+        masteryEntry.adaptiveState.timesPlayed > 0 &&
+        masteryEntry.adaptiveState.timesPlayed % 3 !== 0
+      ) {
+        // Bypass all AI logic and force them to finish this bundle!
+        return conceptId;
+      }
+    }
+  }
+
+  // ==========================================
+  // 2. NORMAL UNPLAYED CHECK
+  // ==========================================
   for (const conceptId of frontier) {
     const masteryEntry = ensureMasteryEntry(user, conceptId, {
       status: "unlocked",
@@ -452,6 +525,9 @@ function chooseNextConceptId(user, frontier) {
     }
   }
 
+  // ==========================================
+  // 3. NORMAL UCB MULTI-ARMED BANDIT LOGIC
+  // ==========================================
   const totalPlays = frontier.reduce((sum, conceptId) => {
     const masteryEntry = ensureMasteryEntry(user, conceptId, {
       status: "unlocked",
@@ -481,13 +557,86 @@ function chooseNextConceptId(user, frontier) {
   return bestConceptId;
 }
 
-function getQuestionForConcept(concept, masteryEntry) {
+function getQuestionForConcept(concept, masteryEntry, user) {
   if (!concept?.questions?.length) {
     return null;
   }
 
-  const questionIndex = masteryEntry.adaptiveState.timesPlayed % concept.questions.length;
-  return concept.questions[questionIndex];
+  const questions = concept.questions;
+  const length = questions.length;
+  const timesPlayed = masteryEntry.adaptiveState?.timesPlayed || 0;
+
+  // The Salt: Unique starting point based on username
+  // const saltSource = user?.username || user?._id?.toString() || "default";
+  const saltSource = user?._id?.toString() || user?.username || "default";
+  const salt = saltSource
+    .split("")
+    .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+
+  // Check if this concept requires the 3-part sequence.
+  const isFullIntegration = isFullIntegrationConceptId(concept.id);
+
+  if (isFullIntegration) {
+    // ==========================================
+    // FULL-INTEGRATION LOGIC: Randomize Bundles of 3
+    // ==========================================
+    const BUNDLE_SIZE = 3;
+    const numBundles = Math.floor(length / BUNDLE_SIZE);
+
+    if (numBundles === 0) return questions[timesPlayed % length]; // Safety fallback
+
+    // Jump by a prime number of bundles
+    let bundleStep = 3;
+    if (numBundles % bundleStep === 0) bundleStep = 5;
+
+    // Which bundle are we on? (Changes every 3 plays)
+    const currentBundleIndex = Math.floor(timesPlayed / BUNDLE_SIZE);
+
+    // Which step of the bundle are we on? (0 = Bar, 1 = Eq, 2 = Solve)
+    const stepInsideBundle = timesPlayed % BUNDLE_SIZE;
+
+    // Calculate which bundle to load next, then pick the exact step inside it
+    const randomizedBundle =
+      (salt + currentBundleIndex * bundleStep) % numBundles;
+    const finalIndex = randomizedBundle * BUNDLE_SIZE + stepInsideBundle;
+
+    return questions[finalIndex];
+  } else if (concept.id === "missing_part_equations") {
+    // ==========================================
+    // MISSING PART EQUATIONS: Proportion Logic
+    // 20% Diff1 Add, 20% Diff1 Sub, 60% Diff2 Mix
+    // ==========================================
+    const diff1Add = questions.filter((q) => q.difficulty === 1 && q.equationSpec?.operator === "+");
+    const diff1Sub = questions.filter((q) => q.difficulty === 1 && q.equationSpec?.operator === "-");
+    const diff2 = questions.filter((q) => q.difficulty === 2);
+
+    const cycleIndex = timesPlayed % 5;
+    let selectedPool;
+
+    if (cycleIndex === 0) {
+      selectedPool = diff1Add.length ? diff1Add : questions;
+    } else if (cycleIndex === 1) {
+      selectedPool = diff1Sub.length ? diff1Sub : questions;
+    } else {
+      selectedPool = diff2.length ? diff2 : questions;
+    }
+
+    let step = 7;
+    if (selectedPool.length % step === 0) step = 11;
+    if (selectedPool.length % step === 0) step = 3;
+
+    const poolIndex = (salt + timesPlayed * step) % selectedPool.length;
+    return selectedPool[poolIndex];
+  } else {
+    // ==========================================
+    // MOD 1 & 2 LOGIC: Standard Randomization
+    // ==========================================
+    let step = 7;
+    if (length % step === 0) step = 11;
+
+    const index = (salt + timesPlayed * step) % length;
+    return questions[index];
+  }
 }
 
 function updateAdaptiveState(adaptiveState, isCorrect) {
@@ -526,7 +675,7 @@ function updateAdaptiveState(adaptiveState, isCorrect) {
 }
 
 function hasMasteryChangePoint(adaptiveState) {
-  return adaptiveState.changePointScore >= Math.log(1 / CHANGE_POINT_FALSE_POSITIVE_RATE);
+  return adaptiveState.changePointScore >= MASTERY_SCORE_THRESHOLD;
 }
 
 async function getNextProblem(user) {
@@ -551,7 +700,8 @@ async function getNextProblem(user) {
 
   return {
     concept,
-    question: getQuestionForConcept(concept, masteryEntry),
+    // We added `user` right here! -->
+    question: getQuestionForConcept(concept, masteryEntry, user),
   };
 }
 
@@ -560,6 +710,52 @@ async function getNextConcept(user) {
   return concept;
 }
 
+// async function updateMastery(user, conceptId, isCorrect) {
+//   const graph = await loadConceptGraph();
+//   const masteryEntry = ensureMasteryEntry(user, conceptId, {
+//     status: "unlocked",
+//     timeAdded: getTotalInteractionCount(user),
+//   });
+
+//   masteryEntry.lastAttempts = normalizeBooleanList(
+//     [...masteryEntry.lastAttempts, isCorrect],
+//     WINDOW_SIZE,
+//   );
+//   masteryEntry.attemptCount += 1;
+//   if (isCorrect) {
+//     masteryEntry.successCount += 1;
+//   }
+
+//   updateAdaptiveState(masteryEntry.adaptiveState, Boolean(isCorrect));
+//   persistMasteryEntry(user, conceptId, masteryEntry);
+
+//   if (
+//     masteryEntry.status !== "mastered" &&
+//     masteryEntry.attemptCount >= MASTERY_MIN_ATTEMPTS &&
+//     hasMasteryChangePoint(masteryEntry.adaptiveState)
+//   ) {
+//     masteryEntry.status = "mastered";
+//     persistMasteryEntry(user, conceptId, masteryEntry);
+//     await unlockChildren(user, conceptId, graph);
+//   } else if (masteryEntry.status === "mastered") {
+//     user.zpdNodes = dedupeIds(
+//       (user.zpdNodes || []).filter((id) => id !== conceptId),
+//     );
+//   }
+
+//   user.zpdNodes = dedupeIds(
+//     (user.zpdNodes || []).filter((activeConceptId) =>
+//       graph.conceptMap.has(activeConceptId),
+//     ),
+//   );
+
+//   return masteryEntry;
+// }
+
+// Critical Bug Fix (Stop ZPD from jumping from module 3 without completing)
+// Bundle-aware scoring: Module 4 steps are grouped into bundles of 3.
+// attemptCount/successCount only update when a bundle completes.
+// If a step fails mid-bundle, remaining steps are skipped (padded).
 async function updateMastery(user, conceptId, isCorrect) {
   const graph = await loadConceptGraph();
   const masteryEntry = ensureMasteryEntry(user, conceptId, {
@@ -567,39 +763,271 @@ async function updateMastery(user, conceptId, isCorrect) {
     timeAdded: getTotalInteractionCount(user),
   });
 
-  masteryEntry.lastAttempts = normalizeBooleanList(
-    [...masteryEntry.lastAttempts, isCorrect],
-    WINDOW_SIZE,
-  );
-  masteryEntry.attemptCount += 1;
-  if (isCorrect) {
-    masteryEntry.successCount += 1;
+  const isFullIntegration = isFullIntegrationConceptId(conceptId);
+
+  // Step 1: Always update adaptive state first (increments timesPlayed)
+  updateAdaptiveState(masteryEntry.adaptiveState, Boolean(isCorrect));
+
+  // Step 2: Update mastery-level counts (bundle-aware for Module 4)
+  let bundleJustCompleted = false;
+  let bundleCorrect = false;
+
+  if (isFullIntegration) {
+    // ==========================================
+    // BUNDLE-AWARE SCORING for Module 4
+    // ==========================================
+    const tp = masteryEntry.adaptiveState.timesPlayed; // already incremented
+
+    if (!isCorrect) {
+      // Step failed mid-bundle: pad timesPlayed to next multiple of 3
+      // so the student moves on to a fresh question bundle
+      const remainder = tp % 3;
+      if (remainder !== 0) {
+        const padding = 3 - remainder;
+        masteryEntry.adaptiveState.timesPlayed += padding;
+        for (let i = 0; i < padding; i++) {
+          masteryEntry.adaptiveState.correctnessRecord.push(false);
+        }
+        masteryEntry.adaptiveState.correctnessRecord = normalizeBooleanList(
+          masteryEntry.adaptiveState.correctnessRecord,
+          BANDIT_HISTORY_LIMIT,
+        );
+        masteryEntry.adaptiveState.estimate =
+          masteryEntry.adaptiveState.correctnessSum /
+          masteryEntry.adaptiveState.timesPlayed;
+      }
+      // Bundle complete via failure: 1 attempt, 0 success
+      bundleJustCompleted = true;
+      bundleCorrect = false;
+      masteryEntry.attemptCount += 1;
+      masteryEntry.lastAttempts = normalizeBooleanList(
+        [...masteryEntry.lastAttempts, false],
+        WINDOW_SIZE,
+      );
+    } else if (tp % 3 === 0) {
+      // Correct AND bundle just completed naturally (3rd step done)
+      bundleJustCompleted = true;
+      const record = masteryEntry.adaptiveState.correctnessRecord;
+      const last3 = record.slice(-3);
+      bundleCorrect = last3.length === 3 && last3.every(Boolean);
+
+      masteryEntry.attemptCount += 1;
+      if (bundleCorrect) {
+        masteryEntry.successCount += 1;
+      }
+      masteryEntry.lastAttempts = normalizeBooleanList(
+        [...masteryEntry.lastAttempts, bundleCorrect],
+        WINDOW_SIZE,
+      );
+    }
+    // else: correct but mid-bundle -> don't update mastery counts yet
+  } else {
+    // ==========================================
+    // STANDARD per-step scoring (Modules 1-3, 5-6)
+    // ==========================================
+    bundleJustCompleted = true;
+    bundleCorrect = isCorrect;
+
+    masteryEntry.lastAttempts = normalizeBooleanList(
+      [...masteryEntry.lastAttempts, isCorrect],
+      WINDOW_SIZE,
+    );
+    masteryEntry.attemptCount += 1;
+    if (isCorrect) {
+      masteryEntry.successCount += 1;
+    }
   }
 
-  updateAdaptiveState(masteryEntry.adaptiveState, Boolean(isCorrect));
   persistMasteryEntry(user, conceptId, masteryEntry);
+
+  // Step 3: Check for mastery graduation
+  // For full-integration, timesPlayed (not attemptCount) tracks bundle boundaries
+  const isBundleComplete = isFullIntegration
+    ? masteryEntry.adaptiveState.timesPlayed % 3 === 0
+    : true;
+
+  // Success rate check: student must achieve >= MASTERY_SUCCESS_RATE (80%) over the recent window
+  const windowAttempts = masteryEntry.lastAttempts || [];
+  const recentSuccesses = windowAttempts.filter(Boolean).length;
+  const recentSuccessRate =
+    windowAttempts.length > 0 ? recentSuccesses / windowAttempts.length : 0;
+
+  const hasRequiredSuccessRate = recentSuccessRate >= MASTERY_SUCCESS_RATE;
 
   if (
     masteryEntry.status !== "mastered" &&
     masteryEntry.attemptCount >= MASTERY_MIN_ATTEMPTS &&
-    hasMasteryChangePoint(masteryEntry.adaptiveState)
+    hasMasteryChangePoint(masteryEntry.adaptiveState) &&
+    hasRequiredSuccessRate &&
+    isBundleComplete
   ) {
     masteryEntry.status = "mastered";
     persistMasteryEntry(user, conceptId, masteryEntry);
     await unlockChildren(user, conceptId, graph);
   } else if (masteryEntry.status === "mastered") {
-    user.zpdNodes = dedupeIds((user.zpdNodes || []).filter((id) => id !== conceptId));
+    user.zpdNodes = dedupeIds(
+      (user.zpdNodes || []).filter((id) => id !== conceptId),
+    );
   }
 
   user.zpdNodes = dedupeIds(
-    (user.zpdNodes || []).filter((activeConceptId) => graph.conceptMap.has(activeConceptId)),
+    (user.zpdNodes || []).filter((activeConceptId) =>
+      graph.conceptMap.has(activeConceptId),
+    ),
   );
 
-  return masteryEntry;
+  return { masteryEntry, bundleJustCompleted, bundleCorrect };
+}
+
+/**
+ * Jump the student directly to a specific concept by mastering all
+ * prerequisites up to (but not including) the target concept.
+ * This lets students skip practice sections and go straight to word problems.
+ */
+async function jumpToConcept(user, targetConceptId) {
+  const graph = await loadConceptGraph();
+  const targetConcept = graph.conceptMap.get(targetConceptId);
+  if (!targetConcept) {
+    throw new Error(`Concept "${targetConceptId}" not found`);
+  }
+
+  // Collect all ancestors (prerequisites, recursively) of the target
+  const toMaster = new Set();
+  const queue = [...(targetConcept.prerequisites || [])];
+  while (queue.length > 0) {
+    const id = queue.shift();
+    if (toMaster.has(id) || !graph.conceptMap.has(id)) continue;
+    toMaster.add(id);
+    const concept = graph.conceptMap.get(id);
+    for (const prereq of concept.prerequisites || []) {
+      queue.push(prereq);
+    }
+  }
+
+  // Mark every ancestor as mastered
+  const timeAdded = getTotalInteractionCount(user);
+  for (const conceptId of toMaster) {
+    const entry = ensureMasteryEntry(user, conceptId, {
+      status: "unlocked",
+      timeAdded,
+    });
+    entry.status = "mastered";
+    persistMasteryEntry(user, conceptId, entry);
+  }
+
+  // Unlock the target concept itself
+  const targetEntry = ensureMasteryEntry(user, targetConceptId, {
+    status: "unlocked",
+    timeAdded,
+  });
+  if (targetEntry.status === "locked") {
+    targetEntry.status = "unlocked";
+    persistMasteryEntry(user, targetConceptId, targetEntry);
+  }
+
+  // Set the ZPD to the target concept only
+  user.zpdNodes = [targetConceptId];
+}
+
+/**
+ * Switch the student's active section and un-skip any skipped nodes.
+ */
+async function switchSection(user, sectionId) {
+  const PATHWAYS = {
+    practice: ["single_add", "single_sub", "multi_add", "multi_sub"],
+    equations: ["missing_part_equations"],
+  };
+
+  if (sectionId === "schemas") {
+    const entry = user.mastery.get("combine_mod1");
+    if (!entry || entry.status === "locked") {
+      await jumpToConcept(user, "combine_mod1");
+      return;
+    }
+
+    const schemaNodes = [];
+    for (const [id, mEntry] of user.mastery.entries()) {
+      if (!PATHWAYS.practice.includes(id) && !PATHWAYS.equations.includes(id)) {
+        if (mEntry.status === "unlocked") {
+          schemaNodes.push(id);
+        }
+      }
+    }
+
+    if (schemaNodes.length > 0) {
+      user.zpdNodes = schemaNodes;
+    } else {
+      const target = "combine_mod1";
+      const mEntry = user.mastery.get(target);
+      if (mEntry) {
+        mEntry.status = "unlocked";
+        persistMasteryEntry(user, target, mEntry);
+      }
+      user.zpdNodes = [target];
+    }
+    return;
+  }
+
+  const concepts = PATHWAYS[sectionId];
+  if (!concepts) throw new Error("Invalid section");
+
+  for (const conceptId of concepts) {
+    const entry = user.mastery.get(conceptId);
+    if (entry && entry.status === "mastered") {
+      const windowAttempts = entry.lastAttempts || [];
+      const recentSuccesses = windowAttempts.filter(Boolean).length;
+      const recentSuccessRate = windowAttempts.length > 0 ? recentSuccesses / windowAttempts.length : 0;
+      
+      const trulyMastered = 
+        entry.attemptCount >= MASTERY_MIN_ATTEMPTS && 
+        recentSuccessRate >= MASTERY_SUCCESS_RATE &&
+        hasMasteryChangePoint(entry.adaptiveState);
+        
+      if (!trulyMastered) {
+        entry.status = "unlocked";
+        persistMasteryEntry(user, conceptId, entry);
+      }
+    }
+  }
+
+  let targetConceptId = null;
+  for (const conceptId of concepts) {
+    const entry = user.mastery.get(conceptId);
+    if (!entry || entry.status !== "mastered") {
+      targetConceptId = conceptId;
+      break;
+    }
+  }
+
+  if (!targetConceptId) {
+    targetConceptId = concepts[concepts.length - 1];
+    const entry = user.mastery.get(targetConceptId);
+    entry.status = "unlocked";
+    persistMasteryEntry(user, targetConceptId, entry);
+  }
+
+  const targetEntry = ensureMasteryEntry(user, targetConceptId, {
+    status: "unlocked",
+    timeAdded: getTotalInteractionCount(user),
+  });
+
+  if (targetEntry.status === "locked") {
+    targetEntry.status = "unlocked";
+    persistMasteryEntry(user, targetConceptId, targetEntry);
+  }
+
+  user.zpdNodes = [targetConceptId];
 }
 
 module.exports = {
   updateMastery,
   getNextConcept,
   getNextProblem,
+  jumpToConcept,
+  switchSection,
+  isFullIntegrationConceptId,
+  MASTERY_MIN_ATTEMPTS,
+  MASTERY_SCORE_THRESHOLD,
+  MASTERY_SUCCESS_RATE,
+  WINDOW_SIZE,
 };

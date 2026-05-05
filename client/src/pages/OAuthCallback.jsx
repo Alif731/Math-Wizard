@@ -36,7 +36,7 @@ const OAuthCallback = () => {
 
         dispatch(apiSlice.util.resetApiState());
         dispatch(setCredentials({ ...profile }));
-        navigate(getDefaultRouteForRole(profile.role), { replace: true });
+        navigate(getDefaultRouteForRole(profile.role, profile.loginCount), { replace: true });
       } catch (err) {
         if (!isCancelled) {
           setMessage(err?.data?.message || err?.error || "Google sign-in could not be completed.");
@@ -54,7 +54,7 @@ const OAuthCallback = () => {
   return (
     <div className="login__main">
       <div className="login__container login__container--compact">
-        <p className="login__eyebrow">Maths Wizard</p>
+        <p className="login__eyebrow">WordSolve</p>
         <h1 className="login__container__header">Google Sign-In</h1>
         <p className="login__subtitle">{message}</p>
         {showBackButton && (

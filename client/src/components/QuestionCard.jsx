@@ -1,67 +1,145 @@
 import { useState, useEffect } from "react";
-import "../sass/components/questionCard.scss";
-import DragDropQuestion from "./DragDropQuestion";
 import Confetti from "react-confetti";
-import MatchTheFollowing from "./MatchTheFollowing";
 
-import { PiArrowBendDoubleUpLeftBold } from "react-icons/pi";
+import "../sass/components/questionCard.scss";
+import "../sass/components/question_type/conceptualQuestion.scss";
+import "../sass/components/question_type/visualBarModel.scss";
+import "../sass/components/question_type/matchTheFollowing.scss";
+import "../sass/components/question_type/directInputQuestion.scss";
+import "../sass/components/question_type/schemaQuestion.scss";
 
-// preload audio
+import GhostPanel from "./GhostPanel.jsx";
+import ConceptualQuestion from "./Question_Type/Phase1/ConceptualQuestion";
+import VisualBarModel from "./Question_Type/Phase1/VisualBarModel";
+import MatchTheFollowing from "./Question_Type/Phase1/MatchTheFollowing";
+import DirectInputQuestion from "./Question_Type/Phase1/DirectInputQuestion";
+import SchemaQuestion from "./Question_Type/Phase2/SchemaQuestion.jsx";
+import {
+  buildSubmissionResponse,
+  createInitialResponse,
+  isQuestionResponseReady,
+} from "../utils/questionValidation";
+
 const audioSuccess = new Audio("/success1.mp3");
 const audioFailure = new Audio("/failure.mp3");
+const NEXT_PROBLEM_DELAY_MS = 1800;
 
-const QuestionCard = ({ problem, onSubmit, setStreak }) => {
-  // --- STREAK SYSTEM ---
-  // const [streak, setStreak] = useState(0);
+const getViewportSize = () => {
+  if (typeof window === "undefined") {
+    return { width: 0, height: 0 };
+  }
 
-  // // Load the streak from browser memory when the component mounts
-  // useEffect(() => {
-  //   const savedStreak = sessionStorage.getItem("mathStreak");
-  //   if (savedStreak) setStreak(Number(savedStreak));
-  // }, []);
+  return {
+    width: window.innerWidth,
+    height: window.innerHeight,
+  };
+};
 
-  // // Helper function to update the streak
-  // const handleStreakUpdate = (isCorrect) => {
-  //   const newStreak = isCorrect ? streak + 1 : 0;
-  //   setStreak(newStreak);
-  //   sessionStorage.setItem("mathStreak", newStreak);
-  // };
-  // -----------------------------------------------------------
-  // Concatenate for foundational questions
-  const question = problem?.question;
-  let displayOperands = question?.operands || [];
-  const num1 = displayOperands[0];
-  const num2 = displayOperands[1];
-  const showFullEquation = num1 && num2;
-
-  const [answer, setAnswer] = useState("");
+const QuestionCard = ({
+  problem,
+  onSubmit,
+  onNext,
+  disabled,
+  practiceSummary = { correct: 0, attempted: 0 },
+}) => {
+  const [answer, setAnswer] = useState(() =>
+    createInitialResponse(problem?.question),
+  );
+  const [feedback, setFeedback] = useState(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isError, setIsError] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
+  const [viewportSize, setViewportSize] = useState(getViewportSize);
 
-  // Reset state when the problem changes
+  // NEW: Holds our animation state safely
+  const [statAnim, setStatAnim] = useState({ key: 0, colorClass: "" });
+
+  // 1. When a new question loads, completely reset everything (including the animation)
   useEffect(() => {
-    setAnswer("");
+    setAnswer(createInitialResponse(problem?.question));
+    setFeedback(null);
     setIsSuccess(false);
     setIsError(false);
     setSelectedOption(null);
+    setStatAnim({ key: 0, colorClass: "" }); // Ensures no popping on question load!
   }, [problem]);
 
+  // 2. Only trigger animations when Success or Error actually occur
+  useEffect(() => {
+    if (isSuccess) {
+      setStatAnim((prev) => ({
+        key: prev.key + 1,
+        colorClass: "stat-pop-success",
+      }));
+    } else if (isError) {
+      setStatAnim((prev) => ({
+        key: prev.key + 1,
+        colorClass: "stat-pop-error",
+      }));
+    }
+  }, [isSuccess, isError]);
+
+  useEffect(() => {
+    const handleResize = () => setViewportSize(getViewportSize());
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const playSuccessSound = () => {
-    audioSuccess.currentTime = 0; // Rewind to start (in case they click fast)
-    audioSuccess.play().catch((e) => console.log("Audio blocked by browser"));
+    audioSuccess.currentTime = 0;
+    audioSuccess.play().catch(() => { });
   };
 
   const playErrorSound = () => {
-    audioFailure.currentTime = 0; // Rewind to start (in case they click fast)
-    audioFailure.play().catch((e) => console.log("Audio blocked by browser"));
+    audioFailure.currentTime = 0;
+    audioFailure.play().catch(() => { });
   };
 
-  // foundational
-  const handleOptionClick = (option) => {
-    // Prevent clicking other buttons while animating
-    if (isSuccess || isError) return;
+  const queueNextProblem = () => {
+    window.setTimeout(() => onNext?.(), NEXT_PROBLEM_DELAY_MS);
+  };
 
+  const applyFeedback = (result) => {
+    setFeedback(result);
+    setIsSuccess(Boolean(result?.isCorrect));
+    setIsError(Boolean(result) && !result.isCorrect);
+
+    // if (result?.isCorrect) {
+    //   playSuccessSound();
+    // } else {
+    //   playErrorSound();
+    // }
+  };
+
+  const submitStructuredResponse = async (overrideResponse) => {
+    if (!problem?.question || feedback || disabled) return;
+
+    const isSyntheticEvent =
+      overrideResponse &&
+      typeof overrideResponse === "object" &&
+      "preventDefault" in overrideResponse;
+
+    const responseToSubmit =
+      isSyntheticEvent || overrideResponse === undefined
+        ? buildSubmissionResponse(problem.question, answer)
+        : overrideResponse;
+
+    if (!isQuestionResponseReady(problem.question, answer)) return;
+
+    try {
+      const result = await onSubmit(responseToSubmit);
+      applyFeedback(result);
+      queueNextProblem();
+    } catch (error) {
+      console.error("Failed to submit:", error);
+    }
+  };
+
+  const handleOptionClick = async (option) => {
+    if (isSuccess || isError) return;
     setSelectedOption(option);
 
     const rawCorrect = problem?.question?.correctAnswer || problem?.answer;
@@ -73,392 +151,224 @@ const QuestionCard = ({ problem, onSubmit, setStreak }) => {
     const isCorrect = String(option).trim() === String(rawCorrect).trim();
 
     if (isCorrect) {
-      setStreak((prev) => prev + 1);
       setIsSuccess(true);
-      playSuccessSound();
+      // playSuccessSound();
       setTimeout(() => onSubmit(option), 3000);
     } else {
-      setStreak(0);
       setIsError(true);
-      playErrorSound();
+      // playErrorSound();
       setTimeout(() => onSubmit(option), 2600);
     }
   };
 
-  // normal question
-  const handleSubmit = (e) => {
-    if (e && e.preventDefault) e.preventDefault();
+  const handleDirectSubmit = async (event) => {
+    if (event?.preventDefault) event.preventDefault();
 
-    // SAFETY: Check for empty input
-    if (answer === "" || answer === null || answer === undefined) return;
+    if (!problem?.question || feedback || disabled) return;
 
-    // 2. SAFETY: Check if backend data exists (prevents crash)
-    const rawCorrect = problem?.question?.correctAnswer;
-    if (rawCorrect === undefined || rawCorrect === null) {
-      onSubmit(answer); // Submit blindly if data is missing
-      return;
-    }
+    const textAnswer =
+      typeof answer === "string"
+        ? answer
+        : answer?.textAnswer || answer?.slots?.answer || "";
 
-    // Convert both to Strings so "15" == 15
-    const userAnswer = String(answer).trim();
-    const dbAnswer = String(rawCorrect).trim();
-    const isCorrect = userAnswer === dbAnswer;
+    if (!String(textAnswer || "").trim()) return;
 
-    // ANIMATION LOGIC
-    const shouldAnimate =
-      problem.question.type === "visual" ||
-      problem.question.type === "icons_items" ||
-      problem.question.type === "direct";
-    if (shouldAnimate) {
-      if (isCorrect) {
-        playSuccessSound();
-        // SUCCESS ANIMATION
-        setIsSuccess(true);
-        setTimeout(() => {
-          onSubmit(userAnswer);
-        }, 3000);
-      } else {
-        playErrorSound();
-        // ERROR ANIMATION
-        setIsError(true);
-        setTimeout(() => {
-          onSubmit(userAnswer);
-        }, 2600);
-      }
-    } else {
-      // If not visual, submit immediately without animation
-      onSubmit(userAnswer);
+    try {
+      const result = await onSubmit(textAnswer);
+
+      applyFeedback(result);
+
+      queueNextProblem();
+    } catch (error) {
+      console.error("Failed to submit:", error);
     }
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      handleSubmit(e);
+  const handleMatchComplete = async (isValid) => {
+    if (feedback || disabled) return;
+
+    try {
+      const result = await onSubmit(isValid ? "matched" : "wrong_answer");
+      applyFeedback(result);
+      queueNextProblem();
+    } catch (error) {
+      console.error("Failed to submit:", error);
     }
   };
 
   if (!problem) return <div className="loading-state">Loading...</div>;
 
-  // Check if this is a "Multiple Choice" style question
   const questionType = problem.question.type;
-  const isConceptual = problem.question.type === "conceptual";
+  const isConceptual = questionType === "conceptual";
   const visualData = problem.question.visualData;
   const isIconsItems = questionType === "icons_items";
+  const isWorksheetDriven = [
+    "practice",
+    "equations",
+    "bar_to_equation",
+    "schema_bar_model",
+    "schema_direct_solve",
+    "schema_equation",
+    "schema_solve",
+    "schema_variables",
+    "word_to_bar",
+  ].includes(problem?.question?.moduleStage);
+  const showTelemetry = Boolean(problem?.adaptiveState) && import.meta.env.DEV;
   const isMatchTheFollowing =
     isIconsItems &&
     Array.isArray(visualData?.leftItems) &&
     Array.isArray(visualData?.rightItems);
-  const isIconDragDrop =
-    isIconsItems &&
-    Array.isArray(visualData?.groups) &&
-    Array.isArray(visualData?.dragOptions);
 
-  // Helper to determine bars container class based on state
-  const getInputClass = () => {
-    if (isSuccess) return "visual__input visual__input__success";
-    if (isError) return "visual__input visual__input__error";
-    return "visual__input";
-  };
+  const matchLeft = visualData?.leftItems || [];
+  const matchRight = visualData?.rightItems || [];
 
-  // bar model dynamic answer width helper function
-  // Helper to dynamically scale the input width for Visual Bar Models
-  const getDynamicWidth = () => {
-    // 1. If not submitted yet, leave it at its default CSS width (return undefined)
-    if (!isSuccess && !isError) return undefined;
+  const attempted = practiceSummary?.attempted || 0;
+  const correct = practiceSummary?.correct || 0;
 
-    // 2. If correct, span the full 100% of the bar below it
-    if (isSuccess) return "100%";
-
-    // 3. If wrong, calculate how big their number is compared to the correct answer
-    const correctNum = Number(question?.correctAnswer);
-    const userNum = Number(answer);
-
-    if (!isNaN(correctNum) && !isNaN(userNum) && correctNum > 0) {
-      const percentage = (userNum / correctNum) * 100;
-      // Cap the width between 15% (so it doesn't shrink to nothing) and 100% (so it doesn't break the screen)
-      return `${Math.min(100, Math.max(15, percentage))}%`;
-    }
-
-    return "100%"; // Fallback
-  };
-
-  // Foundational Render
-  const conceptualButtons = [];
-  if (isConceptual && question?.options) {
-    for (let i = 0; i < question.options.length; i++) {
-      const option = question.options[i];
-      // Generate A, B, C, D dynamically based on loop index
-      const letter = String.fromCharCode(65 + i);
-
-      let btnClass = "card__options__btn";
-      if (selectedOption === option) {
-        if (isSuccess) btnClass += " card__options__btn__success";
-        if (isError) btnClass += " card__options__btn__error";
-      }
-
-      conceptualButtons.push(
-        <button
-          key={option}
-          className={btnClass}
-          onClick={() => handleOptionClick(option)}
-          disabled={isSuccess || isError}
-        >
-          <span className="sike">
-            <span className="sike__options">{letter}</span>
-            {showFullEquation ? `${num1} ${option} ${num2}` : option}
-          </span>
-        </button>,
-      );
-    }
-  }
-
-  // Fallback data for Match The Following if not in DB yet
-  const matchLeft = visualData?.leftItems || [
-    { id: "L1", content: "🐶🐶🐶 + 🐶🐶", matchId: "R1" },
-    { id: "L2", content: "10 - 4", matchId: "R2" },
-    { id: "L3", content: "⭐⭐ × ⭐⭐", matchId: "R3" },
-    { id: "L4", content: "8 ÷ 2", matchId: "R4" },
-  ];
-
-  const matchRight = visualData?.rightItems || [
-    { id: "R4", content: "4" },
-    { id: "R1", content: "5" },
-    { id: "R3", content: "4 Stars" },
-    { id: "R2", content: "6" },
-    { id: "R5", content: "9" },
-  ];
-
-  // Match-the-following flow
-  const handleMatchComplete = (isValid) => {
-    // Fill the state so any empty-checks pass
-    setAnswer("matched");
-
-    if (isValid) {
-      setStreak((prev) => prev + 1);
-      setIsSuccess(true);
-      playSuccessSound();
-
-      // Confetti for 2.5s, then next question
-      setTimeout(() => {
-        onSubmit("matched");
-      }, 2500);
-    } else {
-      setStreak(0);
-      setIsError(true);
-      playErrorSound();
-
-      // Show red lines for 2.6s, then move to next question!
-      setTimeout(() => {
-        onSubmit("wrong_answer");
-      }, 2600);
-    }
-  };
-
-  // Legacy icon drag-drop flow
-  const handleDragDropCorrect = (value) => {
-    setStreak((prev) => prev + 1);
-    setIsSuccess(true);
-    playSuccessSound();
-    setTimeout(() => {
-      onSubmit(value);
-    }, 3000);
-  };
-
-  const handleDragDropWrong = (value) => {
-    setStreak(0);
-    setIsError(true);
-    playErrorSound();
-    setTimeout(() => {
-      onSubmit(value);
-    }, 2600);
-  };
-
-  const [showHint, setShowHint] = useState(false);
-
-  // 1. Check if they have seen the hint yet this session when the component loads
-  useEffect(() => {
-    if (problem?.question?.type === "visual") {
-      const hasSeenHint = sessionStorage.getItem("visualHintSeen");
-      if (!hasSeenHint) {
-        setShowHint(true); // Show it if they haven't seen it!
-      }
-    }
-  }, [problem]);
-
-  // 2. The moment they start typing, hide the hint and save it to session storage
-  useEffect(() => {
-    if (answer !== "" && showHint) {
-      setShowHint(false);
-      sessionStorage.setItem("visualHintSeen", "true"); // Locks it away for the rest of the session!
-    }
-  }, [answer, showHint]);
-
+  const displayAttempted = isSuccess || isError ? attempted + 1 : attempted;
+  const displayCorrect = isSuccess ? correct + 1 : correct;
   return (
-    <div>
-      <div className="question__card">
-        {/* 🎉 CONFETTI EXPLOSION HERE */}
-        {isSuccess && (
-          <Confetti recycle={false} numberOfPieces={500} gravity={0.3} />
-        )}
-        <div className="question__text">
-          {" "}
-          <span className="highlight3">Q,</span> {problem.question.text}
+    <div className="question-shell">
+      <div
+        className="practice-summary"
+        style={{ display: "flex", gap: "1.2rem", alignItems: "center" }}
+      >
+        {/* CORRECT STAT */}
+        <div className="practice-summary__stat">
+          <span
+            className="practice-summary__label"
+            style={{ marginRight: "0.5rem" }}
+          >
+            Correct:
+          </span>
+          <strong
+            key={`correct-anim-${statAnim.key}`}
+            className={statAnim.colorClass}
+          >
+            {displayCorrect}
+          </strong>
         </div>
-        {/* --- SECTION 3: Match The Following SECTION --- */}
-        {isMatchTheFollowing && (
-          <div className="icons-items__container">
-            <MatchTheFollowing
-              key={problem.question.id}
-              leftItems={matchLeft}
-              rightItems={matchRight}
-              onComplete={handleMatchComplete}
-            />
-          </div>
-        )}
-        {/* {isIconDragDrop && (
-          <div className="icons-items__container">
-            <DragDropQuestion
-              options={visualData.dragOptions}
-              correctAnswer={question.correctAnswer}
-              iconName={visualData.groups?.[0]?.icon || "apple"}
-              onCorrect={handleDragDropCorrect}
-              onWrong={handleDragDropWrong}
-            />
-          </div>
-        )} */}
-        {/* ---------------------- SECTION 2: VISUAL BAR MODEL -------------------- */}
-        {questionType === "visual" && visualData && (
-          <div className="visual__container">
-            {/* Top Bracket with INPUT instead of '?' */}
-            {visualData.showTotal && (
-              <div className="visual__bracket">
-                {showHint && !isSuccess && !isError && (
-                  // {!isSuccess && !isError && (
-                  <div className="visual__hint">
-                    <div className="visual__hint-text">Type here!</div>
-                    <div className="visual__hint-arrow">
-                      <PiArrowBendDoubleUpLeftBold />
-                    </div>
-                  </div>
-                )}
-                <input
-                  type="number"
-                  className={getInputClass()}
-                  value={answer}
-                  onChange={(e) =>
-                    !isSuccess && !isError && setAnswer(e.target.value)
-                  }
-                  onKeyDown={handleKeyDown}
-                  onBlur={handleSubmit}
-                  placeholder="?"
-                  autoComplete="off"
-                  readOnly={isSuccess || isError}
-                  // Dynamic Width Input
-                  style={{
-                    width: getDynamicWidth(),
-                  }}
-                />
-                <div className="visual__line">
-                  <span className="visual__line__span">|</span>
-                </div>
-              </div>
-            )}
-            {/* Bars */}
-            {/* <div className={`visual__bars ${isSuccess ? "visual__bars__success" : ""}`}> */}
-            <div className={`visual__bars`}>
-              {visualData.parts.map((part, index) => (
-                <div
-                  key={index}
-                  className="visual__segment"
-                  style={{
-                    backgroundColor: part.color,
-                    flex: part.value,
-                  }}
-                >
-                  <span className="visual__label">{part.label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-        {/* ---------------------- SECTION 1: Foundational MODEL -------------------- */}
-        {isConceptual ? (
-          // 1. OPTION MODE (For Signs)
-          <div className="card__options">{conceptualButtons}</div>
-        ) : (
-          // ---------------------- SECTION 4: Normal Questions--------------------
-          <div>
-            {!isConceptual && questionType !== "visual" && !isIconsItems && (
-              <form onSubmit={handleSubmit} className="answer__form">
-                <input
-                  type="number"
-                  value={answer}
-                  onChange={(e) => setAnswer(e.target.value)}
-                  placeholder="Type your answer here..."
-                  className={
-                    isSuccess
-                      ? "answer__input visual__input__success"
-                      : isError
-                        ? "answer__input visual__input__error"
-                        : "answer__input"
-                  }
-                  autoFocus
-                />
-                <button
-                  onClick={handleSubmit}
-                  className="submit__btn"
-                  disabled={isSuccess || isError}
-                >
-                  {isSuccess
-                    ? "Correct!"
-                    : isError
-                      ? "Wrong..."
-                      : "Submit Answer"}
-                </button>
-              </form>
-            )}
-          </div>
-        )}
+
+        {/* ATTEMPTED STAT */}
+        <div className="practice-summary__stat">
+          <span
+            className="practice-summary__label"
+            style={{ marginRight: "0.5rem" }}
+          >
+            Attempted:
+          </span>
+          <strong
+            /* Uses the exact same animation key so they pop at the exact same time */
+            key={`attempt-anim-${statAnim.key}`}
+            /* Only applies the subtle bump if an animation is actively playing */
+            className={statAnim.key > 0 ? "stat-pop-neutral" : ""}
+          >
+            {displayAttempted}
+          </strong>
+        </div>
       </div>
+      <div className="question-shell__main">
+        {/* Confetti rendered outside question__card to avoid clipping */}
+        {isSuccess && (
+          <Confetti
+            key={`success-confetti-${statAnim.key}`}
+            width={viewportSize.width}
+            height={viewportSize.height}
+            recycle={false}
+            numberOfPieces={360}
+            gravity={0.48}
+            tweenDuration={700}
+            className="success-confetti"
+            style={{
+              position: "fixed",
+              inset: 0,
+              pointerEvents: "none",
+              zIndex: 9999,
+            }}
+          />
+        )}
+        <div className="question__card">
+          {isWorksheetDriven ? (
+            <SchemaQuestion
+              question={problem.question}
+              response={answer}
+              setResponse={setAnswer}
+              feedback={feedback}
+              onCheck={submitStructuredResponse}
+              onNext={onNext}
+              isSubmitting={disabled}
+            />
+          ) : (
+            <>
+              <div className="question__text">
+                <span className="highlight3">Q,</span> {problem.question.text}
+              </div>
+
+              {isMatchTheFollowing && (
+                <div className="icons-items__container">
+                  <MatchTheFollowing
+                    key={problem.question.id}
+                    id={problem.question.id || problem.question._id}
+                    leftItems={matchLeft}
+                    rightItems={matchRight}
+                    onComplete={handleMatchComplete}
+                  />
+                </div>
+              )}
+
+              {questionType === "visual" && visualData && (
+                <VisualBarModel
+                  problem={problem}
+                  answer={answer}
+                  setAnswer={setAnswer}
+                  isSuccess={isSuccess}
+                  isError={isError}
+                  handleKeyDown={(event) => {
+                    if (event.key === "Enter") handleDirectSubmit(event);
+                  }}
+                  handleSubmit={handleDirectSubmit}
+                />
+              )}
+
+              {isConceptual ? (
+                <ConceptualQuestion
+                  problem={problem}
+                  selectedOption={selectedOption}
+                  isSuccess={isSuccess}
+                  isError={isError}
+                  handleOptionClick={handleOptionClick}
+                />
+              ) : (
+                <div>
+                  {!isConceptual &&
+                    questionType !== "visual" &&
+                    !isIconsItems && (
+                      <DirectInputQuestion
+                        answer={answer}
+                        setAnswer={setAnswer}
+                        isSuccess={isSuccess}
+                        isError={isError}
+                        handleSubmit={handleDirectSubmit}
+                      />
+                    )}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+
+      {showTelemetry && (
+        <aside className="question-shell__telemetry">
+          <GhostPanel
+            adaptiveData={problem?.adaptiveState}
+            conceptId={problem?.concept?.id}
+            masteryConfig={problem?.masteryConfig}
+          />
+        </aside>
+      )}
     </div>
   );
 };
 
 export default QuestionCard;
-
-//  {/* Loop through the groups (e.g., 4 Apples, then 3 Cars) */}
-//           {problem.question?.visualData.groups.map((group, index) => {
-//             // Find the correct icon component from our map
-//             const IconComponent = ICON_MAP[group.icon] || FaQuestionCircle;
-
-//             return (
-//               <div key={index} className="icons-items__group-wrapper">
-
-//                 {/* The Grid of Icons dynamically */}
-//                 <div className="icons-items__grid">
-//                   {Array.from({ length: group.count }).map((_, i) => (
-//                     <span
-//                       key={i}
-//                       className="icons-items__icon"
-//                       style={{ animationDelay: `${i * 0.1}s` }}
-//                     >
-//                       <IconComponent />
-//                     </span>
-//                   ))}
-//                 </div>
-
-//                 {/* Label under the icons (e.g. "4 Apples") */}
-//                 <span className="icons-items__label">{group.label}</span>
-
-//                 {/* Show Operator (like +) if it's not the last group */}
-//                 {index < problem.question.visualData.groups.length - 1 && (
-//                    <div className="icons-items__operator">
-//                      {problem.question.visualData.operator || "+"}
-//                    </div>
-//                 )}
-//               </div>
-//             );
-//           })}
-
-//           {/* Equals Sign */}
-//           <div className="icons-items__operator">=</div>

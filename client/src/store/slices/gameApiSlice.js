@@ -5,12 +5,12 @@ export const gameApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     // --- GAME ROUTES ---
     getProblem: builder.query({
-      query: (_username) => '/learning/problem',
+      query: (_username) => "/learning/problem",
       providesTags: ["Problem"],
     }),
 
     getUserStatus: builder.query({
-      query: (_username) => '/learning/status',
+      query: (_username) => "/learning/status",
       providesTags: ["UserStatus"],
     }),
 
@@ -20,8 +20,26 @@ export const gameApiSlice = apiSlice.injectEndpoints({
         method: "POST",
         body: payload,
       }),
-      // Magic: Refresh UserStatus AND Problem when an answer is submitted
-      invalidatesTags: ["UserStatus", "Problem"],
+      invalidatesTags: ["Leaderboard", "UserStatus", "Activity"],
+    }),
+
+    // Jump to a specific concept (used by Student Hub)
+    jumpToConcept: builder.mutation({
+      query: (payload) => ({
+        url: "/learning/jump",
+        method: "POST",
+        body: payload,
+      }),
+      invalidatesTags: ["Problem", "UserStatus"],
+    }),
+
+    switchSection: builder.mutation({
+      query: (payload) => ({
+        url: "/learning/switch-section",
+        method: "POST",
+        body: payload,
+      }),
+      invalidatesTags: ["Problem", "UserStatus"],
     }),
   }),
   overrideExisting: false, // Prevent errors in hot-reloading
@@ -32,4 +50,6 @@ export const {
   useGetProblemQuery,
   useGetUserStatusQuery,
   useSubmitAnswerMutation,
+  useJumpToConceptMutation,
+  useSwitchSectionMutation,
 } = gameApiSlice;

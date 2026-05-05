@@ -1,3 +1,5 @@
+@use "../util/breakpoint" as ut;
+
 .profile-page {
   min-height: 88vh;
   font-family: cursive;
@@ -7,18 +9,27 @@
 
   .profile-layout {
     display: grid;
-    grid-template-columns: 1fr 350px;
+    // grid-template-columns: 1fr 350px;
+    // grid-template-columns: 3fr 1fr;
     gap: 2rem;
     margin-top: 2rem;
+    margin: auto;
+    // max-width: 1350px;
 
     @media (max-width: 992px) {
       grid-template-columns: 1fr;
     }
   }
 
+  .student__link {
+    display: flex;
+    gap: 15px;
+    flex-direction: column;
+  }
+
   .profile-section {
     background: white;
-    padding: 2rem;
+    padding: 1rem;
     border-radius: 24px;
     border-right: 5px solid #f2cc8f;
     border-bottom: 5px solid #f2cc8f;
@@ -26,15 +37,21 @@
     margin-bottom: 2rem;
 
     .profile-section-title {
-      color: #3d405b;
+      color: #5d6185;
       font-size: 1.8rem;
       margin-bottom: 1.5rem;
-      text-shadow: rgba(242, 204, 143, 0.5) 0 0 10px;
+      // text-shadow: rgba(242, 204, 143, 0.5) 0 0 10px;
       border-bottom: 2px dashed #f2cc8f;
       padding-bottom: 0.5rem;
     }
   }
 
+  .profile-settings-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    align-items: stretch;
+  }
   .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -67,6 +84,29 @@
     background: #fffcf7;
     border-radius: 12px;
     padding: 0.5rem;
+    max-height: 500px; // You can adjust this value (e.g., 60vh) depending on your screen size preference
+    overflow-y: auto;
+
+    // Add a little padding so the scrollbar doesn't touch the cards
+    padding-right: 10px;
+
+    // --- 2. Custom Elegant Scrollbar ---
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: #cbd5e1; // Soft grey
+      border-radius: 10px;
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8; // Slightly darker grey on hover
+    }
   }
 
   .activity-item {
@@ -85,15 +125,21 @@
       border-radius: 50%;
       margin-right: 12px;
 
-      &.correct { background: #81b29a; }
-      &.incorrect { background: #e07a5f; }
+      &.correct {
+        background: #81b29a;
+      }
+      &.incorrect {
+        background: #e07a5f;
+      }
     }
 
     .activity-text {
       flex-grow: 1;
       color: #3d405b;
       font-size: 1.1rem;
-      strong { color: #e07a5f; }
+      strong {
+        color: #0071e9;
+      }
     }
 
     .activity-date {
@@ -104,7 +150,7 @@
 
   .avatar-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
     gap: 1rem;
     padding: 1rem;
     background: #fffcf7;
@@ -113,7 +159,7 @@
 
     .avatar-option {
       font-size: 2.5rem;
-      padding: 0.5rem;
+      // padding: 0.5rem;
       cursor: pointer;
       text-align: center;
       border-radius: 12px;
@@ -139,7 +185,7 @@
       margin-bottom: 1rem;
       label {
         display: block;
-        color: #3d405b;
+        color: #5d6185;
         margin-bottom: 0.4rem;
         font-weight: bold;
       }
@@ -168,8 +214,13 @@
     transition: all 0.3s;
 
     &:hover {
-      background: #e07a5f;
-      transform: translateY(-2px);
+      background-color: #3d405b;
+      color: #81b29a;
+      transform: translateY(2px);
+      box-shadow:
+        rgb(0 0 0 / 49%) 0px 2px 4px,
+        rgb(0 0 0) 0px 7px 13px -3px,
+        #81b29a 0px -3px 0px inset;
     }
   }
 
@@ -198,8 +249,14 @@
     padding: 0.6rem;
     border-radius: 8px;
     font-weight: bold;
-    &.success { background: #f0fdf4; color: #16a34a; }
-    &.error { background: #fef2f2; color: #dc2626; }
+    &.success {
+      background: #f0fdf4;
+      color: #16a34a;
+    }
+    &.error {
+      background: #fef2f2;
+      color: #dc2626;
+    }
   }
 
   .sidebar-section {
@@ -209,6 +266,183 @@
       border-radius: 24px;
       border-right: 5px solid #f2cc8f;
       border-bottom: 5px solid #f2cc8f;
+    }
+  }
+}
+
+.player-badge-profile {
+  border-radius: 12px;
+  border-right: 5px solid #f2cc8f;
+  border-bottom: 5px solid #f2cc8f;
+  font-family: cursive;
+  background: linear-gradient(145deg, #3d405b 0%, #11161c 100%);
+  color: #f2e9e4;
+  padding: 10px;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 2rem;
+
+  // transition
+  display: flex;
+  align-items: center;
+  cursor: default;
+  transition: all 0.5s ease-in-out;
+  text-align: center;
+
+  @include ut.breakpoint(medium) {
+    font-size: 1.2rem;
+  }
+  @include ut.breakpoint(small) {
+    font-size: 0.6rem;
+  }
+
+  // --- THE HOVER LOGIC ---
+  strong {
+    // 1. Hidden State (Default)
+    max-width: 0; // Takes up no width
+    opacity: 1; // Invisible
+    overflow: hidden; // Hides the text that overflows width 0
+    white-space: nowrap; // Keeps text on one line so it slides out
+    transition:
+      max-width 0.8s ease-in-out,
+      opacity 0.8s ease-in-out,
+      margin 0.8s ease;
+    margin-right: 0; // No gap when hidden
+    color: white; // perfect animation
+    text-shadow: none; // perfect animation
+  }
+
+  // 2. Visible State (On Parent Hover)
+  &:hover strong {
+    max-width: 1000px; // Expand wide enough to fit the text
+    opacity: 1; // Fade in
+    margin-right: 0.5rem; // Add a small gap between message and username
+    color: #f2e9e4;
+    text-shadow: none;
+  }
+}
+
+.game-header-profile {
+  // max-width: 1200px;
+  // margin: 0.5rem;
+  // font-size: 1rem;
+  margin: 1.5rem 0;
+  margin-right: 0.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap; // Wrap on small phones
+  gap: 1rem;
+}
+
+// Activity Section Style
+.activity-item {
+  display: flex;
+  align-items: center;
+  padding: 14px;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid #f0f0f0;
+  transition: all 0.3s ease;
+
+  &--correct {
+    border-left: 4px solid #22c55e;
+    &:hover {
+      background-color: #f0fdf4;
+    }
+    .icon-success {
+      color: #22c55e;
+      // filter: drop-shadow(0 0 3px rgba(34, 197, 94, 0.4));
+    }
+  }
+
+  &--incorrect {
+    border-left: 4px solid #ef4444;
+    &:hover {
+      background-color: #fef2f2;
+    }
+    .icon-error {
+      color: #ef4444;
+      // filter: drop-shadow(0 0 3px rgba(239, 68, 68, 0.4));
+    }
+  }
+}
+
+.activity-icon-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 12px;
+}
+
+.activity-details {
+  display: flex;
+  flex: 1;
+  justify-content: space-between;
+  .student-name {
+    color: #374151;
+    font-weight: 600;
+  }
+
+  .activity-date {
+    display: block;
+    font-size: 0.75rem;
+    color: #9ca3af;
+    margin-top: 2px;
+  }
+}
+
+.activity-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.03); // Glass effect
+  border: 2px dashed rgba(0, 0, 0, 0.05); // Dash border looks like an "empty slot"
+  border-radius: 24px;
+  margin-top: 10px;
+
+  .icon-wrapper {
+    background: rgba(85, 174, 247, 0.1); // Light purple circle
+    color: #0071e9;
+    padding: 20px;
+    border-radius: 50%;
+    margin-bottom: 20px;
+  }
+
+  h3 {
+    color: #2d3748; // Dark gray/black for readability
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+    font-weight: 700;
+  }
+
+  p {
+    color: #718096; // Softer gray for the subtitle
+    max-width: 300px;
+    line-height: 1.5;
+    margin-bottom: 24px;
+  }
+
+  .start-learning-btn {
+    background: #0071e9;
+    color: white;
+    padding: 10px 24px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      background: #014b99;
+      box-shadow: 0 6px 20px rgba(85, 150, 247, 0.4);
     }
   }
 }

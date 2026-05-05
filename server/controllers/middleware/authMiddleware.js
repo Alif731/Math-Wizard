@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../../models/User');
+const { clearTokenCookie } = require('../../utils/generateToken');
 
 const protect = async (req, res, next) => {
   let token;
@@ -13,13 +14,21 @@ const protect = async (req, res, next) => {
       req.user = await User.findById(decoded.userId).select('-password');
 
       if (!req.user) {
+        clearTokenCookie(res);
         res.status(401).json({ message: 'Not authorized, user not found' });
         return;
       }
 
       next();
     } catch (error) {
-      console.error(error);
+      clearTokenCookie(res);
+
+      if (error?.name === 'JsonWebTokenError' || error?.name === 'TokenExpiredError') {
+        console.warn(`JWT verification failed: ${error.message}`);
+      } else {
+        console.error(error);
+      }
+
       res.status(401).json({ message: 'Not authorized, token failed' });
     }
   } else {

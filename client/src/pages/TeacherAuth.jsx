@@ -1,12 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { setCredentials } from "../store/slices/authSlice";
-import { useLoginMutation, useRegisterMutation } from "../store/slices/usersApiSlice";
+import { logout, setCredentials } from "../store/slices/authSlice";
+import {
+  useLazyGetUserProfileQuery,
+  useLoginMutation,
+  useRegisterMutation,
+} from "../store/slices/usersApiSlice";
 import { apiSlice } from "../store/slices/apiSlice";
 import getDefaultRouteForRole from "../utils/getDefaultRouteForRole";
 import PasswordField from "../components/PasswordField";
+
 import "../sass/page/loginPage.scss";
+
+import { toast } from "react-toastify";
 
 const TeacherAuth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -17,18 +24,53 @@ const TeacherAuth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
+  const [isCheckingStoredSession, setIsCheckingStoredSession] = useState(false);
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [login, { isLoading: isLoginLoading }] = useLoginMutation();
   const [register, { isLoading: isRegisterLoading }] = useRegisterMutation();
+  const [getUserProfile] = useLazyGetUserProfileQuery();
   const { userInfo } = useSelector((state) => state.auth);
 
   useEffect(() => {
-    if (userInfo) {
-      navigate(getDefaultRouteForRole(userInfo.role), { replace: true });
-    }
-  }, [navigate, userInfo]);
+    let isActive = true;
+
+    const validateStoredSession = async () => {
+      if (!userInfo) {
+        setIsCheckingStoredSession(false);
+        return;
+      }
+
+      setIsCheckingStoredSession(true);
+
+      try {
+        const profile = await getUserProfile().unwrap();
+
+        if (!isActive) {
+          return;
+        }
+
+        dispatch(setCredentials({ ...profile }));
+        navigate(getDefaultRouteForRole(profile.role, profile.loginCount), { replace: true });
+      } catch (_error) {
+        if (!isActive) {
+          return;
+        }
+
+        dispatch(logout());
+        dispatch(apiSlice.util.resetApiState());
+        setError("");
+        setIsCheckingStoredSession(false);
+      }
+    };
+
+    validateStoredSession();
+
+    return () => {
+      isActive = false;
+    };
+  }, [dispatch, getUserProfile, navigate, userInfo]);
 
   const handleModeToggle = () => {
     setIsLogin((prev) => !prev);
@@ -43,7 +85,9 @@ const TeacherAuth = () => {
   const completeLogin = (payload) => {
     dispatch(apiSlice.util.resetApiState());
     dispatch(setCredentials({ ...payload }));
-    navigate(getDefaultRouteForRole(payload?.role), { replace: true });
+
+    toast.success(`Welcome to the Dashboard, ${payload.username}!`);
+    navigate(getDefaultRouteForRole(payload?.role, payload?.loginCount), { replace: true });
   };
 
   const handleLogin = async (e) => {
@@ -88,15 +132,29 @@ const TeacherAuth = () => {
         teacherCode,
       }).unwrap();
       completeLogin(res);
+      toast.success("Teacher account created!");
     } catch (err) {
       setError(err?.data?.message || err.error || "Teacher sign up failed");
     }
   };
+  const videoSrc = isLogin ? "/TG.mp4" : "/TG1.mp4";
 
   return (
     <div className="login__main">
+      <div className="login__img">
+        <video
+          key={videoSrc}
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="bg-video"
+        >
+          <source src={videoSrc} type="video/mp4" />
+        </video>
+      </div>
       <div className="login__container">
-        <p className="login__eyebrow">Maths Wizard</p>
+        {/* <p className="login__eyebrow">WordSolve</p> */}
         <h1 className="login__container__header">Teacher Portal</h1>
         <p className="login__subtitle">
           {isLogin
@@ -132,7 +190,10 @@ const TeacherAuth = () => {
         </div>
 
         <div className="login__container__form">
-          <form onSubmit={isLogin ? handleLogin : handleRegister} className="login-form">
+          <form
+            onSubmit={isLogin ? handleLogin : handleRegister}
+            className="login-form"
+          >
             {!isLogin && (
               <div className="input__group">
                 <input
@@ -182,17 +243,23 @@ const TeacherAuth = () => {
             <button
               type="submit"
               className="loginMain__btn"
-              disabled={isLoginLoading || isRegisterLoading}
+              disabled={
+                isCheckingStoredSession || isLoginLoading || isRegisterLoading
+              }
             >
-              {isLoginLoading || isRegisterLoading
-                ? "Loading..."
-                : isLogin
-                  ? "Teacher Login"
-                  : "Teacher Sign Up"}
+              {isCheckingStoredSession
+                ? "Checking session..."
+                : isLoginLoading || isRegisterLoading
+                  ? "Loading..."
+                  : isLogin
+                    ? "Teacher Login"
+                    : "Teacher Sign Up"}
             </button>
 
             <p className="login__toggle" onClick={handleModeToggle}>
-              {isLogin ? "Need a teacher account? Sign Up" : "Already registered? Login"}
+              {isLogin
+                ? "Need a teacher account? Sign Up"
+                : "Already registered? Login"}
             </p>
           </form>
         </div>

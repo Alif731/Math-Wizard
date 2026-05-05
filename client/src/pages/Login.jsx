@@ -1,19 +1,26 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { setCredentials } from "../store/slices/authSlice";
+import { logout, setCredentials } from "../store/slices/authSlice";
 import {
   useGetOAuthProvidersQuery,
+  useLazyGetUserProfileQuery,
   useLoginMutation,
   useRegisterMutation,
 } from "../store/slices/usersApiSlice";
 import { apiSlice } from "../store/slices/apiSlice";
 import getDefaultRouteForRole from "../utils/getDefaultRouteForRole";
 import PasswordField from "../components/PasswordField";
+import { toast } from "react-toastify";
+
 import "../sass/page/loginPage.scss";
 
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api").replace(/\/+$/, "");
-const backendBaseUrl = apiBaseUrl.endsWith("/api") ? apiBaseUrl.slice(0, -4) : apiBaseUrl;
+const apiBaseUrl = (
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api"
+).replace(/\/+$/, "");
+const backendBaseUrl = apiBaseUrl.endsWith("/api")
+  ? apiBaseUrl.slice(0, -4)
+  : apiBaseUrl;
 const googleOAuthUrl = `${backendBaseUrl}/api/users/oauth/google`;
 
 const Login = () => {
@@ -24,12 +31,14 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
+  const [isCheckingStoredSession, setIsCheckingStoredSession] = useState(false);
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const [login, { isLoading: isLoginLoading }] = useLoginMutation();
   const [register, { isLoading: isRegisterLoading }] = useRegisterMutation();
+  const [getUserProfile] = useLazyGetUserProfileQuery();
   const {
     data: oauthProviders,
     isLoading: isOAuthProvidersLoading,
@@ -40,10 +49,43 @@ const Login = () => {
   const googleEnabled = Boolean(oauthProviders?.google);
 
   useEffect(() => {
-    if (userInfo) {
-      navigate(getDefaultRouteForRole(userInfo.role), { replace: true });
-    }
-  }, [navigate, userInfo]);
+    let isActive = true;
+
+    const validateStoredSession = async () => {
+      if (!userInfo) {
+        setIsCheckingStoredSession(false);
+        return;
+      }
+
+      setIsCheckingStoredSession(true);
+
+      try {
+        const profile = await getUserProfile().unwrap();
+
+        if (!isActive) {
+          return;
+        }
+
+        dispatch(setCredentials({ ...profile }));
+        navigate(getDefaultRouteForRole(profile.role, profile.loginCount), { replace: true });
+      } catch (_error) {
+        if (!isActive) {
+          return;
+        }
+
+        dispatch(logout());
+        dispatch(apiSlice.util.resetApiState());
+        setError("");
+        setIsCheckingStoredSession(false);
+      }
+    };
+
+    validateStoredSession();
+
+    return () => {
+      isActive = false;
+    };
+  }, [dispatch, getUserProfile, navigate, userInfo]);
 
   const handleModeToggle = () => {
     setIsLogin((prev) => !prev);
@@ -55,9 +97,20 @@ const Login = () => {
   };
 
   const completeLogin = (payload) => {
+    sessionStorage.removeItem("visualHintCount");
+    sessionStorage.removeItem("lastHintProblemId");
+    sessionStorage.removeItem("matchHintCount");
+    sessionStorage.removeItem("lastMatchHintId");
+
+    // THE NEW RULE: If it's their 1st login, give 2 hints. Otherwise, give 1.
+    const maxHints = payload?.loginCount <= 1 ? 2 : 1;
+    sessionStorage.setItem("maxHintsAllowed", maxHints);
+
     dispatch(apiSlice.util.resetApiState());
     dispatch(setCredentials({ ...payload }));
-    navigate(getDefaultRouteForRole(payload?.role), { replace: true });
+
+    toast.success(`Welcome back, ${payload.username}!`);
+    navigate(getDefaultRouteForRole(payload?.role, payload?.loginCount), { replace: true });
   };
 
   const handleLogin = async (e) => {
@@ -90,7 +143,12 @@ const Login = () => {
     }
 
     try {
-      const res = await register({ username, password, role: "student" }).unwrap();
+      const res = await register({
+        username,
+        password,
+        role: "student",
+      }).unwrap();
+      toast.success("Account created successfully!");
       completeLogin(res);
     } catch (err) {
       setError(err?.data?.message || err.error || "Registration failed");
@@ -104,6 +162,11 @@ const Login = () => {
       return;
     }
 
+    sessionStorage.removeItem("visualHintCount");
+    sessionStorage.removeItem("lastHintProblemId");
+    sessionStorage.removeItem("matchHintCount");
+    sessionStorage.removeItem("lastMatchHintId");
+
     window.location.assign(googleOAuthUrl);
   };
 
@@ -115,11 +178,24 @@ const Login = () => {
         ? ""
         : "Credentials not added";
 
+  const videoSrc = isLogin ? "/BG.mp4" : "/BG1.mp4";
   return (
     <div className="login__main">
+      <div className="login__img">
+        <video
+          key={videoSrc}
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="bg-video"
+        >
+          <source src={videoSrc} type="video/mp4" />
+        </video>
+      </div>
       <div className="login__container">
-        <p className="login__eyebrow">Maths Wizard</p>
-        <h1 className="login__container__header">Math Master</h1>
+        {/* <p className="login__eyebrow">WordSolve</p> */}
+        <h1 className="login__container__header">WordSolve</h1>
         <p className="login__subtitle">
           {isLogin
             ? "Welcome back. Ready for more math challenges?"
@@ -148,7 +224,10 @@ const Login = () => {
         </div>
 
         <div className="login__container__form">
-          <form onSubmit={isLogin ? handleLogin : handleRegister} className="login-form">
+          <form
+            onSubmit={isLogin ? handleLogin : handleRegister}
+            className="login-form"
+          >
             <div className="input__group">
               <input
                 className="login__container__name"
@@ -186,13 +265,17 @@ const Login = () => {
             <button
               type="submit"
               className="loginMain__btn"
-              disabled={isLoginLoading || isRegisterLoading}
+              disabled={
+                isCheckingStoredSession || isLoginLoading || isRegisterLoading
+              }
             >
-              {isLoginLoading || isRegisterLoading
-                ? "Loading..."
-                : isLogin
-                  ? "Login"
-                  : "Sign Up"}
+              {isCheckingStoredSession
+                ? "Checking session..."
+                : isLoginLoading || isRegisterLoading
+                  ? "Loading..."
+                  : isLogin
+                    ? "Login"
+                    : "Sign Up"}
             </button>
 
             <div className="login__divider">
@@ -214,7 +297,9 @@ const Login = () => {
             </div>
 
             <p className="login__toggle" onClick={handleModeToggle}>
-              {isLogin ? "Don't have an account? Sign Up" : "Already have an account? Login"}
+              {isLogin
+                ? "Don't have an account? Sign Up"
+                : "Already have an account? Login"}
             </p>
           </form>
         </div>
