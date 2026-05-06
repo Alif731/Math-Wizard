@@ -10,6 +10,7 @@ import {
 import { apiSlice } from "../store/slices/apiSlice";
 import getDefaultRouteForRole from "../utils/getDefaultRouteForRole";
 import PasswordField from "../components/PasswordField";
+import { validatePassword } from "../utils/validatePassword";
 
 import "../sass/page/loginPage.scss";
 
@@ -116,6 +117,12 @@ const TeacherAuth = () => {
 
     if (password !== confirmPassword) {
       setError("Passwords do not match");
+      return;
+    }
+
+    const { error: passwordError } = validatePassword(password);
+    if (passwordError) {
+      setError(passwordError);
       return;
     }
 
