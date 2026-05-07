@@ -3368,13 +3368,20 @@ const conceptsData = [
 
 const seedData = async () => {
   try {
-    // 1. Clean the database
-    await Concept.deleteMany({});
-    await User.deleteMany({});
-    await Attempt.deleteMany({});
-    await TeacherSignupCode.deleteMany({});
-    console.log("-----------------------------------------");
-    console.log("🧹 DATABASE WIPED FOR TESTING");
+    const isDevOrMemory = process.env.NODE_ENV === "development" || process.env.USE_MEMORY_DB === "true";
+    
+    // 1. Clean the database (ONLY IF EXPLICITLY ALLOWED OR IN LOCAL DEV)
+    if (process.env.RESET_DEMO_DATA === "true" || isDevOrMemory) {
+      await Concept.deleteMany({});
+      await User.deleteMany({});
+      await Attempt.deleteMany({});
+      await TeacherSignupCode.deleteMany({});
+      console.log("-----------------------------------------");
+      console.log("🧹 DATABASE WIPED FOR TESTING");
+    } else {
+      console.log("-----------------------------------------");
+      console.log("⚠️ SKIPPING DATABASE WIPE (Protecting Production Data)");
+    }
 
     await ensureTeacherSignupCode();
     await Concept.insertMany(conceptsData);

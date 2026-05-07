@@ -137,6 +137,22 @@ const validateIssuedQuestion = (user, conceptId, questionId) => {
   return null;
 };
 
+const serializeProblemForClient = (questionDoc) => {
+  const raw = questionDoc.toObject ? questionDoc.toObject() : questionDoc;
+  
+  // Create a safe copy to send to the client
+  const safeQuestion = { ...raw, id: raw._id };
+  
+  // Delete sensitive fields
+  delete safeQuestion.correctAnswer;
+  delete safeQuestion.validation;
+  delete safeQuestion.explanation;
+  delete safeQuestion.generatedByAI;
+  delete safeQuestion.verifiedByTeacher;
+  
+  return safeQuestion;
+};
+
 /**
  * Fetches the next problem for the user based on the KL-UCB learning engine.
  */
@@ -165,7 +181,7 @@ exports.getProblem = async (req, res) => {
       : masteryEntry.adaptiveState;
     res.json({
       concept: { id: concept.id, title: concept.title },
-      question: { ...question.toObject(), id: question._id },
+      question: serializeProblemForClient(question),
       description: concept.description,
       masteryConfig,
       //  ghost panel stats

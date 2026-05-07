@@ -21,6 +21,8 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
+    "helmet": "^8.0.0",
+    "compression": "^1.7.4",
     "express-rate-limit": "^8.3.1",
     "jsonwebtoken": "^9.0.3",
     "mathjs": "^15.1.0",
