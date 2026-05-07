@@ -9,6 +9,7 @@ import {
 
 const express = require("express");
 const cookieParser = require("cookie-parser");
+const lusca = require("lusca");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 const request = require("supertest");
@@ -37,6 +38,7 @@ const createApp = () => {
 
   testApp.use(express.json());
   testApp.use(cookieParser());
+  testApp.use(lusca.csrf());
   testApp.use("/api/learning", learningRoutes);
   testApp.use("/api/teacher", teacherRoutes);
   testApp.use("/api/users", userRoutes);
