@@ -68,6 +68,15 @@ app.use(express.json({ limit: "32kb" }));
 app.use(express.urlencoded({ extended: false, limit: "8kb" }));
 app.use(cookieParser());
 
+const { globalLimiter } = require("./controllers/middleware/rateLimitMiddleware");
+const { csrfGuard } = require("./controllers/middleware/csrfMiddleware");
+
+// Apply global rate limiting
+app.use("/api/", globalLimiter);
+
+// Apply CSRF protection
+app.use(csrfGuard);
+
 const learningRoutes = require("./routes/learningRoutes");
 const userRoutes = require("./routes/userRoutes");
 const leaderboardRoutes = require("./routes/leaderboardRoutes");
