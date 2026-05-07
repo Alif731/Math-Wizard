@@ -29,7 +29,7 @@ import {
 import { useGetClassroomStatsQuery } from "../store/slices/usersApiSlice";
 import { useGetRecentActivityQuery } from "../store/slices/usersApiSlice";
 
-import Heatmap from "../components/HeatMap";
+import Heatmap from "../components/Heatmap";
 import StudentMasteryRoster from "../components/StudentMasteryRoster";
 
 // Styling
