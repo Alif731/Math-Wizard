@@ -12,6 +12,7 @@ import { apiSlice } from "../store/slices/apiSlice";
 import getDefaultRouteForRole from "../utils/getDefaultRouteForRole";
 import PasswordField from "../components/PasswordField";
 import { toast } from "react-toastify";
+import { validatePassword } from "../utils/validatePassword";
 
 import "../sass/page/loginPage.scss";
 
@@ -139,6 +140,12 @@ const Login = () => {
 
     if (password !== confirmPassword) {
       setError("Passwords do not match");
+      return;
+    }
+
+    const { error: passwordError } = validatePassword(password);
+    if (passwordError) {
+      setError(passwordError);
       return;
     }
 
