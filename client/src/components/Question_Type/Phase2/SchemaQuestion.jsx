@@ -380,24 +380,26 @@ const SchemaQuestion = ({
   return (
     <div className="worksheet">
       <div className="worksheet__helper">
-        {/* Question Type */}
-        <div className="worksheet-title">
-          {question?.promptTitle || "practice"}
-        </div>
+        <div className="worksheet__helper__div">
+          {/* Question Type */}
+          <div className="worksheet-title">
+            {question?.promptTitle || "practice"}
+          </div>
 
-        {/* Schema  Type */}
-        <div className="worksheet__topline-main">
-          {/* {isSchemaStage && (
+          {/* Schema  Type */}
+          <div className="worksheet__topline-main">
+            {/* {isSchemaStage && (
             <StageTabs currentStage={question?.stageIndex || 1} />
           )} */}
 
-          {question?.schemaKind && (
-            <div
-              className={`schema-badge schema-badge--${question.schemaKind}`}
-            >
-              {question.schemaKind} Schema
-            </div>
-          )}
+            {question?.schemaKind && (
+              <div
+                className={`schema-badge schema-badge--${question.schemaKind}`}
+              >
+                {question.schemaKind} Schema
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Interactive Toggle Hint Button */}
@@ -409,6 +411,7 @@ const SchemaQuestion = ({
           if (!helpText) return null;
 
           return (
+            // <div>
             <button
               type="button"
               className={`worksheet-help ${showHint ? "is-open" : ""}`}
@@ -423,6 +426,7 @@ const SchemaQuestion = ({
                 </span>
               )}
             </button>
+            // </div>
           );
         })()}
       </div>

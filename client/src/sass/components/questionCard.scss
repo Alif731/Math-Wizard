@@ -1,3 +1,5 @@
+@use "../util/breakpoint" as ut;
+
 $page-text: #3d405b;
 $page-text-soft: #6b7280;
 $page-accent: #f2cc8f;
@@ -43,7 +45,7 @@ $page-accent: #f2cc8f;
   padding-top: 0;
   border-radius: 1rem;
   max-width: 1100px;
-  font-family: cursive;
+  font-family: "ActualComicSans", cursive;
   border-bottom: 5px solid #81b29a;
   border-right: 5px solid #81b29a;
   margin: auto;

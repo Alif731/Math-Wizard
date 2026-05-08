@@ -1,3 +1,4 @@
+@use "../util/breakpoint" as ut;
 $slate-blue: #729d88;
 $bg-cream: #fffaf3;
 $coral-red: #e07a5f;
@@ -14,6 +15,9 @@ $coral-red: #e07a5f;
   box-shadow:
     0 10px 25px rgb(61 64 91 / 11%),
     inset 0 -1px 0 rgba(242, 204, 143, 0.55);
+  @include ut.breakpoint(medium) {
+    font-size: 0.7rem;
+  }
   &.logged-in {
     color: $slate-blue !important;
     background: rgba(255, 255, 255, 0.72);

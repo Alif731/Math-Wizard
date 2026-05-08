@@ -1,10 +1,9 @@
 const Concept = require("../models/Concept");
 
 const WINDOW_SIZE = 5;
-const MASTERY_MIN_ATTEMPTS = 5;
-const MASTERY_SCORE_THRESHOLD = 5;
+const MASTERY_MIN_ATTEMPTS = 1;
+const MASTERY_SCORE_THRESHOLD = 1;
 const MASTERY_SUCCESS_RATE = 0.8; // 80% — student must get 4/5, 8/10, etc.
-
 
 // const WINDOW_SIZE = 3;
 // const MASTERY_MIN_ATTEMPTS = 2;
@@ -13,8 +12,8 @@ const MASTERY_SUCCESS_RATE = 0.8; // 80% — student must get 4/5, 8/10, etc.
 
 const CHANGE_POINT_FALSE_POSITIVE_RATE = Math.exp(-MASTERY_SCORE_THRESHOLD);
 const BANDIT_PRIORS = Object.freeze({
-  guessProbability: 0.10,
-  slipProbability: 0.10,
+  guessProbability: 0.1,
+  slipProbability: 0.1,
 });
 const BANDIT_HISTORY_LIMIT = 25;
 const EPSILON = 1e-9;
@@ -67,7 +66,6 @@ function normalizeNumberList(values, limit) {
     .slice(-limit)
     .map(Number);
 }
-
 
 function cloneMasteryEntry(entry) {
   if (!entry) {
@@ -142,11 +140,11 @@ function normalizeAdaptiveState(adaptiveState, fallback = {}) {
     ),
     guessProbability: clampProbability(
       adaptiveState?.guessProbability || BANDIT_PRIORS.guessProbability,
-      BANDIT_PRIORS.guessProbability
+      BANDIT_PRIORS.guessProbability,
     ),
     slipProbability: clampProbability(
       adaptiveState?.slipProbability || BANDIT_PRIORS.slipProbability,
-      BANDIT_PRIORS.slipProbability
+      BANDIT_PRIORS.slipProbability,
     ),
     changePointScore: Number.isFinite(Number(adaptiveState?.changePointScore))
       ? Number(adaptiveState.changePointScore)
@@ -606,8 +604,12 @@ function getQuestionForConcept(concept, masteryEntry, user) {
     // MISSING PART EQUATIONS: Proportion Logic
     // 20% Diff1 Add, 20% Diff1 Sub, 60% Diff2 Mix
     // ==========================================
-    const diff1Add = questions.filter((q) => q.difficulty === 1 && q.equationSpec?.operator === "+");
-    const diff1Sub = questions.filter((q) => q.difficulty === 1 && q.equationSpec?.operator === "-");
+    const diff1Add = questions.filter(
+      (q) => q.difficulty === 1 && q.equationSpec?.operator === "+",
+    );
+    const diff1Sub = questions.filter(
+      (q) => q.difficulty === 1 && q.equationSpec?.operator === "-",
+    );
     const diff2 = questions.filter((q) => q.difficulty === 2);
 
     const cycleIndex = timesPlayed % 5;
@@ -976,13 +978,14 @@ async function switchSection(user, sectionId) {
     if (entry && entry.status === "mastered") {
       const windowAttempts = entry.lastAttempts || [];
       const recentSuccesses = windowAttempts.filter(Boolean).length;
-      const recentSuccessRate = windowAttempts.length > 0 ? recentSuccesses / windowAttempts.length : 0;
-      
-      const trulyMastered = 
-        entry.attemptCount >= MASTERY_MIN_ATTEMPTS && 
+      const recentSuccessRate =
+        windowAttempts.length > 0 ? recentSuccesses / windowAttempts.length : 0;
+
+      const trulyMastered =
+        entry.attemptCount >= MASTERY_MIN_ATTEMPTS &&
         recentSuccessRate >= MASTERY_SUCCESS_RATE &&
         hasMasteryChangePoint(entry.adaptiveState);
-        
+
       if (!trulyMastered) {
         entry.status = "unlocked";
         persistMasteryEntry(user, conceptId, entry);

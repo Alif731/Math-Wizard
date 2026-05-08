@@ -1,3 +1,4 @@
+@use "../util/breakpoint" as ut;
 @import url("https://fonts.googleapis.com/css2?family=Playwrite+GB+J+Guides:ital@0;1&display=swap");
 
 $page-text: #3d405b;
@@ -28,13 +29,14 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   margin: 0 auto;
   min-height: 86vh;
   // padding: 1.25rem 1rem 2rem;
-  font-family: cursive;
+  font-family: "ActualComicSans", cursive;
   color: $page-text;
 }
 
 .game-header {
   // max-width: 1200px;
   // margin: 0.5rem;
+  width: fit-content;
   margin: 0.8rem 0;
   margin-right: 0.5rem;
   display: flex;
@@ -54,13 +56,22 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     border-right: 5px solid #f2cc8f;
     border-bottom: 5px solid #f2cc8f;
 
-    font-family: cursive;
+    font-family: "ActualComicSans", cursive;
 
     color: #3d405b;
     padding: 10px;
     border-radius: 9999px;
     font-weight: bold;
     font-size: 1.1rem;
+    @include ut.breakpoint(medium) {
+      font-size: 0.72rem;
+    }
+    @include ut.breakpoint(small) {
+      font-size: 0.62rem;
+    }
+    @include ut.breakpoint(xSmall) {
+      font-size: 0.47rem;
+    }
 
     // transition
     display: flex;
@@ -223,7 +234,7 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   // background: linear-gradient(135deg, #f4f1de, #f2cc8f);
   // border-right: 5px solid #f2cc8f;
   // border-bottom: 5px solid #f2cc8f;
-  font-family: cursive;
+  font-family: "ActualComicSans", cursive;
   color: #ffffff;
   // background-color: #22223b;
   padding: 8px 16px;
