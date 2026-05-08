@@ -143,9 +143,18 @@ const serializeProblemForClient = (questionDoc) => {
   // Create a safe copy to send to the client
   const safeQuestion = { ...raw, id: raw._id };
   
-  // Delete sensitive fields
-  delete safeQuestion.correctAnswer;
-  delete safeQuestion.validation;
+  // Strip fields that should only appear after the student submits.
+  // - explanation: revealed only in the submitAnswer response
+  // - generatedByAI / verifiedByTeacher: internal metadata
+  //
+  // NOTE: `correctAnswer` is intentionally KEPT. The client uses it for
+  // instant visual feedback on conceptual (MCQ) and visual bar model
+  // questions. Server-side validation in submitAnswer is the authoritative
+  // check regardless.
+  //
+  // NOTE: `validation` is intentionally KEPT. It contains structural/display
+  // data the client needs (displayEquation, verificationEquation, slot
+  // structure for bar models, variable metadata for locking unknowns).
   delete safeQuestion.explanation;
   delete safeQuestion.generatedByAI;
   delete safeQuestion.verifiedByTeacher;

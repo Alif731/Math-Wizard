@@ -8,6 +8,7 @@ import {
 
 import QuestionCard from "../components/QuestionCard";
 import "../sass/page/homePage.scss";
+import { Sunrise, Sun, Moon } from "lucide-react";
 
 const Home = () => {
   const { userInfo } = useSelector((state) => state.auth);
@@ -82,13 +83,57 @@ const Home = () => {
   if (!username) return <div className="loading-state">Loading...</div>;
   if (!problem) return <div className="loading-state">Loading...</div>;
 
+  // Greet According to time
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+
+    if (hour < 12) {
+      return {
+        firstLetter: "M",
+        rest: "orning",
+        Icon: Sunrise,
+        color: "#f59e0b",
+      }; // Amber for Morning
+    } else if (hour < 17) {
+      return {
+        firstLetter: "A",
+        rest: "fternoon",
+        Icon: Sun,
+        color: "#eab308",
+      }; // Yellow for Afternoon
+    } else {
+      return { firstLetter: "E", rest: "vening", Icon: Moon, color: "#8b5cf6" }; // Purple for Evening
+    }
+  };
+  const { firstLetter, rest, Icon, color } = getGreeting();
+
   return (
     <div className="home-page">
       <header className="game-header">
-        <div className="player-badge highlight2">
+        {/* <div className="player-badge highlight2">
           <span className="highlight1">G</span>
           <span style={{ marginRight: "6px" }}>ood</span>
           <span className="highlight2"> M</span>orning {username}
+          <strong style={{ marginLeft: "0.4rem" }}>
+            {" "}
+            . <span className="highlight1">L</span>et's Continue this Journey!
+          </strong>
+        </div> */}
+        <div className="player-badge highlight2">
+          {/* 4. Render the Lucide Icon with perfect vertical alignment */}
+          <span
+            style={{
+              marginRight: "8px",
+              display: "inline-flex",
+              alignItems: "center",
+            }}
+          >
+            <Icon size={22} color={color} strokeWidth={2.5} />
+          </span>
+          <span className="highlight1">G</span>
+          <span style={{ marginRight: "6px" }}>ood</span>
+          <span className="highlight2"> {firstLetter}</span>
+          {rest} {username}
           <strong style={{ marginLeft: "0.4rem" }}>
             {" "}
             . <span className="highlight1">L</span>et's Continue this Journey!

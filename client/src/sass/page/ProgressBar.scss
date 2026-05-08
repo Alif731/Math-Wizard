@@ -1,3 +1,5 @@
+@use "../util/breakpoint" as ut;
+
 $page-text: #3d405b;
 $page-text-soft: #6b7280;
 $page-accent: #c7684f;
@@ -43,7 +45,7 @@ $page-sage: #81b29a;
     padding: 0.82rem 1.15rem;
     border-right: 5px solid #f2cc8f;
     border-bottom: 5px solid #f2cc8f;
-    font-family: cursive;
+    font-family: "ActualComicSans", cursive;
     background: linear-gradient(145deg, #3d405b 0%, #11161c 100%);
     color: #f2e9e4;
     padding: 10px;
@@ -399,7 +401,7 @@ $page-sage: #81b29a;
 
   /* 2. The Switch Button */
   &__button {
-    font-family: cursive;
+    font-family: "ActualComicSans", cursive;
     background: linear-gradient(135deg, #fff6ea 0%, #fffdf8 100%);
     color: #c7684f;
     font-size: 0.8rem;

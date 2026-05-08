@@ -39,6 +39,9 @@
     font-weight: 700;
     color: #0071e9;
     transition: color 0.2s ease;
+    @include ut.breakpoint(medium) {
+      font-size: 0.7rem;
+    }
   }
 
   & li {
@@ -63,6 +66,9 @@
 
     @include ut.breakpoint(large) {
       font-size: 1.12rem;
+    }
+    @include ut.breakpoint(medium) {
+      padding: 0rem;
     }
   }
 

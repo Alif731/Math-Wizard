@@ -1,3 +1,5 @@
+@use "../util/breakpoint" as ut;
+
 $slate-blue: #3d405b;
 $bg-cream: #fffaf3;
 $card-white: #ffffff;
@@ -19,7 +21,7 @@ $light-blue: #8eb1c7;
   max-width: 1100px;
   width: 100%;
   margin: 0 auto;
-  font-family: "Nunito", cursive, sans-serif;
+  font-family: "ActualComicSans", cursive;
 }
 
 .student-hub__header {
@@ -77,7 +79,7 @@ $light-blue: #8eb1c7;
   overflow: hidden;
   text-align: left;
   cursor: pointer;
-  font-family: cursive;
+  font-family: "ActualComicSans", cursive;
   display: flex;
   flex-direction: column;
 

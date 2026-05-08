@@ -2,7 +2,7 @@ import React from "react";
 import { Activity } from "lucide-react";
 import "../sass/components/GhostPanel.scss";
 
-const EngineTelemetry = ({ adaptiveData, conceptId, masteryConfig }) => {
+const GhostPanel = ({ adaptiveData, conceptId, masteryConfig }) => {
   // If no data is arriving, show a "Waiting" state instead of nothing
   if (!adaptiveData) return null;
 
@@ -19,7 +19,8 @@ const EngineTelemetry = ({ adaptiveData, conceptId, masteryConfig }) => {
   const total = adaptiveData.attemptCount || 0;
   const success = adaptiveData.successCount || 0;
   const estimate = adaptiveData.estimate || 0;
-  const record = adaptiveData.lastAttempts || adaptiveData.correctnessRecord || [];
+  const record =
+    adaptiveData.lastAttempts || adaptiveData.correctnessRecord || [];
 
   const accuracyPercent = total > 0 ? (success / total) * 100 : 0;
 
@@ -120,7 +121,8 @@ const EngineTelemetry = ({ adaptiveData, conceptId, masteryConfig }) => {
   );
 };
 
-export default EngineTelemetry;
+// export default EngineTelemetry;
+export default GhostPanel;
 
 // import { useEffect, useState } from "react";
 // import {
