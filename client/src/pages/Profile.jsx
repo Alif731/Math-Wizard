@@ -97,9 +97,11 @@ export default function Profile() {
           >
             Open Full Leaderboard
           </Link>
-          <Link to="/progress" className="teacher-dashboard__secondaryAction">
-            My Progress
-          </Link>
+          {isStudent && (
+            <Link to="/progress" className="teacher-dashboard__secondaryAction">
+              My Progress
+            </Link>
+          )}
         </div>
       </header>
 
