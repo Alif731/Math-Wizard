@@ -3368,8 +3368,10 @@ const conceptsData = [
 
 const seedData = async () => {
   try {
-    const isDevOrMemory = process.env.NODE_ENV === "development" || process.env.USE_MEMORY_DB === "true";
-    
+    const isDevOrMemory =
+      process.env.NODE_ENV === "development" ||
+      process.env.USE_MEMORY_DB === "true";
+
     // 1. Clean the database (ONLY IF EXPLICITLY ALLOWED OR IN LOCAL DEV)
     if (process.env.RESET_DEMO_DATA === "true" || isDevOrMemory) {
       await Concept.deleteMany({});

@@ -258,16 +258,16 @@ const ChangeBarModel = ({
   const m2 = b2?.magnitude || 50;
   const total = m1 + m2;
 
-  console.log("--- SUBMIT DEBUG ---");
-  console.log("1. Is Attempted:", question?.isAttempted);
-  console.log("2. Target Field:", question?.targetField);
-  console.log("3. Is Correct:", question?.isCorrect);
-  console.log("--------------------");
+  // console.log("--- SUBMIT DEBUG ---");
+  // console.log("1. Is Attempted:", question?.isAttempted);
+  // console.log("2. Target Field:", question?.targetField);
+  // console.log("3. Is Correct:", question?.isCorrect);
+  // console.log("--------------------");
 
-  console.log("--- FINDING THE STATE ---");
-  console.log("Full Question Object:", question);
-  console.log("Full Response Object:", response);
-  console.log("-------------------------");
+  // console.log("--- FINDING THE STATE ---");
+  // console.log("Full Question Object:", question);
+  // console.log("Full Response Object:", response);
+  // console.log("-------------------------");
   return (
     <div
       className={`bar-model bar-model--change ${isMod1 ? "is-pill-model" : "is-solid-classic"}`}

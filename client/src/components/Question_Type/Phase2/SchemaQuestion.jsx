@@ -637,7 +637,7 @@ const SchemaQuestion = ({
             onClick={triggerCheck}
           >
             {question?.moduleStage === "schema_solve" || isDirectSchemaSolve
-              ? "Check answer →"
+              ? "Check →"
               : "Submit ✓"}
           </button>
         )}

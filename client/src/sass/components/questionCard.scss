@@ -52,6 +52,12 @@ $page-accent: #f2cc8f;
   box-shadow:
     rgb(129 178 154 / 18%) 3px 3px 6px 0px inset,
     rgb(129 178 154 / 0%) -3px -3px 6px 1px inset;
+  @include ut.breakpoint(larger) {
+    margin: 2rem;
+  }
+  @include ut.breakpoint(large) {
+    margin: auto;
+  }
 }
 
 .success-confetti {
@@ -163,6 +169,18 @@ $page-accent: #f2cc8f;
     font-size: 1.45rem;
     line-height: 1;
     color: #f2cc8f;
+  }
+  @include ut.breakpoint(large) {
+    // font-size: 0.6rem;
+  }
+  @include ut.breakpoint(medium) {
+    padding: 0.32rem;
+  }
+  @include ut.breakpoint(small) {
+    // font-size: 0.9rem;
+  }
+  @include ut.breakpoint(xSmall) {
+    // font-size: 0.7rem;
   }
 }
 

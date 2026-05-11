@@ -23,6 +23,7 @@ const StudentMasteryRoster = ({ classroomData, masteryConfig }) => {
   if (classroomData) {
     for (let i = 0; i < classroomData.length; i++) {
       const student = classroomData[i];
+      // console.log(`Student ${student.username} avatar:`, student.avatarSeed); // Check this!
 
       if (student.username.toLowerCase().includes(searchTerm.toLowerCase())) {
         let totalAttempts = 0;
@@ -81,8 +82,8 @@ const StudentMasteryRoster = ({ classroomData, masteryConfig }) => {
           >
             <div className="student-info">
               <UserAvatar
-                name={student.avatarSeed || student.username}
-                variant={student.avatar || "beam"}
+                name={student.avatarSeed}
+                variant={student.avatar}
                 size={44}
               />
               <div className="name-group">
@@ -150,7 +151,8 @@ const StudentMasteryRoster = ({ classroomData, masteryConfig }) => {
                 {selectedStudent.nodes?.map((node, index) => {
                   // Progress based on attempts toward mastery threshold
                   const attempts = node.attempts || 0;
-                  const percentScore = Math.min(attempts / minAttempts, 1) * 100;
+                  const percentScore =
+                    Math.min(attempts / minAttempts, 1) * 100;
 
                   return (
                     <div key={index} className="node-detail-item">

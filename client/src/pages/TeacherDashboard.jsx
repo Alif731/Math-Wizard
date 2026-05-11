@@ -49,7 +49,7 @@ const TeacherDashboard = () => {
 
   // 2. Data Fetching - Activity Feed (Polls every 3s)
   const { data: recentActivity, isLoading: loadingActivity } =
-    useGetRecentActivityQuery(undefined, { pollingInterval: 3000 });
+    useGetRecentActivityQuery(undefined, { pollingInterval: 5000 });
 
   // 3. Data Fetching - Leaderboard Status
   const {
@@ -58,7 +58,7 @@ const TeacherDashboard = () => {
     isError: isStatusError,
     error: statusError,
   } = useGetLeaderboardStatusQuery(undefined, {
-    pollingInterval: 3000,
+    pollingInterval: 30000,
   });
 
   // --- Logic for Filtering Activity ---
@@ -111,7 +111,7 @@ const TeacherDashboard = () => {
 
   const { data: classroomRaw, isLoading: isLoadingStats } =
     useGetClassroomStatsQuery(undefined, {
-      pollingInterval: 3000, //  Add this to sync every 3 seconds
+      pollingInterval: 20000, //  Add this to sync every 3 seconds
     });
 
   // API now returns { classroomData, masteryConfig }
@@ -121,7 +121,7 @@ const TeacherDashboard = () => {
   const strugglingAlerts = useMemo(() => {
     if (!classroomData) return [];
 
-    console.log("DEBUG: Full Classroom Data:", classroomData);
+    // console.log("DEBUG: Full Classroom Data:", classroomData);
 
     const alerts = [];
     classroomData.forEach((student) => {
@@ -147,6 +147,23 @@ const TeacherDashboard = () => {
     });
     return alerts;
   }, [classroomData]);
+
+  // const mergedClassroomData = useMemo(() => {
+  //   if (!classroomData || !entries) return classroomData;
+
+  //   return classroomData.map((student) => {
+  //     // Find the student in the leaderboard entries to "steal" their correct icon
+  //     const match = entries.find(
+  //       (e) => e.userId === (student.id || student._id),
+  //     );
+
+  //     return {
+  //       ...student,
+  //       avatarSeed: match ? match.avatarSeed : student.avatarSeed,
+  //       avatar: match ? match.avatar : student.avatar,
+  //     };
+  //   });
+  // }, [classroomData, entries]);
 
   return (
     <div className="teacher-dashboard">
@@ -373,7 +390,14 @@ const TeacherDashboard = () => {
             </div>
           </section>
           <Heatmap classroomData={classroomData} />
-          <StudentMasteryRoster classroomData={classroomData} masteryConfig={teacherMasteryConfig} />
+          <StudentMasteryRoster
+            classroomData={classroomData}
+            masteryConfig={teacherMasteryConfig}
+          />
+          {/* <StudentMasteryRoster
+            classroomData={mergedClassroomData}
+            masteryConfig={teacherMasteryConfig}
+          /> */}
         </div>
       )}
 
@@ -389,7 +413,7 @@ const TeacherDashboard = () => {
               <Users size={16} />
               <input
                 type="text"
-                placeholder="Filter by student identifier..."
+                placeholder="Search Student"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />

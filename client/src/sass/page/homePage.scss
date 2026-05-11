@@ -36,7 +36,7 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 .game-header {
   // max-width: 1200px;
   // margin: 0.5rem;
-  width: fit-content;
+  // width: fit-content;
   margin: 0.8rem 0;
   margin-right: 0.5rem;
   display: flex;
@@ -44,7 +44,13 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   align-items: center;
   flex-wrap: wrap; // Wrap on small phones
   gap: 1rem;
-
+  @include ut.breakpoint(medium) {
+    // flex-direction: column;
+  }
+  @include ut.breakpoint(small) {
+  }
+  @include ut.breakpoint(xSmall) {
+  }
   .game-title {
     font-size: 2rem;
     font-weight: 800;
@@ -63,7 +69,11 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     border-radius: 9999px;
     font-weight: bold;
     font-size: 1.1rem;
+    @include ut.breakpoint(large) {
+      width: fit-content;
+    }
     @include ut.breakpoint(medium) {
+      width: fit-content;
       font-size: 0.72rem;
     }
     @include ut.breakpoint(small) {
@@ -123,7 +133,7 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
 .status-card {
-  width: min(100%, 720px);
+  // width: min(100%, 720px);
   padding: 2rem;
   border-radius: 28px;
   text-align: center;
@@ -141,6 +151,15 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     border-color: rgba(129, 178, 154, 0.52);
     color: #44735f;
     margin: auto;
+    @include ut.breakpoint(medium) {
+      font-size: 1rem;
+    }
+    @include ut.breakpoint(small) {
+      font-size: 0.8rem;
+    }
+    @include ut.breakpoint(xSmall) {
+      font-size: 0.7rem;
+    }
   }
 
   &.loading {
@@ -203,7 +222,6 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   }
 
   .player-badge {
-    width: 100%;
     align-items: flex-start;
     // flex-direction: column;
     flex-direction: row;
@@ -218,6 +236,16 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   .practice-summary__stat {
     flex: 1 1 30%;
     min-width: 0;
+    strong {
+      @include ut.breakpoint(medium) {
+        font-size: 0.9rem;
+      }
+    }
+  }
+  .practice-summary__label {
+    @include ut.breakpoint(medium) {
+      font-size: 0.7rem;
+    }
   }
 
   .player-badge__copy strong {
@@ -251,6 +279,33 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   border-left: 1px solid rgb(255 255 113);
   border-radius: 10px;
   background: #22223b;
+  &.pop-active {
+    animation: popBounce 0.5s cubic-bezier(0.25, 1.5, 0.5, 1);
+  }
+  &.shake-active {
+    animation: shakeError 0.5s ease-in-out;
+    background-color: #b91c1c;
+    color: white;
+    border-color: #b91c1c;
+
+    /* Force the inner spans to turn white so they don't clash with the red background */
+    .highlight1,
+    .highlight2 {
+      text-shadow: none;
+      color: #f2cc8f;
+    }
+  }
+  @include ut.breakpoint(medium) {
+    // margin-left: 0;
+    width: fit-content;
+    font-size: 0.72rem;
+  }
+  @include ut.breakpoint(small) {
+    font-size: 0.62rem;
+  }
+  @include ut.breakpoint(xSmall) {
+    font-size: 0.47rem;
+  }
 }
 
 @keyframes popInBounce {
@@ -425,15 +480,6 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   }
 }
 
-.streak__badge {
-  /* ... your existing styles stay exactly the same ... */
-
-  /* Add this new modifier class right inside or below .streak__badge */
-  &.pop-active {
-    animation: popBounce 0.5s cubic-bezier(0.25, 1.5, 0.5, 1);
-  }
-}
-
 // Fail
 @keyframes shakeError {
   0%,
@@ -450,25 +496,104 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   }
 }
 
-.streak__badge {
-  /* ... your existing code ... */
+// ---------------------------------------- Game Over Screen
+.mastery-complete-banner {
+  position: relative;
+  display: flex;
+  flex-direction: column; /* Stacked for mobile, can be row for desktop */
+  align-items: center;
+  gap: 1.5rem;
+  background: #ffffff;
+  border: 4px solid #3d405b; /* Thick Navy Hub Border */
+  border-radius: 24px;
+  padding: 3rem 2rem;
+  max-width: 550px;
+  margin: 4rem auto;
+  text-align: center;
+  box-shadow: 10px 10px 0px #3d405b; /* Signature Hub Shadow */
+  animation: bannerPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 
-  &.pop-active {
-    animation: popBounce 0.5s cubic-bezier(0.25, 1.5, 0.5, 1);
+  @include ut.breakpoint(medium) {
+    flex-direction: row;
+    text-align: left;
+    padding: 2.5rem 3.5rem;
   }
 
-  /* NEW: The failure state */
-  &.shake-active {
-    animation: shakeError 0.5s ease-in-out;
-    background-color: #b91c1c;
-    color: white;
-    border-color: #b91c1c;
+  .banner-icon-container {
+    background: #f2cc8f; /* Brand Gold */
+    min-width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 4px solid #3d405b;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #3d405b;
+    box-shadow: 5px 5px 0px #3d405b;
+  }
 
-    /* Force the inner spans to turn white so they don't clash with the red background */
-    .highlight1,
-    .highlight2 {
-      text-shadow: none;
-      color: #f2cc8f;
+  .banner-content {
+    h3 {
+      margin: 0;
+      color: #3d405b;
+      font-size: 1.8rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
     }
+
+    p {
+      margin: 0.5rem 0 1.5rem;
+      color: #64748b;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .banner-action-btn {
+      font-family: "ActualComicSans", cursive;
+
+      background: #3d405b;
+      color: #fff;
+      border: none;
+      padding: 0.8rem 1.5rem;
+      border-radius: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.1);
+
+      &:hover {
+        background: #f2cc8f;
+        color: #3d405b;
+        transform: translateY(-2px);
+        box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.1);
+      }
+    }
+  }
+
+  .decoration-star {
+    position: absolute;
+    color: #f2cc8f;
+    opacity: 0.7;
+    &.top-right {
+      top: 15px;
+      right: 15px;
+    }
+    &.bottom-left {
+      bottom: 15px;
+      left: 15px;
+    }
+  }
+}
+
+@keyframes bannerPop {
+  0% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
   }
 }

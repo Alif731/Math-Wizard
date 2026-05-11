@@ -95,7 +95,7 @@ export default function Profile() {
             to="/leaderboard"
             className="teacher-dashboard__secondaryAction"
           >
-            Open Full Leaderboard
+            Leaderboard
           </Link>
           {isStudent && (
             <Link to="/progress" className="teacher-dashboard__secondaryAction">

@@ -357,7 +357,7 @@ const QuestionCard = ({
           )}
         </div>
       </div>
-
+      {/* 
       {showTelemetry && (
         <aside className="question-shell__telemetry">
           <GhostPanel
@@ -366,7 +366,7 @@ const QuestionCard = ({
             masteryConfig={problem?.masteryConfig}
           />
         </aside>
-      )}
+      )} */}
     </div>
   );
 };

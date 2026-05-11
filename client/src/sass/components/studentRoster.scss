@@ -32,6 +32,15 @@ $text-muted: #64748b;
         display: flex;
         align-items: center;
         gap: 10px;
+        @include ut.breakpoint(large) {
+          font-size: 1.2rem;
+        }
+        @include ut.breakpoint(medium) {
+          font-size: 1rem;
+        }
+        @include ut.breakpoint(xSmall) {
+          font-size: 0.9rem;
+        }
       }
       p {
         color: $text-muted;
@@ -82,6 +91,14 @@ $text-muted: #64748b;
     align-items: center;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    @include ut.breakpoint(medium) {
+      width: fit-content;
+      gap: 1rem;
+    }
+    @include ut.breakpoint(xSmall) {
+      gap: 0.5rem;
+    }
 
     &:hover {
       border-color: $gold-border;
@@ -153,6 +170,18 @@ $text-muted: #64748b;
       color: #cbd5e1;
       transition: all 0.2s ease;
     }
+  }
+}
+.mini-accuracy,
+.node-count {
+  @include ut.breakpoint(large) {
+    font-size: 0.9rem;
+  }
+  @include ut.breakpoint(medium) {
+    font-size: 0.8rem;
+  }
+  @include ut.breakpoint(small) {
+    font-size: 0.7rem;
   }
 }
 

@@ -218,6 +218,24 @@
     font-weight: 700;
     text-decoration: none;
   }
+  @include ut.breakpoint(larger) {
+    // font-size: 1.2rem;
+  }
+  // 900px
+  @include ut.breakpoint(large) {
+    font-size: 0.8rem;
+  }
+  //700px
+  @include ut.breakpoint(medium) {
+    font-size: 0.4rem;
+  }
+  @include ut.breakpoint(small) {
+    font-size: 0.34rem;
+  }
+  //375px
+  // @include ut.breakpoint(xSmall) {
+  //   font-size: 0.3rem;
+  // }
 }
 
 .login-form {
