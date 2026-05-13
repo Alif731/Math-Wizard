@@ -556,7 +556,7 @@ $worksheet-shadow:
     font-weight: 800;
     color: #64748b;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.05rem;
   }
 
   input {
@@ -1588,6 +1588,60 @@ $worksheet-shadow:
     0 10px 22px rgba(61, 64, 91, 0.08);
 }
 
+/* --- KILL THE CURSOR or Type ICON ON SUBMISSION --- */
+.equation-box,
+.bar-box {
+  // When any of the feedback/locked classes are added...
+  &.is-locked,
+  &.is-correct,
+  &.is-wrong {
+    // Target the specific strong tag that holds the cursor
+    strong::after {
+      display: none !important;
+      content: none !important;
+      animation: none !important;
+    }
+  }
+}
+
+/* --- THE 'COMPLETED' FOCUS STATE --- */
+.worksheet.is-completed {
+  //   /* 1. Heavily fade and slightly blur the keypad */
+  //   .worksheet-keypad {
+  //     opacity: 0.3;
+  //     filter: grayscale(100%) blur(1.5px);
+  //     pointer-events: none; // Extra safety so they can't click it
+  //     transition: all 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+  //   }
+
+  //   /* 2. Softly fade the headers and prompt to push attention downwards */
+  .worksheet__topline,
+  // .worksheet-prompt,
+  .worksheet-title,
+  .worksheet-help {
+    opacity: 0.4;
+    pointer-events: none;
+    transition: all 0.6s ease;
+  }
+
+  //   /* 3. Keep the Equation/Bar Model visible for review, but lock interaction */
+  // .equation-board,
+  // .bar-model {
+  // pointer-events: none;
+  /* Optional: drop opacity slightly to 0.8 so the Next button pops even more */
+  // opacity: 0.85;
+  // transition: opacity 0.6s ease;
+  // }
+
+  //   /* 4. Ensure the Actions (Next Button) stay at 100% focus */
+  //   .worksheet-actions {
+  //     position: relative;
+  //     z-index: 10;
+  //     opacity: 1 !important;
+  //     filter: none !important;
+  //   }
+}
+
 /* 4. The Caret Animation */
 @keyframes blinkCaret {
   0%,
@@ -1613,18 +1667,11 @@ $worksheet-shadow:
   );
   box-shadow: $worksheet-shadow;
   overflow: hidden;
-  animation: keypadSlideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards;
-  transition: all 1s ease-in-out;
-}
-@keyframes keypadSlideUp {
-  0% {
-    opacity: 0;
-    transform: translateY(20px) scale(0.98);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  // animation-delay: 0.15s;
+  // transition: all 1s ease-in-out;
+  // // animation-delay: 0.15s;
+  // opacity: 0;
+  // transform-origin: bottom center;
 }
 
 .worksheet-keypad__title {
@@ -2413,7 +2460,7 @@ $worksheet-shadow:
   border-radius: 99px;
   font-size: 1.3rem;
   font-weight: 900;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.05rem;
   text-transform: uppercase;
   cursor: pointer;
   transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -2470,6 +2517,55 @@ $worksheet-shadow:
     transform: translateY(0);
   }
 }
+
+// .worksheet-button--reveal {
+//   // --- Layout & Typography ---
+//   display: inline-flex;
+//   align-items: center;
+//   justify-content: center;
+//   font-weight: 800;
+//   text-transform: uppercase;
+//   letter-spacing: 1px;
+//   border-radius: 99px; // Pill shape from your screenshots
+//   cursor: pointer;
+//   transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+//   position: relative;
+
+//   // --- Colors (Your Palette) ---
+//   background: #3d405b;
+//   color: #ffffff;
+//   border: 3px solid #3d405b;
+
+//   // --- The 3D "Chunky" Look ---
+//   box-shadow:
+//     0 8px 0 #3d405b,
+//     // Main 3D shadow
+//     inset 0 -5px 0 rgba(0, 0, 0, 0.1),
+//     // Bottom inner depth
+//     inset 0 4px 0 rgba(255, 255, 255, 0.5); // Top inner highlight
+
+//   // --- Interaction: Hover (The "Lift") ---
+//   &:hover {
+//     background: #f5d4a1; // Lighter version of your yellow
+//     transform: translateY(-2px); // Slight lift up
+//     box-shadow:
+//       0 10px 0 #3d405b,
+//       // Deeper shadow when lifted
+//       0 0 20px rgba(242, 204, 143, 0.4),
+//       // "Reveal" glow effect
+//       inset 0 -5px 0 rgba(0, 0, 0, 0.1),
+//       inset 0 4px 0 rgba(255, 255, 255, 0.6);
+//   }
+
+//   // --- Interaction: Active (The "Physical Press") ---
+//   &:active {
+//     transform: translateY(6px); // Moves down to "squish" the shadow
+//     box-shadow:
+//       0 2px 0 #3d405b,
+//       // Shadow flattens
+//       inset 0 -2px 0 rgba(0, 0, 0, 0.1);
+//   }
+// }
 
 /* --- STATUS: CARTOON STRIPE --- */
 .worksheet-button--status {
@@ -3073,7 +3169,8 @@ $worksheet-shadow:
 .bar-box {
   position: relative;
   transition: all 0.3s ease;
-
+  font-family: "ActualComicSans", cursive;
+  color: #3d405b !important;
   &.is-correct {
     background-color: #ffffff !important;
     border: 1px solid #e5e5e5 !important;
@@ -3189,6 +3286,187 @@ $worksheet-shadow:
   }
   to {
     transform: scale(1) rotate(0);
+    opacity: 1;
+  }
+}
+
+/* Specific Style for NEXT PROBLEM */
+.worksheet-button--continue {
+  background: #f2cc8f;
+  color: #3d405b;
+  box-shadow:
+    0 8px 0 #3d405b,
+    inset 0 -5px 0 rgba(0, 0, 0, 0.15),
+    inset 0 4px 0 rgba(255, 255, 255, 0.7);
+
+  /* REQUIRED FOR SHIMMER: Keeps the light beam inside the button */
+  position: relative;
+  overflow: hidden;
+
+  animation:
+    buttonPopIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+    buttonBreathe 2.5s infinite ease-in-out 0.4s; // Starts after PopIn
+
+  &:hover {
+    background-color: #81b29a; // Swaps to Sage Green
+    color: #ffffff; // Text turns White
+    transform: translateY(2px);
+
+    /* Shrink the main shadow to simulate pressing it down */
+    box-shadow:
+      0 6px 0 #3d405b,
+      inset 0 -5px 0 rgba(0, 0, 0, 0.15),
+      inset 0 4px 0 rgba(255, 255, 255, 0.7);
+  }
+
+  /* The Magical Shimmer/Glare Effect */
+  /* Update the ::after pseudo-element */
+  .worksheet-button--continue::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0; /* Anchor it to 0 instead of -150% */
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+      to right,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.5) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    /* Use translateX to move it off-screen initially */
+    transform: translateX(-200%) skewX(-25deg);
+    animation: glassShine 4s infinite;
+  }
+}
+
+/* --- ANIMATIONS --- */
+
+@keyframes buttonBreathe {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.04); // Subtle growth
+    filter: brightness(1.1); // Slight magic glow
+    /* Deepen the 3D shadow as it lifts off the page */
+    box-shadow:
+      0 10px 0 #3d405b,
+      inset 0 -5px 0 rgba(0, 0, 0, 0.15),
+      inset 0 4px 0 rgba(255, 255, 255, 0.7);
+  }
+}
+
+@keyframes buttonPopIn {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* The shiny glare that sweeps across the button */
+@keyframes glassShine {
+  0% {
+    transform: translateX(-200%) skewX(-25deg);
+  }
+  15% {
+    transform: translateX(250%) skewX(-25deg);
+  }
+  100% {
+    transform: translateX(250%) skewX(-25deg);
+  }
+}
+
+/* -------------------- KEYPAD EXIT ANIMATION --------------------- */
+@keyframes keypadUnfold {
+  0% {
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  100% {
+    max-height: 400px; /* Adjust if your keypad is taller */
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* --- 2. THE CLOSING ANIMATION --- */
+@keyframes keypadCollapse {
+  0% {
+    max-height: 400px;
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+    margin: 0; /* Sucks up the extra space */
+  }
+}
+
+.keypad-animator {
+  transform-origin: top center;
+  overflow: hidden;
+  will-change: max-height, opacity, transform;
+  animation: keypadUnfold 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+
+  /* Plays when the student hits Submit */
+  &.is-hidden {
+    animation: keypadCollapse 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    pointer-events: none; /* Stops accidental clicks while it shrinks */
+  }
+}
+
+/* Add this to your SASS file */
+.bar-box strong {
+  transition: all 0.4s ease-out;
+}
+
+/* This class is automatically applied when value changes */
+.is-correct strong,
+.is-revealed strong {
+  animation: pulse-reveal 0.6s ease-out;
+}
+
+@keyframes pulse-reveal {
+  0% {
+    transform: scale(1);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Animation for revealed number */
+.is-correct strong {
+  animation: pulse-reveal 0.6s ease-out forwards;
+}
+
+@keyframes pulse-reveal {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 1;
+    filter: brightness(1.2);
+  }
+  100% {
+    transform: scale(1);
     opacity: 1;
   }
 }

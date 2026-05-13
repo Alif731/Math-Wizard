@@ -5,9 +5,9 @@ const MASTERY_MIN_ATTEMPTS = 1;
 const MASTERY_SCORE_THRESHOLD = 1;
 const MASTERY_SUCCESS_RATE = 0.8; // 80% — student must get 4/5, 8/10, etc.
 
-// const WINDOW_SIZE = 3;
-// const MASTERY_MIN_ATTEMPTS = 2;
-// const MASTERY_SCORE_THRESHOLD = 2;
+// const WINDOW_SIZE = 5;
+// const MASTERY_MIN_ATTEMPTS = 5;
+// const MASTERY_SCORE_THRESHOLD = 5;
 // const MASTERY_SUCCESS_RATE = 0.8; // 80% — student must get 4/5, 8/10, etc.
 
 const CHANGE_POINT_FALSE_POSITIVE_RATE = Math.exp(-MASTERY_SCORE_THRESHOLD);

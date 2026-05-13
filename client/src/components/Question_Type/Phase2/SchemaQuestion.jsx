@@ -1,3 +1,4 @@
+// SchemaQuestion.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import {
   getDisplayedTextAnswer,
@@ -160,6 +161,31 @@ const VariableIdentificationPanel = ({
     </div>
   );
 };
+
+// const SchemaQuestion = ({
+//   question,
+//   response,
+//   setResponse,
+//   feedback,
+//   onCheck,
+//   onNext,
+//   isSubmitting,
+//   isDummyMode,
+//   setIsDummyMode,
+//   failedFirstTry,
+// }) => {
+//   const hasFeedback = Boolean(feedback);
+//   const canCheck =
+//     isQuestionResponseReady(question, response) &&
+//     !isSubmitting &&
+//     !hasFeedback;
+//   const isSchemaStage = question?.stageTotal === 3;
+//   const isCompareAnswerInput = isCompareAnswerInputQuestion(question);
+//   const isVariableIdentification = isVariableIdentificationQuestion(question);
+//   const isDirectSchemaSolve = question?.moduleStage === "schema_direct_solve";
+//   const isBarModelStage =
+//     question?.moduleStage === "schema_bar_model" ||
+//     question?.moduleStage === "word_to_bar";
 const SchemaQuestion = ({
   question,
   response,
@@ -168,12 +194,57 @@ const SchemaQuestion = ({
   onCheck,
   onNext,
   isSubmitting,
+  isDummyMode,
+  setIsDummyMode,
+  isRevealed,
+  setIsRevealed,
 }) => {
   const hasFeedback = Boolean(feedback);
+
+  // 1. Move this up so we can use it in the check below
+  // const isBarModelStage =
+  //   question?.moduleStage === "schema_bar_model" ||
+  //   question?.moduleStage === "word_to_bar";
+  const isBarModelStage = Boolean(question?.barModelSpec);
+
+  // --- THE STRICT LOCK: Enforce boxes to be filled ---
+  let isBarModelFullyFilled = true;
+  if (isBarModelStage) {
+    const spec = question?.barModelSpec;
+    const requiredKeys = [];
+
+    if (spec) {
+      if (question?.schemaKind === "change" || spec.layout === "change") {
+        requiredKeys.push((spec.start || spec.left)?.key);
+        requiredKeys.push((spec.change || spec.right)?.key);
+        requiredKeys.push((spec.end || spec.total || spec.result)?.key);
+      } else {
+        requiredKeys.push(spec.total?.key);
+        requiredKeys.push(spec.left?.key);
+        requiredKeys.push(spec.right?.key);
+      }
+    }
+
+    isBarModelFullyFilled = requiredKeys.every((key) => {
+      if (!key) return true;
+      const correctVal = String(
+        question?.validation?.slots?.[key] ?? spec?.[key]?.value ?? "",
+      ).trim();
+
+      // If we are in Dummy Mode, the '?' box is locked, so don't require the user to type it!
+      // if (isDummyMode && correctVal === "?") return true;
+      if (isDummyMode && (correctVal === "?" || correctVal === "")) return true;
+      const val = response?.slots?.[key];
+      return val !== undefined && String(val).trim() !== "";
+    });
+  }
+  // 3. Apply the lock to the Submit button
   const canCheck =
     isQuestionResponseReady(question, response) &&
+    isBarModelFullyFilled && // <--- The strict lock!
     !isSubmitting &&
     !hasFeedback;
+
   const isSchemaStage = question?.stageTotal === 3;
   const isCompareAnswerInput = isCompareAnswerInputQuestion(question);
   const isVariableIdentification = isVariableIdentificationQuestion(question);
@@ -181,6 +252,7 @@ const SchemaQuestion = ({
   const showPromptStrip = !["practice", "equations"].includes(
     question?.moduleStage,
   );
+
   const locksUnknownSlots = [
     "word_to_bar",
     "bar_to_equation",
@@ -378,7 +450,7 @@ const SchemaQuestion = ({
   }, [question]);
 
   return (
-    <div className="worksheet">
+    <div className={`worksheet ${hasFeedback ? "is-completed" : ""}`}>
       <div className="worksheet__helper">
         <div className="worksheet__helper__div">
           {/* Question Type */}
@@ -462,6 +534,8 @@ const SchemaQuestion = ({
                 isAttempted={Boolean(feedback)}
                 isCorrect={feedback?.isCorrect}
                 targetField={response?.activeField}
+                isDummyMode={isDummyMode}
+                isRevealed={isRevealed}
               />
             )}
           <EquationBoard
@@ -514,6 +588,8 @@ const SchemaQuestion = ({
             isAttempted={Boolean(feedback)}
             isCorrect={feedback?.isCorrect}
             targetField={response?.activeField}
+            isDummyMode={isDummyMode}
+            isRevealed={isRevealed}
           />
         ))}
 
@@ -560,41 +636,43 @@ const SchemaQuestion = ({
               placeholder="Type Here"
             />
           </label>
-
-          <Keypad
-            title="Enter your answer."
-            showUnknown={false}
-            showOperatorPad={false}
-            disabled={hasFeedback || isSubmitting}
-            onDigit={(digit) => {
-              if (!hasFeedback) {
-                setResponse((current) => ({
-                  ...(current || {}),
-                  textAnswer: (current?.textAnswer || "") + digit,
-                }));
-              }
-            }}
-            onBackspace={() => {
-              if (!hasFeedback) {
-                setResponse((current) => ({
-                  ...(current || {}),
-                  textAnswer: (current?.textAnswer || "").slice(0, -1),
-                }));
-              }
-            }}
-            onClear={() => {
-              if (!hasFeedback) {
-                setResponse((current) => ({
-                  ...(current || {}),
-                  textAnswer: "",
-                }));
-              }
-            }}
-          />
+          {/* Wrapped in the keypad-animator div so it gets the smooth collapse & fade! */}
+          <div className={`keypad-animator ${hasFeedback ? "is-hidden" : ""}`}>
+            <Keypad
+              title="Enter your answer."
+              showUnknown={false}
+              showOperatorPad={false}
+              disabled={hasFeedback || isSubmitting}
+              onDigit={(digit) => {
+                if (!hasFeedback) {
+                  setResponse((current) => ({
+                    ...(current || {}),
+                    textAnswer: (current?.textAnswer || "") + digit,
+                  }));
+                }
+              }}
+              onBackspace={() => {
+                if (!hasFeedback) {
+                  setResponse((current) => ({
+                    ...(current || {}),
+                    textAnswer: (current?.textAnswer || "").slice(0, -1),
+                  }));
+                }
+              }}
+              onClear={() => {
+                if (!hasFeedback) {
+                  setResponse((current) => ({
+                    ...(current || {}),
+                    textAnswer: "",
+                  }));
+                }
+              }}
+            />
+          </div>
         </div>
       )}
 
-      {question?.inputMode !== "text_answer" && !isCompareAnswerInput && (
+      {/* {question?.inputMode !== "text_answer" && !isCompareAnswerInput && (
         <Keypad
           title={showOperatorPad ? "Choose the operator" : "Enter the number"}
           showUnknown={showUnknownButton}
@@ -608,23 +686,28 @@ const SchemaQuestion = ({
           }
           disabled={hasFeedback || isSubmitting}
         />
+      )} */}
+      {/* Remove the !hasFeedback && and wrap it in this animator div */}
+      {question?.inputMode !== "text_answer" && !isCompareAnswerInput && (
+        <div className={`keypad-animator ${hasFeedback ? "is-hidden" : ""}`}>
+          <Keypad
+            title={showOperatorPad ? "Choose the operator" : "Enter the number"}
+            showUnknown={showUnknownButton}
+            showOperatorPad={showOperatorPad}
+            onDigit={updateActiveSlotValue}
+            onUnknown={() => updateActiveSlotValue("?")}
+            onBackspace={handleBackspace}
+            onClear={handleClear}
+            onOperator={(operator) =>
+              setResponse((current) => ({ ...(current || {}), operator }))
+            }
+            disabled={hasFeedback || isSubmitting}
+          />
+        </div>
       )}
 
-      {/* {feedback && (
-        <div
-          className={`worksheet-feedback ${feedback.isCorrect ? "is-success" : "is-error"}`}
-        >
-          {feedback.isCorrect
-            ? feedback?.explanation || "Good Job!"
-            : `Try again next time. Correct answer: ${feedback?.correctAnswer ?? ""}`}
-        </div>
-      )} */}
-
-      {/* {feedback?.isCorrect && question?.moduleStage === "schema_solve" && (
-        <VerificationPanel question={question} />
-      )} */}
-
-      <div className="worksheet-actions">
+      {/* Automatically Fetch Question */}
+      {/* <div className="worksheet-actions">
         {hasFeedback ? (
           <div className="worksheet-button worksheet-button--status">
             Loading Next Problem.
@@ -639,6 +722,129 @@ const SchemaQuestion = ({
             {question?.moduleStage === "schema_solve" || isDirectSchemaSolve
               ? "Check →"
               : "Submit ✓"}
+          </button>
+        )}
+      </div> */}
+
+      {/* -----------------------1. Show Feedback Message so they know why they are clicking 'Continue' ---------------------*/}
+      {/* <div className="worksheet-actions">
+        {hasFeedback ? (
+          <button
+            type="button"
+            className="worksheet-button worksheet-button--continue"
+            onClick={onNext}
+          >
+            Next Problem →
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="worksheet-button worksheet-button--primary"
+            disabled={!canCheck}
+            onClick={triggerCheck}
+          >
+            Submit ✓
+          </button>
+        )}
+      </div> */}
+
+      <div className="worksheet-actions">
+        {/* 1. INITIAL SUBMIT (Main Screen) */}
+        {!hasFeedback && !isDummyMode && (
+          <button
+            type="button"
+            className="worksheet-button worksheet-button--primary"
+            onClick={triggerCheck}
+            disabled={!canCheck || isSubmitting}
+          >
+            SUBMIT ✓
+          </button>
+        )}
+
+        {/* 2. TRY WITH HINTS (After Main Screen Fail) */}
+        {/* 2. RETRY WITH HINTS (Visible ONLY for Bar Models after a fail) */}
+        {hasFeedback &&
+          !feedback?.isCorrect &&
+          isBarModelStage &&
+          !isDummyMode && (
+            <button
+              type="button"
+              className="worksheet-button worksheet-button--primary"
+              onClick={() => {
+                setIsDummyMode(true);
+
+                // 🔥 UX FIX: Find the first box that is NOT the unknown box
+                const spec = question?.barModelSpec;
+                let autoFocusKey = null;
+
+                if (spec) {
+                  // list all potential keys
+                  const keys =
+                    question?.schemaKind === "change" ||
+                    spec.layout === "change"
+                      ? [
+                          (spec.start || spec.left)?.key,
+                          (spec.change || spec.right)?.key,
+                          (spec.end || spec.total || spec.result)?.key,
+                        ]
+                      : [spec.total?.key, spec.left?.key, spec.right?.key];
+
+                  // Find the first key where the expected value is NOT "?" or ""
+                  autoFocusKey = keys.find((key) => {
+                    const expected = String(
+                      question?.validation?.slots?.[key] ??
+                        spec?.[key]?.value ??
+                        "",
+                    ).trim();
+                    return expected !== "?" && expected !== "";
+                  });
+                }
+
+                setResponse((prev) => ({
+                  ...prev,
+                  slots: {},
+                  activeField: autoFocusKey, // 🔥 Automatically select the first typing box!
+                }));
+              }}
+            >
+              Retry with Hint
+            </button>
+          )}
+
+        {/* 3. DUMMY CHECK (While typing retry) */}
+        {isDummyMode && !hasFeedback && (
+          <button
+            type="button"
+            className="worksheet-button worksheet-button--primary"
+            onClick={triggerCheck}
+            disabled={!canCheck || isSubmitting}
+          >
+            CHECK MODEL ✓
+          </button>
+        )}
+
+        {/* 4. REVEAL BUTTON (Visible ONLY after Dummy Fail) */}
+        {isDummyMode && hasFeedback && !feedback?.isCorrect && !isRevealed && (
+          <button
+            type="button"
+            // className="worksheet-button worksheet-button--reveal"
+            className="worksheet-button worksheet-button--primary"
+            onClick={() => setIsRevealed(true)}
+          >
+            Reveal Answers
+          </button>
+        )}
+
+        {/* 5. NEXT PROBLEM (Scenario 1: Correct, Scenario 2: After Reveal) */}
+        {(feedback?.isCorrect ||
+          isRevealed ||
+          (!isBarModelStage && hasFeedback && !feedback?.isCorrect)) && (
+          <button
+            type="button"
+            className="worksheet-button worksheet-button--continue"
+            onClick={onNext}
+          >
+            Next Problem →
           </button>
         )}
       </div>

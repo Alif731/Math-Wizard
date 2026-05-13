@@ -195,8 +195,9 @@
 
 // export default Home;
 
+// Home.jsx
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import {
   useGetProblemQuery,
@@ -212,6 +213,8 @@ import { Sunrise, Sun, Moon, Trophy, Sparkles } from "lucide-react";
 const Home = () => {
   const { userInfo } = useSelector((state) => state.auth);
   const username = userInfo?.username;
+  const location = useLocation();
+
   const navigate = useNavigate();
   // --- RTK QUERY HOOKS ---
   const {
@@ -276,6 +279,14 @@ const Home = () => {
     // Keep track for the next render
     prevConceptStatus.current[currentConceptId] = currentStatus;
   }, [currentConceptId, status]);
+
+  // If the student clicked "Resume Journey" on the progress page ("Old State Fix")
+  useEffect(() => {
+    if (location.state?.forceRefetch) {
+      refetchProblem();
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state, refetchProblem]);
   // -------------------------------------
 
   // --- HANDLERS ---

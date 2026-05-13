@@ -2,6 +2,7 @@ import "../sass/page/ProgressBar.scss";
 import { useEffect } from "react";
 import {
   Lock,
+  Play,
   PlayCircle,
   Sparkles,
   Loader2,
@@ -152,9 +153,12 @@ const ProgressBar = () => {
   const handleSwitchSection = async (sectionId) => {
     try {
       await switchSection({ sectionId }).unwrap();
-      await refetch();
+      // await refetch();
+      // navigate("/home");
       toast.success("Ready to learn!");
-      navigate("/home");
+      setTimeout(() => {
+        navigate("/home");
+      }, 100);
     } catch (error) {
       toast.error("Failed to switch section.");
       console.error("Switch Error:", error);
@@ -358,17 +362,31 @@ const ProgressBar = () => {
                   </div>
 
                   {isActiveSection ? (
-                    <div className="active-section-badge">
-                      <span
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "6px",
-                        }}
-                      >
-                        <Sparkles size={16} /> Currently Active
-                      </span>
-                    </div>
+                    <>
+                      <div className="active-section-controls">
+                        <div className="active-section-badge">
+                          <span
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "6px",
+                            }}
+                          >
+                            <Sparkles size={16} /> Currently Active
+                          </span>
+                        </div>
+                        <button
+                          className="active-section-badge resume-button"
+                          onClick={() => {
+                            navigate("/home", {
+                              state: { forceRefetch: true },
+                            });
+                          }}
+                        >
+                          <Play size={16} fill="currentColor" /> Resume Journey
+                        </button>
+                      </div>
+                    </>
                   ) : (
                     <button
                       className="progress-section__button"

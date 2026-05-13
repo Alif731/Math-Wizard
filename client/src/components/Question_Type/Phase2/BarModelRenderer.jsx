@@ -1,3 +1,4 @@
+// BarModelRenderer.jsx
 import React from "react";
 import { getBarValue } from "../../../utils/questionValidation";
 import { BarBox } from "./WorksheetParts";
@@ -10,9 +11,88 @@ import {
   getGuidedCompareValue,
 } from "./SchemaUtils";
 
-// ==========================================
-// THE TOTAL PARTS SCHEMA
-// ==========================================
+const getExpectedVal = (q, box) => {
+  if (!box) return "";
+  let val = q?.validation?.slots?.[box.key];
+  if (val !== undefined && val !== null && String(val).trim() !== "") {
+    return String(val).trim();
+  }
+  return String(box.value || "").trim();
+};
+
+const solveMath = (q, spec) => {
+  const getNum = (box) => {
+    let v = getExpectedVal(q, box);
+    return v === "" || v === "?" ? NaN : Math.abs(parseFloat(v)); // absolute prevents negative bugs
+  };
+
+  // 🔥 THE FIX: Explicitly check if this is a Change schema so we don't accidentally hijack it into Total Parts
+  const isChangeModel = q?.schemaKind === "change" || spec?.layout === "change";
+
+  if (!isChangeModel && spec?.total) {
+    // Total Parts is strictly addition logic
+    const t = getNum(spec.total),
+      l = getNum(spec.left),
+      r = getNum(spec.right);
+    if (isNaN(t) && !isNaN(l) && !isNaN(r)) return String(l + r);
+    if (isNaN(l) && !isNaN(t) && !isNaN(r)) return String(Math.abs(t - r));
+    if (isNaN(r) && !isNaN(t) && !isNaN(l)) return String(Math.abs(t - l));
+  } else if (isChangeModel || spec?.change || spec?.right) {
+    // Change Schema Math Logic
+    let isSub = false;
+    const startBox = spec?.start || spec?.left;
+    const changeBox = spec?.change || spec?.right;
+    const endBox = spec?.end || spec?.total || spec?.result;
+
+    const label = String(changeBox?.label || "").toLowerCase();
+    const endLabel = String(endBox?.label || "").toLowerCase();
+    const words = [
+      "spent",
+      "flew",
+      "away",
+      "lost",
+      "gave",
+      "left",
+      "remaining",
+      "ate",
+      "sold",
+    ];
+
+    for (let i = 0; i < words.length; i++) {
+      if (label.includes(words[i]) || endLabel.includes(words[i])) {
+        isSub = true;
+        break;
+      }
+    }
+
+    if (!isSub) {
+      const op = q?.operator || q?.equationSpec?.operator;
+      if (op === "-") isSub = true;
+    }
+
+    const s = getNum(startBox);
+    const c = getNum(changeBox);
+    const e = getNum(endBox);
+
+    if (isSub) {
+      // Subtraction Story: Start (Top) = End + Change
+      if (isNaN(s) && !isNaN(e) && !isNaN(c)) return String(e + c);
+      if (isNaN(e) && !isNaN(s) && !isNaN(c)) return String(Math.abs(s - c));
+      if (isNaN(c) && !isNaN(s) && !isNaN(e)) return String(Math.abs(s - e));
+    } else {
+      // Addition Story: End (Top) = Start + Change
+      if (isNaN(e) && !isNaN(s) && !isNaN(c)) return String(s + c);
+      if (isNaN(s) && !isNaN(e) && !isNaN(c)) return String(Math.abs(e - c));
+      if (isNaN(c) && !isNaN(e) && !isNaN(s)) return String(Math.abs(e - s));
+    }
+  }
+
+  let ans = String(
+    q?.answer || q?.correctAnswer || q?.equationSpec?.answer || "",
+  ).trim();
+  return ans && ans !== "?" ? ans : "";
+};
+
 const TotalPartsBarModel = ({
   spec,
   response,
@@ -20,8 +100,9 @@ const TotalPartsBarModel = ({
   setActiveField,
   question,
   isAttempted,
+  isDummyMode,
   isCorrect,
-  targetField,
+  isRevealed,
 }) => {
   const {
     total: totalMagnitude,
@@ -38,51 +119,95 @@ const TotalPartsBarModel = ({
   const valLeft = getBarValue(response, spec.left);
   const valRight = getBarValue(response, spec.right);
 
-  // Helper to get Feedback status
-  const getFeedbackStatus = (boxKey) => {
-    if (!isAttempted || boxKey !== targetField) return null;
-    return isCorrect ? "correct" : "wrong";
+  const isBoxUnknown = (boxSpec) => {
+    if (!boxSpec) return false;
+    let expected = getExpectedVal(question, boxSpec);
+    return expected === "?" || expected === "";
   };
 
-  const isUnk = (val, boxSpec) => {
-    if (!boxSpec || boxSpec.editable) return false;
-    return String(val || "").trim() === "?";
+  const getCorrectMathValue = (boxSpec) => {
+    const expected = getExpectedVal(question, boxSpec);
+    return expected === "?" || expected === ""
+      ? solveMath(question, spec)
+      : expected;
   };
 
-  // We need this helper here too to prevent inline-style conflicts
-  const getBoxStyle = (box, hashed, widthPercent, status) => {
+  const getDisplayValue = (boxSpec, currentVal) => {
+    const isUnk = isBoxUnknown(boxSpec);
+    if (isRevealed || (isDummyMode && isCorrect && isUnk)) {
+      return getCorrectMathValue(boxSpec);
+    }
+    return !isDummyMode ? response?.slots?.[boxSpec.key] || "" : currentVal;
+  };
+
+  const getFeedbackStatus = (boxKey, boxSpec) => {
+    if (isRevealed) return null;
+    if (!isAttempted) return null;
+    // 🔥 UPDATE: Return "correct" on success to trigger pulse animation class
+    if (isCorrect) return "correct";
+    if (isDummyMode && boxSpec?.editable === false) return null;
+
+    let expected = getExpectedVal(question, boxSpec);
+    const student = String(response?.slots?.[boxKey] || "").trim();
+    if (!student) return "wrong";
+    if (expected === "?" || expected === "") {
+      const calcAnswer = solveMath(question, spec);
+      return student === calcAnswer && calcAnswer !== "" ? "correct" : "wrong";
+    }
+    return student === expected ? "correct" : "wrong";
+  };
+
+  const getBoxStyle = (box, isUnk, widthPercent, status) => {
     const style = widthPercent ? { width: `${widthPercent}%` } : {};
 
-    // 1. Check for feedback colors first
+    // 🔥 ADDED: Amber style for manual reveal
+    // if (isRevealed) {
+    //   return {
+    //     ...style,
+    //     backgroundColor: "#fffbeb",
+    //     border: "2.5px solid #fbbf24",
+    //     color: "#92400e",
+    //     fontWeight: "bold",
+    //   };
+    // }
+
     if (status === "correct")
       return {
         ...style,
         backgroundColor: "#f0fdf4",
         border: "2px solid #4ade80",
+        color: "black",
       };
     if (status === "wrong")
       return {
         ...style,
         backgroundColor: "#fef2f2",
         border: "2px solid #f87171",
+        color: "black",
       };
 
-    // 2. Fallback to normal hashed/colored logic
-    if (hashed) {
+    // 🔥 UPDATE: Hide hashing if user wins (isCorrect)
+    if (isDummyMode && isUnk && !isRevealed && !isCorrect) {
       return {
         ...style,
         backgroundColor: "white",
         backgroundImage: `repeating-linear-gradient(-45deg, transparent, transparent 8px, rgba(148, 163, 184, 0.15) 8px, rgba(148, 163, 184, 0.15) 10px)`,
         border: "2px dashed #94a3b8",
+        color: "black",
       };
     }
+
     const colors = {
       green: "#f0fdf4",
       blue: "#eff6ff",
       orange: "#fff7ed",
       red: "#fef2f2",
     };
-    return { ...style, backgroundColor: colors[box?.color] || "white" };
+    return {
+      ...style,
+      backgroundColor: colors[box?.color] || "white",
+      color: "black",
+    };
   };
 
   return (
@@ -90,49 +215,77 @@ const TotalPartsBarModel = ({
       {!spec.hideTopBar && (
         <div className="bar-model__top">
           <BarBox
-            box={spec.total}
+            box={{
+              ...spec.total,
+              editable: !(
+                isDummyMode &&
+                (isBoxUnknown(spec.total) || isAttempted)
+              ),
+            }}
             label={getBarLabel(spec.total, spec)}
-            value={valTotal}
-            active={activeField === spec.total.key}
-            onClick={() => setActiveField(spec.total.key)}
-            className={`bar-box--wide ${getFeedbackStatus(spec.total.key) === "correct" ? "is-correct" : getFeedbackStatus(spec.total.key) === "wrong" ? "is-wrong" : ""}`}
+            value={getDisplayValue(spec.total, valTotal)}
+            // 🔥 UPDATE: Hide cursor if won
+            active={!isRevealed && !isCorrect && activeField === spec.total.key}
+            onClick={() => {
+              if (!(isDummyMode && (isBoxUnknown(spec.total) || isAttempted)))
+                setActiveField(spec.total.key);
+            }}
+            // 🔥 UPDATE: Remove hashing class if won
+            className={`bar-box--wide ${isBoxUnknown(spec.total) && isDummyMode && !isRevealed && !isCorrect ? "is-missing-value" : ""} ${getFeedbackStatus(spec.total.key, spec.total) === "correct" ? "is-correct" : getFeedbackStatus(spec.total.key, spec.total) === "wrong" ? "is-wrong" : ""}`}
             style={getBoxStyle(
               spec.total,
-              isUnk(valTotal, spec.total),
+              isBoxUnknown(spec.total),
               null,
-              getFeedbackStatus(spec.total.key),
+              getFeedbackStatus(spec.total.key, spec.total),
             )}
           />
         </div>
       )}
-
       <div className="bar-model__bottom">
         <BarBox
-          box={spec.left}
+          box={{
+            ...spec.left,
+            editable: !(
+              isDummyMode &&
+              (isBoxUnknown(spec.left) || isAttempted)
+            ),
+          }}
           label={getBarLabel(spec.left, spec)}
-          value={valLeft}
-          active={activeField === spec.left.key}
-          onClick={() => setActiveField(spec.left.key)}
-          className={`bar-box--segment ${getFeedbackStatus(spec.left.key) === "correct" ? "is-correct" : getFeedbackStatus(spec.left.key) === "wrong" ? "is-wrong" : ""}`}
+          value={getDisplayValue(spec.left, valLeft)}
+          active={!isRevealed && !isCorrect && activeField === spec.left.key}
+          onClick={() => {
+            if (!(isDummyMode && (isBoxUnknown(spec.left) || isAttempted)))
+              setActiveField(spec.left.key);
+          }}
+          className={`bar-box--segment ${isBoxUnknown(spec.left) && isDummyMode && !isRevealed && !isCorrect ? "is-missing-value" : ""} ${getFeedbackStatus(spec.left.key, spec.left) === "correct" ? "is-correct" : getFeedbackStatus(spec.left.key, spec.left) === "wrong" ? "is-wrong" : ""}`}
           style={getBoxStyle(
             spec.left,
-            isUnk(valLeft, spec.left),
+            isBoxUnknown(spec.left),
             percentages.first,
-            getFeedbackStatus(spec.left.key),
+            getFeedbackStatus(spec.left.key, spec.left),
           )}
         />
         <BarBox
-          box={spec.right}
+          box={{
+            ...spec.right,
+            editable: !(
+              isDummyMode &&
+              (isBoxUnknown(spec.right) || isAttempted)
+            ),
+          }}
           label={getBarLabel(spec.right, spec)}
-          value={valRight}
-          active={activeField === spec.right.key}
-          onClick={() => setActiveField(spec.right.key)}
-          className={`bar-box--segment ${getFeedbackStatus(spec.right.key) === "correct" ? "is-correct" : getFeedbackStatus(spec.right.key) === "wrong" ? "is-wrong" : ""}`}
+          value={getDisplayValue(spec.right, valRight)}
+          active={!isRevealed && !isCorrect && activeField === spec.right.key}
+          onClick={() => {
+            if (!(isDummyMode && (isBoxUnknown(spec.right) || isAttempted)))
+              setActiveField(spec.right.key);
+          }}
+          className={`bar-box--segment ${isBoxUnknown(spec.right) && isDummyMode && !isRevealed && !isCorrect ? "is-missing-value" : ""} ${getFeedbackStatus(spec.right.key, spec.right) === "correct" ? "is-correct" : getFeedbackStatus(spec.right.key, spec.right) === "wrong" ? "is-wrong" : ""}`}
           style={getBoxStyle(
             spec.right,
-            isUnk(valRight, spec.right),
+            isBoxUnknown(spec.right),
             percentages.second,
-            getFeedbackStatus(spec.right.key),
+            getFeedbackStatus(spec.right.key, spec.right),
           )}
         />
       </div>
@@ -140,9 +293,6 @@ const TotalPartsBarModel = ({
   );
 };
 
-// ==========================================
-// THE CHANGE SCHEMA
-// ==========================================
 const ChangeBarModel = ({
   spec,
   response,
@@ -150,23 +300,19 @@ const ChangeBarModel = ({
   setActiveField,
   question,
   isAttempted,
+  isDummyMode,
   isCorrect,
-  targetField,
+  isRevealed,
 }) => {
   const isSubtraction = (() => {
-    const op = question?.operator || question?.equationSpec?.operator;
-    if (op === "-") return true;
-    if (op === "+") return false;
-
+    // Check words first to avoid backend operator bugs
     const label = String(
       spec?.change?.label || spec?.right?.label || "",
     ).toLowerCase();
     const endLabel = String(
       spec?.end?.label || spec?.total?.label || "",
     ).toLowerCase();
-
-    // ----------------------------  Check for common subtraction keywords (so the total/larger number  is always at top) ----------------------------------------
-    const subWords = [
+    const words = [
       "spent",
       "flew",
       "away",
@@ -177,9 +323,14 @@ const ChangeBarModel = ({
       "ate",
       "sold",
     ];
-    return subWords.some(
-      (word) => label.includes(word) || endLabel.includes(word),
-    );
+
+    for (let i = 0; i < words.length; i++) {
+      if (label.includes(words[i]) || endLabel.includes(words[i])) return true;
+    }
+
+    const op = question?.operator || question?.equationSpec?.operator;
+    if (op === "-") return true;
+    return false;
   })();
 
   const isMod1 = question?.moduleStage === "word_to_bar";
@@ -198,128 +349,159 @@ const ChangeBarModel = ({
     b2 = changeBox;
   }
 
-  const isUnk = (val, boxSpec) => {
+  const valTop = getBarValue(response, topBox);
+  const valB1 = b1 ? getBarValue(response, b1) : "";
+  const valB2 = b2 ? getBarValue(response, b2) : "";
+
+  const isBoxUnknown = (boxSpec) => {
     if (!boxSpec) return false;
-    const cleanVal = String(val || "").trim();
-    return (cleanVal === "?" || boxSpec.value === "?") && !boxSpec.editable;
+    let expected = getExpectedVal(question, boxSpec);
+    return expected === "?" || expected === "";
   };
 
-  // Helper for feedback
-  const getFeedbackStatus = (boxKey) => {
-    if (!isAttempted || boxKey !== targetField) return null;
-    return isCorrect ? "correct" : "wrong";
+  const getCorrectMathValue = (boxSpec) => {
+    const expected = getExpectedVal(question, boxSpec);
+    return expected === "?" || expected === ""
+      ? solveMath(question, spec)
+      : expected;
   };
 
-  // UPDATED: Handle feedback colors inside the style function
-  const getBoxStyle = (box, hashed, widthPercent, status) => {
+  const getDisplayValue = (boxSpec, currentVal) => {
+    const isUnk = isBoxUnknown(boxSpec);
+    if (isRevealed || (isDummyMode && isCorrect && isUnk)) {
+      return getCorrectMathValue(boxSpec);
+    }
+    return !isDummyMode ? response?.slots?.[boxSpec.key] || "" : currentVal;
+  };
+
+  const getFeedbackStatus = (boxKey, boxSpec) => {
+    if (isRevealed) return null;
+    if (isCorrect) return "correct";
+    if (!isAttempted) return null;
+    if (isDummyMode && boxSpec?.editable === false) return null;
+
+    let expected = getExpectedVal(question, boxSpec);
+    const student = String(response?.slots?.[boxKey] || "").trim();
+    if (!student) return "wrong";
+
+    if (expected === "?" || expected === "") {
+      const calcAnswer = solveMath(question, spec);
+      return student === calcAnswer && calcAnswer !== "" ? "correct" : "wrong";
+    }
+    return student === expected ? "correct" : "wrong";
+  };
+
+  const getBoxStyle = (box, isUnk, widthPercent, status) => {
     const style = widthPercent ? { width: `${widthPercent}%` } : {};
 
-    // 1. If there is feedback, use those colors (Overriding the rest)
-    if (status === "correct") {
+    if (status === "correct")
       return {
         ...style,
         backgroundColor: "#f0fdf4",
         border: "2px solid #4ade80",
+        color: "black",
       };
-    }
-    if (status === "wrong") {
+    if (status === "wrong")
       return {
         ...style,
         backgroundColor: "#fef2f2",
         border: "2px solid #f87171",
+        color: "black",
       };
-    }
 
-    // 2. Normal hashing logic
-    if (hashed) {
+    if (isDummyMode && isUnk && !isRevealed && !isCorrect) {
       return {
         ...style,
         backgroundColor: "white",
         backgroundImage: `repeating-linear-gradient(-45deg, transparent, transparent 8px, rgba(148, 163, 184, 0.15) 8px, rgba(148, 163, 184, 0.15) 10px)`,
         border: "2px dashed #94a3b8",
-        backgroundClip: "padding-box",
+        color: "black",
       };
     }
 
-    // 3. Normal coloring logic
     const colors = {
       green: "#f0fdf4",
       blue: "#eff6ff",
       orange: "#fff7ed",
       red: "#fef2f2",
     };
-    return { ...style, backgroundColor: colors[box?.color] || "white" };
+    return {
+      ...style,
+      backgroundColor: colors[box?.color] || "white",
+      color: "black",
+    };
   };
 
-  const vTop = getBarValue(response, topBox);
-  const v1 = b1 ? getBarValue(response, b1) : null;
-  const v2 = b2 ? getBarValue(response, b2) : null;
-  const m1 = b1?.magnitude || 50;
-  const m2 = b2?.magnitude || 50;
-  const total = m1 + m2;
+  const totalMag = (b1?.magnitude || 50) + (b2?.magnitude || 50);
 
-  // console.log("--- SUBMIT DEBUG ---");
-  // console.log("1. Is Attempted:", question?.isAttempted);
-  // console.log("2. Target Field:", question?.targetField);
-  // console.log("3. Is Correct:", question?.isCorrect);
-  // console.log("--------------------");
-
-  // console.log("--- FINDING THE STATE ---");
-  // console.log("Full Question Object:", question);
-  // console.log("Full Response Object:", response);
-  // console.log("-------------------------");
   return (
     <div
       className={`bar-model bar-model--change ${isMod1 ? "is-pill-model" : "is-solid-classic"}`}
     >
       <div className="bar-model__top">
         <BarBox
-          box={topBox}
+          box={{
+            ...topBox,
+            editable: !(isDummyMode && (isBoxUnknown(topBox) || isAttempted)),
+          }}
           label={getBarLabel(topBox, spec)}
-          value={vTop}
-          active={activeField === topBox.key}
-          onClick={() => setActiveField(topBox.key)}
-          className={`bar-box--wide ${isMod1 ? "bar-box--top-pill" : ""} ${getFeedbackStatus(topBox.key) === "correct" ? "is-correct" : getFeedbackStatus(topBox.key) === "wrong" ? "is-wrong" : ""}`}
+          value={getDisplayValue(topBox, valTop)}
+          active={!isRevealed && !isCorrect && activeField === topBox.key}
+          onClick={() => {
+            if (!(isDummyMode && (isBoxUnknown(topBox) || isAttempted)))
+              setActiveField(topBox.key);
+          }}
+          className={`bar-box--wide ${isBoxUnknown(topBox) && isDummyMode && !isRevealed && !isCorrect ? "is-missing-value" : ""} ${getFeedbackStatus(topBox.key, topBox) === "correct" ? "is-correct" : getFeedbackStatus(topBox.key, topBox) === "wrong" ? "is-wrong" : ""}`}
           style={getBoxStyle(
             topBox,
-            isUnk(vTop, topBox),
+            isBoxUnknown(topBox),
             null,
-            getFeedbackStatus(topBox.key),
+            getFeedbackStatus(topBox.key, topBox),
           )}
         />
       </div>
-
       <div className="bar-model__bottom">
         {b1 && (
           <BarBox
-            box={b1}
+            box={{
+              ...b1,
+              editable: !(isDummyMode && (isBoxUnknown(b1) || isAttempted)),
+            }}
             label={getBarLabel(b1, spec)}
-            value={v1}
-            active={activeField === b1.key}
-            onClick={() => setActiveField(b1.key)}
-            className={`bar-box--segment ${isMod1 ? "bar-box--tray-pill token-1" : ""} ${getFeedbackStatus(b1.key) === "correct" ? "is-correct" : getFeedbackStatus(b1.key) === "wrong" ? "is-wrong" : ""}`}
+            value={getDisplayValue(b1, valB1)}
+            active={!isRevealed && !isCorrect && activeField === b1.key}
+            onClick={() => {
+              if (!(isDummyMode && (isBoxUnknown(b1) || isAttempted)))
+                setActiveField(b1.key);
+            }}
+            className={`bar-box--segment ${isBoxUnknown(b1) && isDummyMode && !isRevealed && !isCorrect ? "is-missing-value" : ""} ${getFeedbackStatus(b1.key, b1) === "correct" ? "is-correct" : getFeedbackStatus(b1.key, b1) === "wrong" ? "is-wrong" : ""}`}
             style={getBoxStyle(
               b1,
-              isUnk(v1, b1),
-              (m1 / total) * 100,
-              getFeedbackStatus(b1.key),
+              isBoxUnknown(b1),
+              ((b1?.magnitude || 50) / totalMag) * 100,
+              getFeedbackStatus(b1.key, b1),
             )}
           />
         )}
-
         {b2 && (
           <BarBox
-            box={b2}
+            box={{
+              ...b2,
+              editable: !(isDummyMode && (isBoxUnknown(b2) || isAttempted)),
+            }}
             label={getBarLabel(b2, spec)}
-            value={v2}
-            active={activeField === b2.key}
-            onClick={() => setActiveField(b2.key)}
-            className={`bar-box--segment ${isMod1 ? "bar-box--tray-pill token-2" : ""} ${getFeedbackStatus(b2.key) === "correct" ? "is-correct" : getFeedbackStatus(b2.key) === "wrong" ? "is-wrong" : ""}`}
+            value={getDisplayValue(b2, valB2)}
+            active={!isRevealed && !isCorrect && activeField === b2.key}
+            onClick={() => {
+              if (!(isDummyMode && (isBoxUnknown(b2) || isAttempted)))
+                setActiveField(b2.key);
+            }}
+            className={`bar-box--segment ${isMod1 ? "bar-box--tray-pill token-2" : ""} ${isBoxUnknown(b2) && isDummyMode && !isRevealed && !isCorrect ? "is-missing-value" : ""} ${getFeedbackStatus(b2.key, b2) === "correct" ? "is-correct" : getFeedbackStatus(b2.key, b2) === "wrong" ? "is-wrong" : ""}`}
             style={getBoxStyle(
               b2,
-              isUnk(v2, b2),
-              (m2 / total) * 100,
-              getFeedbackStatus(b2.key),
+              isBoxUnknown(b2),
+              ((b2?.magnitude || 50) / totalMag) * 100,
+              getFeedbackStatus(b2.key, b2),
             )}
           />
         )}
@@ -327,239 +509,6 @@ const ChangeBarModel = ({
     </div>
   );
 };
-
-// const TotalPartsBarModel = ({
-//   spec,
-//   response,
-//   activeField,
-//   setActiveField,
-//   question,
-// }) => {
-//   const getFeedbackClass = (boxKey) => {
-//     if (!question?.isAttempted) return "";
-//     return boxKey === question?.targetField
-//       ? question.isCorrect
-//         ? "is-correct"
-//         : "is-wrong"
-//       : "";
-//   };
-//   const {
-//     total: totalMagnitude,
-//     left: leftMagnitude,
-//     right: rightMagnitude,
-//   } = resolveTotalPartsMagnitudes(spec, response);
-//   const percentages = getSegmentPercentages(
-//     leftMagnitude,
-//     rightMagnitude,
-//     totalMagnitude,
-//   );
-
-//   const valTotal = getBarValue(response, spec.total);
-//   const valLeft = getBarValue(response, spec.left);
-//   const valRight = getBarValue(response, spec.right);
-
-//   // THE FINAL FIX: Ignore editable placeholders!
-//   const isUnk = (val, boxSpec) => {
-//     if (!boxSpec) return false;
-
-//     // 1. If the student is supposed to type into this box, keep it solid!
-//     // (This stops the Mod 1 placeholders from getting dashed)
-//     if (boxSpec.editable) return false;
-
-//     // 2. If the box is locked and displays a "?", it's the true unknown. Dash it!
-//     const cleanVal = String(val || "").trim();
-//     if (cleanVal === "?") return true;
-
-//     return false;
-//   };
-
-//   return (
-//     <div className="bar-model bar-model--total-parts">
-//       {!spec.hideTopBar && (
-//         <div className="bar-model__top">
-//           <BarBox
-//             box={spec.total}
-//             label={getBarLabel(spec.total, spec)}
-//             value={valTotal}
-//             active={activeField === spec.total.key}
-//             onClick={() => setActiveField(spec.total.key)}
-//             className={`bar-box--wide ${isUnk(valTotal, spec.total) ? "is-missing-value" : ""} ${getFeedbackClass(spec.total.key)}`}
-//             // className={`bar-box--wide ${isUnk(valTotal, spec.total) ? "is-missing-value" : ""}`}
-//           />
-//         </div>
-//       )}
-
-//       <div className="bar-model__bottom">
-//         <BarBox
-//           box={spec.left}
-//           label={getBarLabel(spec.left, spec)}
-//           value={valLeft}
-//           active={activeField === spec.left.key}
-//           onClick={() => setActiveField(spec.left.key)}
-//           // className={`bar-box--segment ${isUnk(valLeft, spec.left) ? "is-missing-value" : ""}`}
-//           className={`bar-box--segment ${isUnk(valLeft, spec.left) ? "is-missing-value" : ""} ${getFeedbackClass(spec.left.key)}`}
-//           style={{ width: `${percentages.first}%` }}
-//         />
-//         <BarBox
-//           box={spec.right}
-//           label={getBarLabel(spec.right, spec)}
-//           value={valRight}
-//           active={activeField === spec.right.key}
-//           onClick={() => setActiveField(spec.right.key)}
-//           // className={`bar-box--segment ${isUnk(valRight, spec.right) ? "is-missing-value" : ""}`}
-//           className={`bar-box--segment ${isUnk(valRight, spec.right) ? "is-missing-value" : ""} ${getFeedbackClass(spec.right.key)}`}
-//           style={{ width: `${percentages.second}%` }}
-//         />
-//       </div>
-//     </div>
-//   );
-// };
-// const ChangeBarModel = ({
-//   spec,
-//   response,
-//   activeField,
-//   setActiveField,
-//   question,
-// }) => {
-//   // 1. MATHEMATICAL STRUCTURE DETECTION
-//   const isSubtraction = (() => {
-//     const op = question?.operator || question?.equationSpec?.operator;
-//     if (op === "-") return true;
-//     if (op === "+") return false;
-
-//     const label = String(
-//       spec?.change?.label || spec?.right?.label || "",
-//     ).toLowerCase();
-//     const endLabel = String(
-//       spec?.end?.label || spec?.total?.label || "",
-//     ).toLowerCase();
-//     return (
-//       label.includes("gave") ||
-//       label.includes("ate") ||
-//       label.includes("lost") ||
-//       label.includes("away") ||
-//       label.includes("flew") ||
-//       label.includes("spent") ||
-//       endLabel.includes("left over") ||
-//       endLabel.includes("remaining")
-//     );
-//   })();
-
-//   const isMod1 = question?.moduleStage === "word_to_bar";
-
-//   // 2. BOX MAPPING
-//   const startBox = spec.start || spec.left;
-//   const changeBox = spec.change || spec.right;
-//   const endBox = spec.end || spec.total || spec.result;
-
-//   let topBox, b1, b2;
-//   if (isSubtraction) {
-//     topBox = startBox;
-//     b1 = endBox;
-//     b2 = changeBox;
-//   } else {
-//     topBox = endBox;
-//     b1 = startBox;
-//     b2 = changeBox;
-//   }
-
-//   // 3. THE "ONLY HASH THE UNKNOWN" LOGIC
-//   const isUnk = (val, boxSpec) => {
-//     if (!boxSpec) return false;
-//     const cleanVal = String(val || "").trim();
-//     return (cleanVal === "?" || boxSpec.value === "?") && !boxSpec.editable;
-//   };
-
-//   // 4. STYLE FIX: White background for hashed boxes, original colors for solid boxes
-//   const getBoxStyle = (box, hashed, widthPercent = null) => {
-//     const style = widthPercent ? { width: `${widthPercent}%` } : {};
-
-//     if (hashed) {
-//       return {
-//         ...style,
-//         backgroundColor: "white", // Removed background color for hashed boxes
-//         backgroundImage: `repeating-linear-gradient(-45deg, transparent, transparent 8px, rgba(148, 163, 184, 0.15) 8px, rgba(148, 163, 184, 0.15) 10px)`,
-//         border: "2px dashed #94a3b8",
-//         backgroundClip: "padding-box",
-//       };
-//     }
-
-//     // Colors only for non-hashed, solid boxes
-//     const colors = {
-//       green: "#f0fdf4",
-//       blue: "#eff6ff",
-//       orange: "#fff7ed",
-//       red: "#fef2f2",
-//     };
-//     return { ...style, backgroundColor: colors[box?.color] || "white" };
-//   };
-
-//   const vTop = getBarValue(response, topBox);
-//   const v1 = b1 ? getBarValue(response, b1) : null;
-//   const v2 = b2 ? getBarValue(response, b2) : null;
-
-//   const m1 = b1?.magnitude || 50;
-//   const m2 = b2?.magnitude || 50;
-//   const total = m1 + m2;
-
-//   const getFeedbackClass = (boxKey) => {
-//     if (!question?.isAttempted) return "";
-//     return boxKey === question?.targetField
-//       ? question.isCorrect
-//         ? "is-correct"
-//         : "is-wrong"
-//       : "";
-//   };
-
-//   return (
-//     <div
-//       className={`bar-model bar-model--change ${isMod1 ? "is-pill-model" : "is-solid-classic"}`}
-//     >
-//       {/* TOP ROW */}
-//       <div className="bar-model__top">
-//         <BarBox
-//           box={topBox}
-//           label={getBarLabel(topBox, spec)}
-//           value={vTop}
-//           active={activeField === topBox.key}
-//           onClick={() => setActiveField(topBox.key)}
-//           // className={`bar-box--wide ${isMod1 ? "bar-box--top-pill" : ""}`}
-//           className={`bar-box--wide ${isMod1 ? "bar-box--top-pill" : ""} ${getFeedbackClass(topBox.key)}`}
-//           style={getBoxStyle(topBox, isUnk(vTop, topBox))}
-//         />
-//       </div>
-
-//       {/* BOTTOM ROW */}
-//       <div className="bar-model__bottom">
-//         {b1 && (
-//           <BarBox
-//             box={b1}
-//             label={getBarLabel(b1, spec)}
-//             value={v1}
-//             active={activeField === b1.key}
-//             onClick={() => setActiveField(b1.key)}
-//             // className={`bar-box--segment ${isMod1 ? "bar-box--tray-pill token-1" : ""}`}
-//             className={`bar-box--segment ${isMod1 ? "bar-box--tray-pill token-1" : ""} ${getFeedbackClass(b1.key)}`}
-//             style={getBoxStyle(b1, isUnk(v1, b1), (m1 / total) * 100)}
-//           />
-//         )}
-
-//         {b2 && (
-//           <BarBox
-//             box={b2}
-//             label={getBarLabel(b2, spec)}
-//             value={v2}
-//             active={activeField === b2.key}
-//             onClick={() => setActiveField(b2.key)}
-//             className={`bar-box--segment ${isMod1 ? "bar-box--tray-pill token-2" : ""} ${getFeedbackClass(b2.key)}`}
-//             // className={`bar-box--segment ${isMod1 ? "bar-box--tray-pill token-2" : ""}`}
-//             style={getBoxStyle(b2, isUnk(v2, b2), (m2 / total) * 100)}
-//           />
-//         )}
-//       </div>
-//     </div>
-//   );
-// };
 
 const CompareStackedBarModel = ({
   spec,
@@ -815,6 +764,8 @@ const BarModel = ({
   isAttempted,
   isCorrect,
   targetField,
+  isDummyMode,
+  isRevealed,
 }) => {
   const spec = question?.barModelSpec;
   if (!spec) return null;
@@ -831,8 +782,10 @@ const BarModel = ({
         setActiveField={setActiveField}
         question={question}
         isAttempted={isAttempted}
-        isCorrect={isCorrect}
+        isCorrect={isCorrect} // Passes the true/false value
         targetField={targetField}
+        isDummyMode={isDummyMode}
+        isRevealed={isRevealed}
       />
     );
   }
@@ -870,8 +823,10 @@ const BarModel = ({
       setActiveField={setActiveField}
       question={question}
       isAttempted={isAttempted}
-      isCorrect={isCorrect}
+      isCorrect={isCorrect} // Passes the true/false value
       targetField={targetField}
+      isDummyMode={isDummyMode}
+      isRevealed={isRevealed}
     />
   );
 };

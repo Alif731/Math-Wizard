@@ -1,3 +1,4 @@
+// QuestionCard.jsx
 import { useState, useEffect } from "react";
 import Confetti from "react-confetti";
 
@@ -22,7 +23,7 @@ import {
 
 const audioSuccess = new Audio("/success1.mp3");
 const audioFailure = new Audio("/failure.mp3");
-const NEXT_PROBLEM_DELAY_MS = 1800;
+// const NEXT_PROBLEM_DELAY_MS = 1800;
 
 const getViewportSize = () => {
   if (typeof window === "undefined") {
@@ -51,8 +52,14 @@ const QuestionCard = ({
   const [selectedOption, setSelectedOption] = useState(null);
   const [viewportSize, setViewportSize] = useState(getViewportSize);
 
+  // Dummy Practice for Bar Modal
+  const [isDummyMode, setIsDummyMode] = useState(false);
+  const [failedFirstTry, setFailedFirstTry] = useState(false);
+  const [hasFeedback, setHasFeedback] = useState(false);
+
   // NEW: Holds our animation state safely
   const [statAnim, setStatAnim] = useState({ key: 0, colorClass: "" });
+  const [isRevealed, setIsRevealed] = useState(false);
 
   // 1. When a new question loads, completely reset everything (including the animation)
   useEffect(() => {
@@ -62,6 +69,9 @@ const QuestionCard = ({
     setIsError(false);
     setSelectedOption(null);
     setStatAnim({ key: 0, colorClass: "" }); // Ensures no popping on question load!
+    setIsDummyMode(false);
+    setFailedFirstTry(false);
+    setIsRevealed(false);
   }, [problem]);
 
   // 2. Only trigger animations when Success or Error actually occur
@@ -79,6 +89,12 @@ const QuestionCard = ({
     }
   }, [isSuccess, isError]);
 
+  useEffect(() => {
+    if (isDummyMode) {
+      setFeedback(null);
+      setIsError(false);
+    }
+  }, [isDummyMode]);
   useEffect(() => {
     const handleResize = () => setViewportSize(getViewportSize());
 
@@ -98,10 +114,6 @@ const QuestionCard = ({
     audioFailure.play().catch(() => {});
   };
 
-  const queueNextProblem = () => {
-    window.setTimeout(() => onNext?.(), NEXT_PROBLEM_DELAY_MS);
-  };
-
   const applyFeedback = (result) => {
     setFeedback(result);
     setIsSuccess(Boolean(result?.isCorrect));
@@ -114,27 +126,213 @@ const QuestionCard = ({
     // }
   };
 
+  // --- INDESTRUCTIBLE MATH HELPERS ---
+  const getExpectedVal = (q, box) => {
+    if (!box) return "";
+    let val = q?.validation?.slots?.[box.key];
+    if (val !== undefined && val !== null && String(val).trim() !== "") {
+      return String(val).trim();
+    }
+    return String(box.value || "").trim();
+  };
+
+  const solveMath = (q, spec) => {
+    const getNum = (box) => {
+      let v = getExpectedVal(q, box);
+      return v === "" || v === "?" ? NaN : Math.abs(parseFloat(v));
+    };
+
+    // 🔥 THE FIX: Explicitly check if this is a Change schema so we don't accidentally hijack it into Total Parts
+    const isChangeModel =
+      q?.schemaKind === "change" || spec?.layout === "change";
+
+    if (!isChangeModel && spec?.total) {
+      // Total Parts is strictly addition logic
+      const t = getNum(spec.total),
+        l = getNum(spec.left),
+        r = getNum(spec.right);
+      if (isNaN(t) && !isNaN(l) && !isNaN(r)) return String(l + r);
+      if (isNaN(l) && !isNaN(t) && !isNaN(r)) return String(Math.abs(t - r));
+      if (isNaN(r) && !isNaN(t) && !isNaN(l)) return String(Math.abs(t - l));
+    } else if (isChangeModel || spec?.change || spec?.right) {
+      // Change Schema Math Logic
+      let isSub = false;
+      const startBox = spec?.start || spec?.left;
+      const changeBox = spec?.change || spec?.right;
+      const endBox = spec?.end || spec?.total || spec?.result;
+
+      const label = String(changeBox?.label || "").toLowerCase();
+      const endLabel = String(endBox?.label || "").toLowerCase();
+      const words = [
+        "spent",
+        "flew",
+        "away",
+        "lost",
+        "gave",
+        "left",
+        "remaining",
+        "ate",
+        "sold",
+      ];
+
+      for (let i = 0; i < words.length; i++) {
+        if (label.includes(words[i]) || endLabel.includes(words[i])) {
+          isSub = true;
+          break;
+        }
+      }
+
+      if (!isSub) {
+        const op = q?.operator || q?.equationSpec?.operator;
+        if (op === "-") isSub = true;
+      }
+
+      const s = getNum(startBox);
+      const c = getNum(changeBox);
+      const e = getNum(endBox);
+
+      if (isSub) {
+        // Subtraction Story: Start (Top) = End + Change
+        if (isNaN(s) && !isNaN(e) && !isNaN(c)) return String(e + c);
+        if (isNaN(e) && !isNaN(s) && !isNaN(c)) return String(Math.abs(s - c));
+        if (isNaN(c) && !isNaN(s) && !isNaN(e)) return String(Math.abs(s - e));
+      } else {
+        // Addition Story: End (Top) = Start + Change
+        if (isNaN(e) && !isNaN(s) && !isNaN(c)) return String(s + c);
+        if (isNaN(s) && !isNaN(e) && !isNaN(c)) return String(Math.abs(e - c));
+        if (isNaN(c) && !isNaN(e) && !isNaN(s)) return String(Math.abs(e - s));
+      }
+    }
+
+    let ans = String(
+      q?.answer || q?.correctAnswer || q?.equationSpec?.answer || "",
+    ).trim();
+    return ans && ans !== "?" ? ans : "";
+  };
+
+  const handleNext = async () => {
+    // 🔥 Only ping backend to fetch next if we are finished with Dummy Mode
+    if (isDummyMode && (feedback || isRevealed)) {
+      try {
+        const responseToSubmit = buildSubmissionResponse(
+          problem.question,
+          answer,
+        );
+        // Constructed completion payload to tell backend we are moving on
+        Object.keys(problem.question.validation?.slots || {}).forEach(
+          (k) => (responseToSubmit.slots[k] = "?"),
+        );
+        await onSubmit(responseToSubmit);
+      } catch (e) {
+        if (e?.status === 409) return onNext();
+      }
+    }
+
+    // Standard local reset
+    setIsDummyMode(false);
+    setFailedFirstTry(false);
+    setFeedback(null);
+    setIsSuccess(false);
+    setIsError(false);
+    setIsRevealed(false);
+    setAnswer(createInitialResponse(problem?.question));
+    onNext();
+  };
+
   const submitStructuredResponse = async (overrideResponse) => {
-    if (!problem?.question || feedback || disabled) return;
-
-    const isSyntheticEvent =
-      overrideResponse &&
-      typeof overrideResponse === "object" &&
-      "preventDefault" in overrideResponse;
-
-    const responseToSubmit =
-      isSyntheticEvent || overrideResponse === undefined
-        ? buildSubmissionResponse(problem.question, answer)
-        : overrideResponse;
-
+    if (!problem?.question || disabled) return;
+    const responseToSubmit = buildSubmissionResponse(problem.question, answer);
     if (!isQuestionResponseReady(problem.question, answer)) return;
+
+    if (isDummyMode) {
+      const spec = problem.question.barModelSpec || {};
+      const studentSlots = answer?.slots || {};
+      const boxes = [
+        spec.total,
+        spec.left,
+        spec.right,
+        spec.start,
+        spec.change,
+        spec.end,
+        spec.result,
+      ].filter(Boolean);
+
+      let isDummyCorrect = true;
+      boxes.forEach((box) => {
+        let expected = getExpectedVal(problem.question, box);
+        if (expected !== "" && expected !== "?") {
+          if (String(studentSlots[box.key] || "").trim() !== expected)
+            isDummyCorrect = false;
+        }
+      });
+
+      // 🎉 Success or ❌ Failure: Both update UI locally and wait for manual next
+      setFeedback({ isCorrect: isDummyCorrect });
+      setIsSuccess(isDummyCorrect);
+      setIsError(!isDummyCorrect);
+      return;
+    }
+
+    // --- MAIN SCREEN SABOTAGE Logic remains exactly as it was ---
+    const isBarModelStage = Boolean(problem.question.barModelSpec);
+    if (isBarModelStage) {
+      const spec = problem.question.barModelSpec || {};
+      const boxes = [
+        spec.total,
+        spec.left,
+        spec.right,
+        spec.start,
+        spec.change,
+        spec.end,
+        spec.result,
+      ].filter(Boolean);
+      const calcAnswer = solveMath(problem.question, spec);
+      let isModelPerfect = true;
+      const studentSlots = answer?.slots || {};
+
+      boxes.forEach((box) => {
+        let expected = getExpectedVal(problem.question, box);
+        let student = String(studentSlots[box.key] || "").trim();
+        if (expected === "" || expected === "?") {
+          if (student === calcAnswer && calcAnswer !== "") {
+            if (responseToSubmit.slots) responseToSubmit.slots[box.key] = "?";
+          } else {
+            isModelPerfect = false;
+          }
+        } else {
+          if (student !== expected) isModelPerfect = false;
+        }
+      });
+
+      if (!isModelPerfect) {
+        setFailedFirstTry(true);
+        setIsError(true);
+        setFeedback({ isCorrect: false });
+        try {
+          if (responseToSubmit.slots) {
+            const givenBox = boxes.find(
+              (b) =>
+                getExpectedVal(problem.question, b) !== "?" &&
+                getExpectedVal(problem.question, b) !== "",
+            );
+            if (givenBox)
+              responseToSubmit.slots[givenBox.key] = "FORCED_FAIL_BY_FRONTEND";
+          }
+          await onSubmit(responseToSubmit);
+        } catch (e) {
+          if (e?.status === 409) handleNext();
+        }
+        return;
+      }
+    }
 
     try {
       const result = await onSubmit(responseToSubmit);
       applyFeedback(result);
-      queueNextProblem();
+      if (!result.isCorrect && isBarModelStage && !isDummyMode)
+        setFailedFirstTry(true);
     } catch (error) {
-      console.error("Failed to submit:", error);
+      if (error?.status === 409) handleNext();
     }
   };
 
@@ -178,7 +376,7 @@ const QuestionCard = ({
 
       applyFeedback(result);
 
-      queueNextProblem();
+      // queueNextProblem();
     } catch (error) {
       console.error("Failed to submit:", error);
     }
@@ -190,7 +388,7 @@ const QuestionCard = ({
     try {
       const result = await onSubmit(isValid ? "matched" : "wrong_answer");
       applyFeedback(result);
-      queueNextProblem();
+      // queueNextProblem();
     } catch (error) {
       console.error("Failed to submit:", error);
     }
@@ -295,8 +493,14 @@ const QuestionCard = ({
               setResponse={setAnswer}
               feedback={feedback}
               onCheck={submitStructuredResponse}
-              onNext={onNext}
+              onNext={handleNext}
               isSubmitting={disabled}
+              // for dummy test
+              isDummyMode={isDummyMode}
+              setIsDummyMode={setIsDummyMode}
+              failedFirstTry={failedFirstTry}
+              isRevealed={isRevealed}
+              setIsRevealed={setIsRevealed}
             />
           ) : (
             <>
@@ -353,11 +557,21 @@ const QuestionCard = ({
                     )}
                 </div>
               )}
+              {(isSuccess || isError) && !isWorksheetDriven && (
+                <div className="worksheet-actions">
+                  <button
+                    className="worksheet-button worksheet-button--continue"
+                    onClick={onNext}
+                  >
+                    Continue →
+                  </button>
+                </div>
+              )}
             </>
           )}
         </div>
       </div>
-      {/* 
+
       {showTelemetry && (
         <aside className="question-shell__telemetry">
           <GhostPanel
@@ -366,7 +580,7 @@ const QuestionCard = ({
             masteryConfig={problem?.masteryConfig}
           />
         </aside>
-      )} */}
+      )}
     </div>
   );
 };

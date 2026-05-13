@@ -419,7 +419,7 @@
       transition:
         background 0.2s ease,
         color 0.2s ease;
-      font-family: inherit;
+      font-family: "ActualComicSans", cursive;
 
       @include ut.breakpoint(medium) {
         font-size: 1rem;
