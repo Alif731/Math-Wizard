@@ -136,68 +136,111 @@ const QuestionCard = ({
     return String(box.value || "").trim();
   };
 
-  const solveMath = (q, spec) => {
+  // const solveMath = (q, spec) => {
+  //   const getNum = (box) => {
+  //     let v = getExpectedVal(q, box);
+  //     return v === "" || v === "?" ? NaN : Math.abs(parseFloat(v));
+  //   };
+
+  //   // 🔥 THE FIX: Explicitly check if this is a Change schema so we don't accidentally hijack it into Total Parts
+  //   const isChangeModel =
+  //     q?.schemaKind === "change" || spec?.layout === "change";
+
+  //   if (!isChangeModel && spec?.total) {
+  //     // Total Parts is strictly addition logic
+  //     const t = getNum(spec.total),
+  //       l = getNum(spec.left),
+  //       r = getNum(spec.right);
+  //     if (isNaN(t) && !isNaN(l) && !isNaN(r)) return String(l + r);
+  //     if (isNaN(l) && !isNaN(t) && !isNaN(r)) return String(Math.abs(t - r));
+  //     if (isNaN(r) && !isNaN(t) && !isNaN(l)) return String(Math.abs(t - l));
+  //   } else if (isChangeModel || spec?.change || spec?.right) {
+  //     // Change Schema Math Logic
+  //     let isSub = false;
+  //     const startBox = spec?.start || spec?.left;
+  //     const changeBox = spec?.change || spec?.right;
+  //     const endBox = spec?.end || spec?.total || spec?.result;
+
+  //     const label = String(changeBox?.label || "").toLowerCase();
+  //     const endLabel = String(endBox?.label || "").toLowerCase();
+  //     const words = [
+  //       "spent",
+  //       "flew",
+  //       "away",
+  //       "lost",
+  //       "gave",
+  //       "left",
+  //       "remaining",
+  //       "ate",
+  //       "sold",
+  //     ];
+
+  //     for (let i = 0; i < words.length; i++) {
+  //       if (label.includes(words[i]) || endLabel.includes(words[i])) {
+  //         isSub = true;
+  //         break;
+  //       }
+  //     }
+
+  //     if (!isSub) {
+  //       const op = q?.operator || q?.equationSpec?.operator;
+  //       if (op === "-") isSub = true;
+  //     }
+
+  //     const s = getNum(startBox);
+  //     const c = getNum(changeBox);
+  //     const e = getNum(endBox);
+
+  //     if (isSub) {
+  //       // Subtraction Story: Start (Top) = End + Change
+  //       if (isNaN(s) && !isNaN(e) && !isNaN(c)) return String(e + c);
+  //       if (isNaN(e) && !isNaN(s) && !isNaN(c)) return String(Math.abs(s - c));
+  //       if (isNaN(c) && !isNaN(s) && !isNaN(e)) return String(Math.abs(s - e));
+  //     } else {
+  //       // Addition Story: End (Top) = Start + Change
+  //       if (isNaN(e) && !isNaN(s) && !isNaN(c)) return String(s + c);
+  //       if (isNaN(s) && !isNaN(e) && !isNaN(c)) return String(Math.abs(e - c));
+  //       if (isNaN(c) && !isNaN(e) && !isNaN(s)) return String(Math.abs(e - s));
+  //     }
+  //   }
+
+  //   let ans = String(
+  //     q?.answer || q?.correctAnswer || q?.equationSpec?.answer || "",
+  //   ).trim();
+  //   return ans && ans !== "?" ? ans : "";
+  // };
+
+  const solveMath = (q, spec, forceSub = null) => {
     const getNum = (box) => {
       let v = getExpectedVal(q, box);
       return v === "" || v === "?" ? NaN : Math.abs(parseFloat(v));
     };
 
-    // 🔥 THE FIX: Explicitly check if this is a Change schema so we don't accidentally hijack it into Total Parts
     const isChangeModel =
-      q?.schemaKind === "change" || spec?.layout === "change";
+      q?.schemaKind === "change" || spec?.layout === "change" || spec?.change;
 
     if (!isChangeModel && spec?.total) {
-      // Total Parts is strictly addition logic
       const t = getNum(spec.total),
         l = getNum(spec.left),
         r = getNum(spec.right);
       if (isNaN(t) && !isNaN(l) && !isNaN(r)) return String(l + r);
       if (isNaN(l) && !isNaN(t) && !isNaN(r)) return String(Math.abs(t - r));
       if (isNaN(r) && !isNaN(t) && !isNaN(l)) return String(Math.abs(t - l));
-    } else if (isChangeModel || spec?.change || spec?.right) {
-      // Change Schema Math Logic
-      let isSub = false;
-      const startBox = spec?.start || spec?.left;
-      const changeBox = spec?.change || spec?.right;
-      const endBox = spec?.end || spec?.total || spec?.result;
+    } else if (isChangeModel) {
+      const s = getNum(spec?.start || spec?.left);
+      const c = getNum(spec?.change || spec?.right);
+      const e = getNum(spec?.end || spec?.total || spec?.result);
 
-      const label = String(changeBox?.label || "").toLowerCase();
-      const endLabel = String(endBox?.label || "").toLowerCase();
-      const words = [
-        "spent",
-        "flew",
-        "away",
-        "lost",
-        "gave",
-        "left",
-        "remaining",
-        "ate",
-        "sold",
-      ];
-
-      for (let i = 0; i < words.length; i++) {
-        if (label.includes(words[i]) || endLabel.includes(words[i])) {
-          isSub = true;
-          break;
-        }
-      }
-
-      if (!isSub) {
-        const op = q?.operator || q?.equationSpec?.operator;
-        if (op === "-") isSub = true;
-      }
-
-      const s = getNum(startBox);
-      const c = getNum(changeBox);
-      const e = getNum(endBox);
+      let isSub =
+        forceSub !== null
+          ? forceSub
+          : q?.operator === "-" || q?.equationSpec?.operator === "-";
 
       if (isSub) {
-        // Subtraction Story: Start (Top) = End + Change
         if (isNaN(s) && !isNaN(e) && !isNaN(c)) return String(e + c);
         if (isNaN(e) && !isNaN(s) && !isNaN(c)) return String(Math.abs(s - c));
         if (isNaN(c) && !isNaN(s) && !isNaN(e)) return String(Math.abs(s - e));
       } else {
-        // Addition Story: End (Top) = Start + Change
         if (isNaN(e) && !isNaN(s) && !isNaN(c)) return String(s + c);
         if (isNaN(s) && !isNaN(e) && !isNaN(c)) return String(Math.abs(e - c));
         if (isNaN(c) && !isNaN(e) && !isNaN(s)) return String(Math.abs(e - s));
@@ -209,7 +252,6 @@ const QuestionCard = ({
     ).trim();
     return ans && ans !== "?" ? ans : "";
   };
-
   const handleNext = async () => {
     // 🔥 Only ping backend to fetch next if we are finished with Dummy Mode
     if (isDummyMode && (feedback || isRevealed)) {
@@ -242,40 +284,218 @@ const QuestionCard = ({
   const submitStructuredResponse = async (overrideResponse) => {
     if (!problem?.question || disabled) return;
     const responseToSubmit = buildSubmissionResponse(problem.question, answer);
-    if (!isQuestionResponseReady(problem.question, answer)) return;
+    const isEquationStage = ["bar_to_equation", "schema_equation"].includes(
+      problem.question.moduleStage,
+    );
 
+    if (!isEquationStage && !isQuestionResponseReady(problem.question, answer))
+      return;
+    const isBarModelStage = Boolean(problem.question.barModelSpec);
+
+    // ====================================================
+    // 🔥 1. DUMMY MODE GRADER (Practice Mode)
+    // ====================================================
     if (isDummyMode) {
-      const spec = problem.question.barModelSpec || {};
-      const studentSlots = answer?.slots || {};
-      const boxes = [
-        spec.total,
-        spec.left,
-        spec.right,
-        spec.start,
-        spec.change,
-        spec.end,
-        spec.result,
-      ].filter(Boolean);
-
       let isDummyCorrect = true;
-      boxes.forEach((box) => {
-        let expected = getExpectedVal(problem.question, box);
-        if (expected !== "" && expected !== "?") {
-          if (String(studentSlots[box.key] || "").trim() !== expected)
-            isDummyCorrect = false;
-        }
-      });
+      const studentSlots = answer?.slots || {};
+      const detailedFeedback = { isCorrect: true, slots: {} };
 
-      // 🎉 Success or ❌ Failure: Both update UI locally and wait for manual next
-      setFeedback({ isCorrect: isDummyCorrect });
+      if (isEquationStage) {
+        const templateSlots = (
+          problem.question.equationSpec?.template || []
+        ).filter((item) => item.type === "slot" && item.key);
+        const isCombine =
+          problem.question.schemaKind?.toLowerCase() === "combine";
+        let isFlexibleMatch = false;
+
+        // Helper to extract the true story number
+        const getExpected = (key) => {
+          const validationVal = problem.question.validation?.slots?.[key];
+          if (
+            validationVal !== undefined &&
+            validationVal !== null &&
+            String(validationVal).trim() !== ""
+          ) {
+            return String(validationVal).trim();
+          }
+          const tItem = templateSlots.find((t) => t.key === key);
+          return String(tItem?.value || "").trim();
+        };
+
+        // Flexible Math Check (e.g. 8+5 is the same as 5+8)
+        if (isCombine && templateSlots.length >= 2) {
+          const lKey = templateSlots[0].key;
+          const rKey = templateSlots[1].key;
+          const tL = String(studentSlots[lKey] || "").trim();
+          const tR = String(studentSlots[rKey] || "").trim();
+
+          const eL = getExpected(lKey);
+          const eR = getExpected(rKey);
+
+          if (tL === eR && tR === eL && tL !== "" && tR !== "") {
+            isFlexibleMatch = true;
+          }
+        }
+
+        // Grade every known box strictly
+        templateSlots.forEach((item, index) => {
+          const key = item.key;
+          const student = String(studentSlots[key] || "").trim();
+          const expected = getExpected(key);
+
+          // If expected is "?" or "", it's the unknown box. Skip grading it.
+          const isUnknownBox = expected === "?" || expected === "";
+          let isSlotCorrect = true;
+
+          if (!isUnknownBox) {
+            if (isFlexibleMatch && (index === 0 || index === 1)) {
+              isSlotCorrect = true;
+            } else {
+              isSlotCorrect = student === expected;
+            }
+            if (!isSlotCorrect) isDummyCorrect = false;
+          }
+
+          detailedFeedback.slots[key] = { isCorrect: isSlotCorrect };
+        });
+
+        // 🔥 FIX 1: Check Operator (Always set explicit feedback)
+        if (
+          problem.question.schemaKind === "change" &&
+          problem.question.equationSpec?.operatorEditable
+        ) {
+          const expectedOp =
+            problem.question.equationSpec?.operator ||
+            problem.question.operator;
+
+          const isOpCorrect = answer?.operator === expectedOp;
+          if (!isOpCorrect) isDummyCorrect = false;
+
+          // Always set the explicit status so the UI knows it is correct
+          detailedFeedback.operator = { isCorrect: isOpCorrect };
+        }
+
+        detailedFeedback.isCorrect = isDummyCorrect;
+        setFeedback(detailedFeedback);
+      } else {
+        // MODULE 2 GRADING (Untouched)
+        const spec = problem.question.barModelSpec || {};
+        const boxes = [
+          spec.total,
+          spec.left,
+          spec.right,
+          spec.start,
+          spec.change,
+          spec.end,
+          spec.result,
+        ].filter(Boolean);
+        boxes.forEach((box) => {
+          let expected = getExpectedVal(problem.question, box);
+          if (expected !== "" && expected !== "?") {
+            if (String(studentSlots[box.key] || "").trim() !== expected)
+              isDummyCorrect = false;
+          }
+        });
+        setFeedback({ isCorrect: isDummyCorrect });
+      }
+
       setIsSuccess(isDummyCorrect);
       setIsError(!isDummyCorrect);
+      return; // 🔥 EXIT here so Main Screen Logic NEVER runs!
+    }
+
+    // ====================================================
+    // 🔥 2. MAIN SCREEN GRADER & BACKEND SYNC
+    // ====================================================
+    if (isEquationStage) {
+      const studentSlots = answer?.slots || {};
+      const expectedSlots = problem.question.validation?.slots || {};
+      const spec = problem.question.barModelSpec || {};
+      const calcAnswer = solveMath(problem.question, spec);
+
+      const templateKeys = (problem.question.equationSpec?.template || [])
+        .filter((item) => item.type === "slot" && item.key)
+        .map((item) => item.key);
+
+      let isLocalCorrect = true;
+      const detailedFeedback = { isCorrect: true, slots: {} };
+
+      templateKeys.forEach((key) => {
+        const student = String(studentSlots[key] || "").trim();
+        let expected = String(expectedSlots[key] || "").trim();
+
+        if (!student) {
+          const item = problem.question.equationSpec.template.find(
+            (t) => t.key === key,
+          );
+          if (item) expected = String(item.value).trim();
+        }
+
+        if (expected === "?" || expected === "") expected = String(calcAnswer);
+
+        const isSlotCorrect =
+          student === expected || (!student && expected === student);
+        if (!isSlotCorrect) isLocalCorrect = false;
+
+        detailedFeedback.slots[key] = { isCorrect: isSlotCorrect };
+      });
+
+      // 🔥 FIX 2: Check Operator (Always set explicit feedback)
+      if (
+        problem.question.schemaKind === "change" &&
+        problem.question.equationSpec?.operatorEditable
+      ) {
+        const expectedOp =
+          problem.question.equationSpec?.operator || problem.question.operator;
+
+        const isOpCorrect = answer?.operator === expectedOp;
+        if (!isOpCorrect) isLocalCorrect = false;
+
+        // Always set the explicit status so the UI knows it is correct
+        detailedFeedback.operator = { isCorrect: isOpCorrect };
+      }
+
+      detailedFeedback.isCorrect = isLocalCorrect;
+      setFeedback(detailedFeedback);
+      setIsSuccess(isLocalCorrect);
+      setIsError(!isLocalCorrect);
+
+      if (!isLocalCorrect) setFailedFirstTry(true);
+
+      try {
+        if (isLocalCorrect) {
+          responseToSubmit.slots = { ...expectedSlots };
+          const expectedOp =
+            problem.question.equationSpec?.operator ||
+            problem.question.operator;
+          if (expectedOp) responseToSubmit.operator = expectedOp;
+        } else {
+          responseToSubmit.slots = { ...expectedSlots };
+          const givenBoxKey = Object.keys(expectedSlots).find(
+            (k) =>
+              String(expectedSlots[k]).trim() !== "?" &&
+              String(expectedSlots[k]).trim() !== "",
+          );
+
+          if (givenBoxKey) {
+            responseToSubmit.slots[givenBoxKey] = "FORCED_FAIL_BY_FRONTEND";
+          } else if (Object.keys(expectedSlots).length > 0) {
+            responseToSubmit.slots[Object.keys(expectedSlots)[0]] =
+              "FORCED_FAIL_BY_FRONTEND";
+          }
+          responseToSubmit.operator = "FAIL";
+        }
+        await onSubmit(responseToSubmit);
+      } catch (e) {
+        if (e?.status === 409) handleNext();
+      }
       return;
     }
 
-    // --- MAIN SCREEN SABOTAGE Logic remains exactly as it was ---
-    const isBarModelStage = Boolean(problem.question.barModelSpec);
-    if (isBarModelStage) {
+    // ====================================================
+    // --- MODULE 2 MAIN SCREEN SABOTAGE (UNTOUCHED) ---
+    // ====================================================
+    if (isBarModelStage && !isEquationStage) {
       const spec = problem.question.barModelSpec || {};
       const boxes = [
         spec.total,
@@ -326,6 +546,7 @@ const QuestionCard = ({
       }
     }
 
+    // --- MODULE 2 STANDARD SUBMIT (UNTOUCHED) ---
     try {
       const result = await onSubmit(responseToSubmit);
       applyFeedback(result);
@@ -335,6 +556,277 @@ const QuestionCard = ({
       if (error?.status === 409) handleNext();
     }
   };
+
+  // const submitStructuredResponse = async (overrideResponse) => {
+  //   if (!problem?.question || disabled) return;
+  //   const responseToSubmit = buildSubmissionResponse(problem.question, answer);
+  //   const isEquationStage = ["bar_to_equation", "schema_equation"].includes(
+  //     problem.question.moduleStage,
+  //   );
+
+  //   if (!isEquationStage && !isQuestionResponseReady(problem.question, answer))
+  //     return;
+  //   const isBarModelStage = Boolean(problem.question.barModelSpec);
+
+  //   // ====================================================
+  //   // 🔥 1. DUMMY MODE GRADER (Practice Mode)
+  //   // ====================================================
+  //   if (isDummyMode) {
+  //     let isDummyCorrect = true;
+  //     const studentSlots = answer?.slots || {};
+  //     const detailedFeedback = { isCorrect: true, slots: {} };
+
+  //     if (isEquationStage) {
+  //       const templateSlots = (
+  //         problem.question.equationSpec?.template || []
+  //       ).filter((item) => item.type === "slot" && item.key);
+  //       const isCombine =
+  //         problem.question.schemaKind?.toLowerCase() === "combine";
+  //       let isFlexibleMatch = false;
+
+  //       // Helper to extract the true story number
+  //       const getExpected = (key) => {
+  //         const validationVal = problem.question.validation?.slots?.[key];
+  //         if (
+  //           validationVal !== undefined &&
+  //           validationVal !== null &&
+  //           String(validationVal).trim() !== ""
+  //         ) {
+  //           return String(validationVal).trim();
+  //         }
+  //         const tItem = templateSlots.find((t) => t.key === key);
+  //         return String(tItem?.value || "").trim();
+  //       };
+
+  //       // Flexible Math Check (e.g. 8+5 is the same as 5+8)
+  //       if (isCombine && templateSlots.length >= 2) {
+  //         const lKey = templateSlots[0].key;
+  //         const rKey = templateSlots[1].key;
+  //         const tL = String(studentSlots[lKey] || "").trim();
+  //         const tR = String(studentSlots[rKey] || "").trim();
+
+  //         const eL = getExpected(lKey);
+  //         const eR = getExpected(rKey);
+
+  //         if (tL === eR && tR === eL && tL !== "" && tR !== "") {
+  //           isFlexibleMatch = true;
+  //         }
+  //       }
+
+  //       // Grade every known box strictly
+  //       templateSlots.forEach((item, index) => {
+  //         const key = item.key;
+  //         const student = String(studentSlots[key] || "").trim();
+  //         const expected = getExpected(key);
+
+  //         // If expected is "?" or "", it's the unknown box. Skip grading it.
+  //         const isUnknownBox = expected === "?" || expected === "";
+  //         let isSlotCorrect = true;
+
+  //         if (!isUnknownBox) {
+  //           if (isFlexibleMatch && (index === 0 || index === 1)) {
+  //             isSlotCorrect = true;
+  //           } else {
+  //             isSlotCorrect = student === expected;
+  //           }
+  //           if (!isSlotCorrect) isDummyCorrect = false;
+  //         }
+
+  //         detailedFeedback.slots[key] = { isCorrect: isSlotCorrect };
+  //       });
+
+  //       // Check Operator
+  //       if (
+  //         problem.question.schemaKind === "change" &&
+  //         problem.question.equationSpec?.operatorEditable
+  //       ) {
+  //         const expectedOp =
+  //           problem.question.equationSpec?.operator ||
+  //           problem.question.operator;
+  //         if (answer?.operator !== expectedOp) {
+  //           isDummyCorrect = false;
+  //           detailedFeedback.operator = { isCorrect: false };
+  //         }
+  //       }
+
+  //       detailedFeedback.isCorrect = isDummyCorrect;
+  //       setFeedback(detailedFeedback);
+  //     } else {
+  //       // MODULE 2 GRADING (Untouched)
+  //       const spec = problem.question.barModelSpec || {};
+  //       const boxes = [
+  //         spec.total,
+  //         spec.left,
+  //         spec.right,
+  //         spec.start,
+  //         spec.change,
+  //         spec.end,
+  //         spec.result,
+  //       ].filter(Boolean);
+  //       boxes.forEach((box) => {
+  //         let expected = getExpectedVal(problem.question, box);
+  //         if (expected !== "" && expected !== "?") {
+  //           if (String(studentSlots[box.key] || "").trim() !== expected)
+  //             isDummyCorrect = false;
+  //         }
+  //       });
+  //       setFeedback({ isCorrect: isDummyCorrect });
+  //     }
+
+  //     setIsSuccess(isDummyCorrect);
+  //     setIsError(!isDummyCorrect);
+  //     return; // 🔥 EXIT here so Main Screen Logic NEVER runs!
+  //   }
+
+  //   // ====================================================
+  //   // 🔥 2. MAIN SCREEN GRADER & BACKEND SYNC
+  //   // ====================================================
+  //   if (isEquationStage) {
+  //     const studentSlots = answer?.slots || {};
+  //     const expectedSlots = problem.question.validation?.slots || {};
+  //     const spec = problem.question.barModelSpec || {};
+  //     const calcAnswer = solveMath(problem.question, spec);
+
+  //     const templateKeys = (problem.question.equationSpec?.template || [])
+  //       .filter((item) => item.type === "slot" && item.key)
+  //       .map((item) => item.key);
+
+  //     let isLocalCorrect = true;
+  //     const detailedFeedback = { isCorrect: true, slots: {} };
+
+  //     templateKeys.forEach((key) => {
+  //       const student = String(studentSlots[key] || "").trim();
+  //       let expected = String(expectedSlots[key] || "").trim();
+
+  //       if (!student) {
+  //         const item = problem.question.equationSpec.template.find(
+  //           (t) => t.key === key,
+  //         );
+  //         if (item) expected = String(item.value).trim();
+  //       }
+
+  //       if (expected === "?" || expected === "") expected = String(calcAnswer);
+
+  //       const isSlotCorrect =
+  //         student === expected || (!student && expected === student);
+  //       if (!isSlotCorrect) isLocalCorrect = false;
+
+  //       detailedFeedback.slots[key] = { isCorrect: isSlotCorrect };
+  //     });
+
+  //     if (
+  //       problem.question.schemaKind === "change" &&
+  //       problem.question.equationSpec?.operatorEditable
+  //     ) {
+  //       const expectedOp =
+  //         problem.question.equationSpec?.operator || problem.question.operator;
+  //       if (answer?.operator !== expectedOp) {
+  //         isLocalCorrect = false;
+  //         detailedFeedback.operator = { isCorrect: false };
+  //       }
+  //     }
+
+  //     detailedFeedback.isCorrect = isLocalCorrect;
+  //     setFeedback(detailedFeedback);
+  //     setIsSuccess(isLocalCorrect);
+  //     setIsError(!isLocalCorrect);
+
+  //     if (!isLocalCorrect) setFailedFirstTry(true);
+
+  //     try {
+  //       if (isLocalCorrect) {
+  //         responseToSubmit.slots = { ...expectedSlots };
+  //         const expectedOp =
+  //           problem.question.equationSpec?.operator ||
+  //           problem.question.operator;
+  //         if (expectedOp) responseToSubmit.operator = expectedOp;
+  //       } else {
+  //         responseToSubmit.slots = { ...expectedSlots };
+  //         const givenBoxKey = Object.keys(expectedSlots).find(
+  //           (k) =>
+  //             String(expectedSlots[k]).trim() !== "?" &&
+  //             String(expectedSlots[k]).trim() !== "",
+  //         );
+
+  //         if (givenBoxKey) {
+  //           responseToSubmit.slots[givenBoxKey] = "FORCED_FAIL_BY_FRONTEND";
+  //         } else if (Object.keys(expectedSlots).length > 0) {
+  //           responseToSubmit.slots[Object.keys(expectedSlots)[0]] =
+  //             "FORCED_FAIL_BY_FRONTEND";
+  //         }
+  //         responseToSubmit.operator = "FAIL";
+  //       }
+  //       await onSubmit(responseToSubmit);
+  //     } catch (e) {
+  //       if (e?.status === 409) handleNext();
+  //     }
+  //     return;
+  //   }
+
+  //   // ====================================================
+  //   // --- MODULE 2 MAIN SCREEN SABOTAGE (UNTOUCHED) ---
+  //   // ====================================================
+  //   if (isBarModelStage && !isEquationStage) {
+  //     const spec = problem.question.barModelSpec || {};
+  //     const boxes = [
+  //       spec.total,
+  //       spec.left,
+  //       spec.right,
+  //       spec.start,
+  //       spec.change,
+  //       spec.end,
+  //       spec.result,
+  //     ].filter(Boolean);
+  //     const calcAnswer = solveMath(problem.question, spec);
+  //     let isModelPerfect = true;
+  //     const studentSlots = answer?.slots || {};
+
+  //     boxes.forEach((box) => {
+  //       let expected = getExpectedVal(problem.question, box);
+  //       let student = String(studentSlots[box.key] || "").trim();
+  //       if (expected === "" || expected === "?") {
+  //         if (student === calcAnswer && calcAnswer !== "") {
+  //           if (responseToSubmit.slots) responseToSubmit.slots[box.key] = "?";
+  //         } else {
+  //           isModelPerfect = false;
+  //         }
+  //       } else {
+  //         if (student !== expected) isModelPerfect = false;
+  //       }
+  //     });
+
+  //     if (!isModelPerfect) {
+  //       setFailedFirstTry(true);
+  //       setIsError(true);
+  //       setFeedback({ isCorrect: false });
+  //       try {
+  //         if (responseToSubmit.slots) {
+  //           const givenBox = boxes.find(
+  //             (b) =>
+  //               getExpectedVal(problem.question, b) !== "?" &&
+  //               getExpectedVal(problem.question, b) !== "",
+  //           );
+  //           if (givenBox)
+  //             responseToSubmit.slots[givenBox.key] = "FORCED_FAIL_BY_FRONTEND";
+  //         }
+  //         await onSubmit(responseToSubmit);
+  //       } catch (e) {
+  //         if (e?.status === 409) handleNext();
+  //       }
+  //       return;
+  //     }
+  //   }
+
+  //   // --- MODULE 2 STANDARD SUBMIT (UNTOUCHED) ---
+  //   try {
+  //     const result = await onSubmit(responseToSubmit);
+  //     applyFeedback(result);
+  //     if (!result.isCorrect && isBarModelStage && !isDummyMode)
+  //       setFailedFirstTry(true);
+  //   } catch (error) {
+  //     if (error?.status === 409) handleNext();
+  //   }
+  // };
 
   const handleOptionClick = async (option) => {
     if (isSuccess || isError) return;
