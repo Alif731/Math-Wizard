@@ -1586,7 +1586,7 @@ $worksheet-shadow:
   background: #ffffff !important;
   z-index: 10; /* Keeps the glowing box above other elements */
   animation: breathingPulse 2s infinite ease-in-out;
-  cursor: hover;
+  cursor: pointer;
 }
 .equation-box.is-active:focus,
 .bar-box.is-active:focus {
@@ -1608,12 +1608,6 @@ $worksheet-shadow:
 .bar-box.is-active strong:has(.hide-on-focus)::after {
   margin-left: 0;
 }
-.equation-box:focus .hide-on-focus,
-.bar-box:focus .hide-on-focus,
-.equation-box.is-active .hide-on-focus,
-.bar-box.is-active .hide-on-focus {
-  display: none;
-}
 
 .equation-box strong span.hide-on-focus,
 .bar-box strong span.hide-on-focus {
@@ -1623,11 +1617,30 @@ $worksheet-shadow:
   color: #3d405b;
 }
 
+// .equation-box:focus .hide-on-focus,
+// .bar-box:focus .hide-on-focus,
+// .equation-box.is-active .hide-on-focus,
+// .bar-box.is-active .hide-on-focus {
+//   display: none;
+// }
+
 .equation-box:focus .hide-on-focus,
 .bar-box:focus .hide-on-focus,
 .equation-box.is-active .hide-on-focus,
 .bar-box.is-active .hide-on-focus {
-  display: none;
+  /* Hides the ?, but keeps its physical space so the box NEVER shrinks! */
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* --- ADD THIS TO KILL THE BROWSER'S UGLY DEFAULT BLACK LINE --- */
+button.bar-box:focus,
+button.equation-box:focus,
+button.bar-box:active,
+button.equation-box:active {
+  outline: none !important; /* Kills the browser focus ring */
+  transform: none !important; /* Kills the browser native button press */
 }
 
 .equation-box.is-active:not(:has(.hide-on-focus)),
@@ -2409,7 +2422,7 @@ $worksheet-shadow:
     width: 200px;
   }
   @include ut.breakpoint(medium) {
-    width: 150px;
+    width: fit-content;
   }
   @include ut.breakpoint(small) {
     // font-size: 0.9rem;
@@ -2525,10 +2538,18 @@ $worksheet-shadow:
   // }
   @include ut.breakpoint(large) {
     min-height: 54px;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
   }
   @include ut.breakpoint(medium) {
     font-size: 1rem;
+    // font-size: 1rem;
+  }
+  @include ut.breakpoint(small) {
+    font-size: 0.9rem;
+    // font-size: 1rem;
+  }
+  @include ut.breakpoint(xSmall) {
+    font-size: 0.8rem;
     // font-size: 1rem;
   }
 }
@@ -2570,54 +2591,108 @@ $worksheet-shadow:
   }
 }
 
-// .worksheet-button--reveal {
-//   // --- Layout & Typography ---
-//   display: inline-flex;
-//   align-items: center;
-//   justify-content: center;
-//   font-weight: 800;
-//   text-transform: uppercase;
-//   letter-spacing: 1px;
-//   border-radius: 99px; // Pill shape from your screenshots
-//   cursor: pointer;
-//   transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-//   position: relative;
+.worksheet-button--reveal {
+  /* 1. Structural base for the shine effect */
+  position: relative;
+  overflow: hidden;
 
-//   // --- Colors (Your Palette) ---
-//   background: #3d405b;
-//   color: #ffffff;
-//   border: 3px solid #3d405b;
+  background: #f2cc8f;
+  color: #3d405b;
 
-//   // --- The 3D "Chunky" Look ---
-//   box-shadow:
-//     0 8px 0 #3d405b,
-//     // Main 3D shadow
-//     inset 0 -5px 0 rgba(0, 0, 0, 0.1),
-//     // Bottom inner depth
-//     inset 0 4px 0 rgba(255, 255, 255, 0.5); // Top inner highlight
+  /* 2. The Secret Sauce: Smooth transitions for the 3D press */
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 
-//   // --- Interaction: Hover (The "Lift") ---
-//   &:hover {
-//     background: #f5d4a1; // Lighter version of your yellow
-//     transform: translateY(-2px); // Slight lift up
-//     box-shadow:
-//       0 10px 0 #3d405b,
-//       // Deeper shadow when lifted
-//       0 0 20px rgba(242, 204, 143, 0.4),
-//       // "Reveal" glow effect
-//       inset 0 -5px 0 rgba(0, 0, 0, 0.1),
-//       inset 0 4px 0 rgba(255, 255, 255, 0.6);
-//   }
+  box-shadow:
+    0 8px 0 #3d405b,
+    inset 0 -5px 0 rgba(0, 0, 0, 0.15),
+    inset 0 4px 0 rgba(255, 255, 255, 0.7);
 
-//   // --- Interaction: Active (The "Physical Press") ---
-//   &:active {
-//     transform: translateY(6px); // Moves down to "squish" the shadow
-//     box-shadow:
-//       0 2px 0 #3d405b,
-//       // Shadow flattens
-//       inset 0 -2px 0 rgba(0, 0, 0, 0.1);
-//   }
-// }
+  /* 3. Idle Animation: A subtle, friendly bounce to draw the eye */
+  animation: gentle-float 3s infinite ease-in-out;
+
+  /* --- HOVER STATE --- */
+  /* Using :not(:disabled) is slightly safer than :enabled in React */
+  &:hover:not(:disabled) {
+    background: #fcd34d;
+    // color: white;
+    // background: #81b29a;
+    transform: translateY(2px);
+
+    /* Kept the shadow color #3d405b consistent so it doesn't flash grayish-blue */
+    box-shadow:
+      0 6px 0 #3d405b,
+      inset 0 -5px 0 rgba(0, 0, 0, 0.1),
+      inset 0 4px 0 rgba(255, 255, 255, 0.9);
+
+    /* Pause the float animation when the user interacts with it */
+    animation-play-state: paused;
+  }
+
+  /* 4. Premium Shine Swipe on Hover */
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.5),
+      transparent
+    );
+    transform: skewX(-20deg);
+  }
+
+  &:hover:not(:disabled)::after {
+    animation: shine-swipe 0.6s ease-out;
+  }
+
+  /* --- ACTIVE (CLICK) STATE --- */
+  &:active:not(:disabled) {
+    transform: translateY(8px); /* Fully pressed down */
+    box-shadow:
+      0 0 0 #3d405b,
+      inset 0 -2px 0 rgba(0, 0, 0, 0.1),
+      inset 0 2px 0 rgba(255, 255, 255, 0.4);
+  }
+
+  /* --- DISABLED STATE --- */
+  &:disabled {
+    background: #e2e8f0;
+    color: #94a3b8;
+    border-color: #94a3b8;
+    box-shadow:
+      0 8px 0 #cbd5e1,
+      /* Lightened the shadow so it looks truly inactive */ inset 0 -4px 0
+        rgba(0, 0, 0, 0.05);
+    cursor: not-allowed;
+    transform: translateY(0);
+
+    /* Ensure disabled buttons never animate */
+    animation: none;
+  }
+}
+
+@keyframes gentle-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  } /* Gently lifts up and down */
+}
+
+@keyframes shine-swipe {
+  0% {
+    left: -150%;
+  }
+  100% {
+    left: 150%;
+  }
+}
 
 /* --- STATUS: CARTOON STRIPE --- */
 .worksheet-button--status {
@@ -3539,4 +3614,11 @@ $worksheet-shadow:
   background-color: #fff3cd !important; /* Soft yellow */
   border-color: #ffe69c !important;
   color: #664d03 !important;
+}
+
+button.bar-box:active,
+.bar-box:active {
+  transform: none !important;
+  /* Or, if you want it to match your focus state: */
+  /* transform: translateY(-1px) !important; */
 }

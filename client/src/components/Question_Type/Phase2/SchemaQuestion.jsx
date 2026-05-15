@@ -1014,138 +1014,12 @@ const getTrueExpectedValue = (questionData, key) => {
   return "";
 };
 // 🔥 FIX: Perfect Algebraic Solver (Handles both + and - automatically)
-const solveMissingValue = (q) => {
-  const template = q?.equationSpec?.template || [];
-  const slotItems = template.filter((t) => t.type === "slot");
-  if (slotItems.length < 3) return null;
-
-  // 1. Get the true expected values for all slots
-  const vals = slotItems.map((s) => {
-    const v = getTrueExpectedValue(q, s.key);
-    return { key: s.key, num: parseFloat(v), isUnknown: v === "?" || v === "" };
-  });
-
-  const unknown = vals.find((v) => v.isUnknown);
-  const equalIdx = template.findIndex((t) => t.value === "=");
-  if (!unknown || equalIdx === -1) return null;
-
-  // 2. Find the operator (Defaults to +, but looks for -)
-  let operator = "+";
-  const opItem = template.find((t) => t.type === "operator");
-  if (opItem && (opItem.value === "+" || opItem.value === "-")) {
-    operator = opItem.value;
-  } else if (q?.equationSpec?.operator) {
-    operator = q.equationSpec.operator;
-  } else if (q?.operator) {
-    operator = q.operator;
-  }
-
-  // 3. Identify the "Result" side of the "=" sign (the side with only 1 slot)
-  const resultSlot = vals.find((v) => {
-    const idx = template.findIndex((t) => t.key === v.key);
-    const onLeft = idx < equalIdx;
-    const countOnSide = vals.filter(
-      (v2) =>
-        template.findIndex((t2) => t2.key === v2.key) < equalIdx === onLeft,
-    ).length;
-    return countOnSide === 1;
-  });
-
-  if (!resultSlot) return null;
-
-  // 4. Identify the two "Terms" on the other side
-  const terms = vals.filter((v) => v.key !== resultSlot.key);
-  if (terms.length !== 2) return null;
-
-  const [term1, term2] = terms; // term1 is left of the operator, term2 is right
-
-  // --- ALGEBRA SOLVER ---
-  // Case A: The unknown is the Result (e.g., 12 - 5 = ?)
-  if (unknown.key === resultSlot.key) {
-    return operator === "-"
-      ? String(term1.num - term2.num)
-      : String(term1.num + term2.num);
-  }
-
-  // Case B: The unknown is Term 1 (e.g., ? - 5 = 7)
-  if (unknown.key === term1.key) {
-    return operator === "-"
-      ? String(resultSlot.num + term2.num)
-      : String(Math.abs(resultSlot.num - term2.num));
-  }
-
-  // Case C: The unknown is Term 2 (e.g., 12 - ? = 7)
-  if (unknown.key === term2.key) {
-    return operator === "-"
-      ? String(term1.num - resultSlot.num)
-      : String(Math.abs(resultSlot.num - term1.num));
-  }
-
-  return null;
-};
-
-// // 🔥 FIX 2: Bulletproof Data-Driven Solver (No more guessing algebra!)
-// const solveMissingValue = (q) => {
-//   // 1. Find which key is actually the "?"
-//   const template = q?.equationSpec?.template || [];
-//   const unknownSlot = template.find(
-//     (t) => t.type === "slot" && getTrueExpectedValue(q, t.key) === "?",
-//   );
-
-//   if (!unknownSlot) return null;
-//   const key = unknownSlot.key; // e.g., "start", "change", "total"
-
-//   // 2. Look directly in the backend's provided values (100% accurate for all schemas)
-//   if (q?.alternateSlots && q.alternateSlots[key] !== undefined) {
-//     return String(q.alternateSlots[key]).trim();
-//   }
-//   if (q?.values && q.values[key] !== undefined) {
-//     return String(q.values[key]).trim();
-//   }
-
-//   // 3. Fallback (Only runs if backend data is completely missing)
-//   const slotItems = template.filter((t) => t.type === "slot");
-//   if (slotItems.length < 3) return null;
-
-//   const vals = slotItems.map((s) => ({
-//     key: s.key,
-//     num: parseFloat(getTrueExpectedValue(q, s.key)),
-//     isUnknown:
-//       getTrueExpectedValue(q, s.key) === "?" ||
-//       getTrueExpectedValue(q, s.key) === "",
-//   }));
-
-//   const unknown = vals.find((v) => v.isUnknown);
-//   const equalIdx = template.findIndex((t) => t.value === "=");
-//   if (!unknown || equalIdx === -1) return null;
-
-//   const resultSlot = vals.find((v) => {
-//     const idx = template.findIndex((t) => t.key === v.key);
-//     const onLeft = idx < equalIdx;
-//     const countOnSide = vals.filter(
-//       (v2) =>
-//         template.findIndex((t2) => t2.key === v2.key) < equalIdx === onLeft,
-//     ).length;
-//     return countOnSide === 1;
-//   });
-
-//   if (!resultSlot) return null;
-//   const others = vals.filter((v) => v.key !== resultSlot.key);
-//   const knownSum = others.reduce(
-//     (acc, curr) => acc + (isNaN(curr.num) ? 0 : curr.num),
-//     0,
-//   );
-
-//   if (unknown.key === resultSlot.key) return String(knownSum);
-//   return String(Math.abs(resultSlot.num - knownSum));
-// };
-
-// 🔥 FIX 2: Position-Agnostic Solver
 // const solveMissingValue = (q) => {
 //   const template = q?.equationSpec?.template || [];
 //   const slotItems = template.filter((t) => t.type === "slot");
 //   if (slotItems.length < 3) return null;
 
+//   // 1. Get the true expected values for all slots
 //   const vals = slotItems.map((s) => {
 //     const v = getTrueExpectedValue(q, s.key);
 //     return { key: s.key, num: parseFloat(v), isUnknown: v === "?" || v === "" };
@@ -1155,7 +1029,18 @@ const solveMissingValue = (q) => {
 //   const equalIdx = template.findIndex((t) => t.value === "=");
 //   if (!unknown || equalIdx === -1) return null;
 
-//   // Identify the "Total" based on the side of the "=" sign with only one slot
+//   // 2. Find the operator (Defaults to +, but looks for -)
+//   let operator = "+";
+//   const opItem = template.find((t) => t.type === "operator");
+//   if (opItem && (opItem.value === "+" || opItem.value === "-")) {
+//     operator = opItem.value;
+//   } else if (q?.equationSpec?.operator) {
+//     operator = q.equationSpec.operator;
+//   } else if (q?.operator) {
+//     operator = q.operator;
+//   }
+
+//   // 3. Identify the "Result" side of the "=" sign (the side with only 1 slot)
 //   const resultSlot = vals.find((v) => {
 //     const idx = template.findIndex((t) => t.key === v.key);
 //     const onLeft = idx < equalIdx;
@@ -1167,15 +1052,153 @@ const solveMissingValue = (q) => {
 //   });
 
 //   if (!resultSlot) return null;
-//   const others = vals.filter((v) => v.key !== resultSlot.key);
-//   const knownSum = others.reduce(
-//     (acc, curr) => acc + (isNaN(curr.num) ? 0 : curr.num),
-//     0,
-//   );
 
-//   if (unknown.key === resultSlot.key) return String(knownSum);
-//   return String(Math.abs(resultSlot.num - knownSum));
+//   // 4. Identify the two "Terms" on the other side
+//   const terms = vals.filter((v) => v.key !== resultSlot.key);
+//   if (terms.length !== 2) return null;
+
+//   const [term1, term2] = terms; // term1 is left of the operator, term2 is right
+
+//   // --- ALGEBRA SOLVER ---
+//   // Case A: The unknown is the Result (e.g., 12 - 5 = ?)
+//   if (unknown.key === resultSlot.key) {
+//     return operator === "-"
+//       ? String(term1.num - term2.num)
+//       : String(term1.num + term2.num);
+//   }
+
+//   // Case B: The unknown is Term 1 (e.g., ? - 5 = 7)
+//   if (unknown.key === term1.key) {
+//     return operator === "-"
+//       ? String(resultSlot.num + term2.num)
+//       : String(Math.abs(resultSlot.num - term2.num));
+//   }
+
+//   // Case C: The unknown is Term 2 (e.g., 12 - ? = 7)
+//   if (unknown.key === term2.key) {
+//     return operator === "-"
+//       ? String(term1.num - resultSlot.num)
+//       : String(Math.abs(resultSlot.num - term1.num));
+//   }
+
+//   return null;
 // };
+const solveMissingValue = (q) => {
+  // --- 1. EXISTING TEMPLATE SOLVER (For Modules 3 & 4) ---
+  const template = q?.equationSpec?.template || [];
+  const slotItems = template.filter((t) => t.type === "slot");
+
+  // Only run the algebra solver if we actually have an equation template
+  if (slotItems.length >= 3) {
+    // 1. Get the true expected values for all slots
+    const vals = slotItems.map((s) => {
+      const v = getTrueExpectedValue(q, s.key);
+      return {
+        key: s.key,
+        num: parseFloat(v),
+        isUnknown: v === "?" || v === "",
+      };
+    });
+
+    const unknown = vals.find((v) => v.isUnknown);
+    const equalIdx = template.findIndex((t) => t.value === "=");
+
+    if (unknown && equalIdx !== -1) {
+      // 2. Find the operator (Defaults to +, but looks for -)
+      let operator = "+";
+      const opItem = template.find((t) => t.type === "operator");
+      if (opItem && (opItem.value === "+" || opItem.value === "-")) {
+        operator = opItem.value;
+      } else if (q?.equationSpec?.operator) {
+        operator = q.equationSpec.operator;
+      } else if (q?.operator) {
+        operator = q.operator;
+      }
+
+      // 3. Identify the "Result" side of the "=" sign
+      const resultSlot = vals.find((v) => {
+        const idx = template.findIndex((t) => t.key === v.key);
+        const onLeft = idx < equalIdx;
+        const countOnSide = vals.filter(
+          (v2) =>
+            template.findIndex((t2) => t2.key === v2.key) < equalIdx === onLeft,
+        ).length;
+        return countOnSide === 1;
+      });
+
+      if (resultSlot) {
+        // 4. Identify the two "Terms" on the other side
+        const terms = vals.filter((v) => v.key !== resultSlot.key);
+        if (terms.length === 2) {
+          const [term1, term2] = terms; // term1 is left of the operator, term2 is right
+
+          // --- ALGEBRA SOLVER ---
+          if (unknown.key === resultSlot.key) {
+            return operator === "-"
+              ? String(term1.num - term2.num)
+              : String(term1.num + term2.num);
+          }
+          if (unknown.key === term1.key) {
+            return operator === "-"
+              ? String(resultSlot.num + term2.num)
+              : String(Math.abs(resultSlot.num - term2.num));
+          }
+          if (unknown.key === term2.key) {
+            return operator === "-"
+              ? String(term1.num - resultSlot.num)
+              : String(Math.abs(resultSlot.num - term1.num));
+          }
+        }
+      }
+    }
+  }
+
+  // --- 2. FALLBACK SCHEMA SOLVER (For Module 5 - No Template) ---
+  const slots = q?.validation?.slots || {};
+  const schema = q?.schemaKind?.toLowerCase();
+
+  if (schema === "combine") {
+    const l = parseFloat(slots.left || slots.leftTerm);
+    const r = parseFloat(slots.right || slots.rightTerm);
+    const t = parseFloat(slots.total || slots.result);
+
+    if ((slots.total === "?" || isNaN(t)) && !isNaN(l) && !isNaN(r))
+      return String(l + r);
+    if ((slots.left === "?" || isNaN(l)) && !isNaN(t) && !isNaN(r))
+      return String(t - r);
+    if ((slots.right === "?" || isNaN(r)) && !isNaN(t) && !isNaN(l))
+      return String(t - l);
+  }
+
+  if (schema === "change") {
+    const s = parseFloat(slots.start);
+    const c = parseFloat(slots.change);
+    const r = parseFloat(slots.result || slots.end);
+    const op = q?.equationSpec?.operator || q?.operator || "+";
+
+    if (
+      (slots.result === "?" || slots.end === "?" || isNaN(r)) &&
+      !isNaN(s) &&
+      !isNaN(c)
+    ) {
+      return op === "-" ? String(s - c) : String(s + c);
+    }
+    if ((slots.change === "?" || isNaN(c)) && !isNaN(s) && !isNaN(r)) {
+      return op === "-" ? String(s - r) : String(Math.abs(r - s));
+    }
+    if ((slots.start === "?" || isNaN(s)) && !isNaN(c) && !isNaN(r)) {
+      return op === "-" ? String(r + c) : String(Math.abs(r - c));
+    }
+  }
+
+  // --- 3. ABSOLUTE LAST RESORT ---
+  if (q?.validation?.textAnswer !== undefined)
+    return String(q.validation.textAnswer);
+  if (q?.validation?.answer !== undefined) return String(q.validation.answer);
+
+  return null;
+};
+
 const SchemaQuestion = ({
   question,
   response,
@@ -1194,9 +1217,15 @@ const SchemaQuestion = ({
   const isEquationStage = ["bar_to_equation", "schema_equation"].includes(
     question?.moduleStage,
   );
+  // Identify practice schemas so we can apply the Equation Board rules
+  const isPracticeStage = ["practice", "equations"].includes(
+    question?.moduleStage,
+  );
+  const isEquationBoardActive = isEquationStage || isPracticeStage;
 
   const displayQuestion = useMemo(() => {
     if (!isEquationStage) return question;
+    if (!isEquationBoardActive) return question;
     const qClone = JSON.parse(JSON.stringify(question));
     const studentSlots = response?.slots || {};
     const isCorrect = hasFeedback && feedback?.isCorrect;
@@ -1296,6 +1325,7 @@ const SchemaQuestion = ({
     return qClone;
   }, [
     question,
+    isEquationBoardActive,
     isEquationStage,
     isDummyMode,
     hasFeedback,
@@ -1488,6 +1518,7 @@ const SchemaQuestion = ({
 
   const isEquationFilled = useMemo(() => {
     if (!isEquationStage) return true;
+    if (!isEquationBoardActive) return true;
     const slots = response?.slots || {};
 
     // 1. Only look at keys belonging to the CURRENT question template
@@ -1520,7 +1551,13 @@ const SchemaQuestion = ({
       return true;
     });
     // 🔥 Make sure isDummyMode is in the dependency array
-  }, [isEquationStage, response?.slots, question, isDummyMode]);
+  }, [
+    isEquationBoardActive,
+    isEquationStage,
+    response?.slots,
+    question,
+    isDummyMode,
+  ]);
 
   // const canCheck =
   //   (isEquationStage
@@ -1530,7 +1567,7 @@ const SchemaQuestion = ({
   //   !hasFeedback;
 
   const canCheck =
-    (isEquationStage ? isEquationFilled : isBarModelFullyFilled) &&
+    (isEquationBoardActive ? isEquationFilled : isBarModelFullyFilled) &&
     !isSubmitting &&
     !hasFeedback;
 
@@ -1538,6 +1575,9 @@ const SchemaQuestion = ({
   const isCompareAnswerInput = isCompareAnswerInputQuestion(question);
   const isVariableIdentification = isVariableIdentificationQuestion(question);
   const isDirectSchemaSolve = question?.moduleStage === "schema_direct_solve";
+  const isSolveStage =
+    question?.moduleStage === "schema_solve" || isDirectSchemaSolve; // 🔥 Added helper
+  const mathResult = solveMissingValue(question); // 🔥 Pre-calculate answer for reveal
   const showPromptStrip = !["practice", "equations"].includes(
     question?.moduleStage,
   );
@@ -1966,13 +2006,41 @@ const SchemaQuestion = ({
             </div>
           )}
 
-          <label
+          {/* <label
             className={`worksheet-answer-field ${hasFeedback ? (feedback?.isCorrect ? "is-correct" : "is-wrong") : ""}`}
           >
             <input
               type="number"
               inputMode="numeric"
               value={getDisplayedTextAnswer(response) || ""}
+              onChange={(event) =>
+                !hasFeedback &&
+                !isSubmitting &&
+                setResponse((current) => ({
+                  ...(current || {}),
+                  textAnswer: event.target.value,
+                }))
+              }
+              disabled={hasFeedback || isSubmitting}
+              placeholder="Type Here"
+            />
+          </label> */}
+          <label
+            // 🔥 FIX: Added '|| isRevealed' so the box turns green
+            className={`worksheet-answer-field ${hasFeedback ? (feedback?.isCorrect || isRevealed ? "is-correct" : "is-wrong") : ""}`}
+          >
+            <input
+              type="number"
+              inputMode="numeric"
+              // 🔥 FIX: Safely injects the calculated math result or fallback feedback
+              value={
+                isRevealed
+                  ? mathResult ||
+                    feedback?.correctAnswer ||
+                    feedback?.expected ||
+                    ""
+                  : getDisplayedTextAnswer(response) || ""
+              }
               onChange={(event) =>
                 !hasFeedback &&
                 !isSubmitting &&
@@ -2059,37 +2127,6 @@ const SchemaQuestion = ({
               className="worksheet-button worksheet-button--primary"
               onClick={() => {
                 setIsDummyMode(true);
-
-                //  --- Scenario A: Equation Stage without sign ---
-                // if (isEquationStage) {
-                //   const newSlots = {};
-                //   let autoFocusKey = null;
-
-                //   const templateKeys = (question?.equationSpec?.template || [])
-                //     .filter((item) => item.type === "slot" && item.key)
-                //     .map((item) => item.key);
-
-                //   templateKeys.forEach((key) => {
-                //     const isTrueUnknown =
-                //       getTrueExpectedValue(question, key) === "?";
-
-                //     if (isTrueUnknown) {
-                //       newSlots[key] = "?";
-                //     } else {
-                //       newSlots[key] = "";
-                //       if (!autoFocusKey && key !== "operator")
-                //         autoFocusKey = key;
-                //     }
-                //   });
-
-                //   setResponse((prev) => ({
-                //     ...prev,
-                //     slots: newSlots,
-                //     operator: question?.schemaKind === "combine" ? "+" : "",
-                //     activeField: autoFocusKey || "leftTerm",
-                //   }));
-                //   return;
-                // }
                 // --- Scenario A: Equation Stage ---
                 if (isEquationStage) {
                   const newSlots = {};
@@ -2183,7 +2220,7 @@ const SchemaQuestion = ({
           </button>
         )}
 
-        {isDummyMode && hasFeedback && !feedback?.isCorrect && !isRevealed && (
+        {/* {isDummyMode && hasFeedback && !feedback?.isCorrect && !isRevealed && (
           <button
             type="button"
             className="worksheet-button worksheet-button--primary"
@@ -2191,9 +2228,39 @@ const SchemaQuestion = ({
           >
             Reveal Answers
           </button>
-        )}
+        )} */}
 
+        {/* 4. REVEAL BUTTON: Now triggers for Dummy Mode OR Solve Stage */}
+        {(isDummyMode || isSolveStage || isPracticeStage) &&
+          hasFeedback &&
+          !feedback?.isCorrect &&
+          !isRevealed && (
+            <button
+              type="button"
+              className="worksheet-button worksheet-button--reveal"
+              onClick={() => setIsRevealed(true)}
+            >
+              Reveal Answer
+            </button>
+          )}
+
+        {/* 5. NEXT PROBLEM: Holds back during Solve Stage until Revealed */}
         {(feedback?.isCorrect ||
+          isRevealed ||
+          (!isBarModelStage &&
+            !isSolveStage &&
+            !isPracticeStage &&
+            hasFeedback &&
+            !feedback?.isCorrect)) && (
+          <button
+            type="button"
+            className="worksheet-button worksheet-button--continue"
+            onClick={onNext}
+          >
+            Next Problem →
+          </button>
+        )}
+        {/* {(feedback?.isCorrect ||
           isRevealed ||
           (!isBarModelStage && hasFeedback && !feedback?.isCorrect)) && (
           <button
@@ -2203,7 +2270,7 @@ const SchemaQuestion = ({
           >
             Next Problem →
           </button>
-        )}
+        )} */}
       </div>
     </div>
   );

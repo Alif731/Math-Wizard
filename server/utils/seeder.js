@@ -3413,8 +3413,9 @@ const seedData = async () => {
     // "change_mod4"            -> Change: Full 3-Tab Solve
     // "change_mod5"            -> Change: Direct Problem Solving
 
-    const testStage = "combine_mod2"; // CHANGE THIS TO JUMP
-    // const testStage = "change_mod2"; // CHANGE THIS TO JUMP
+    // ------------------- uncomment code at line 2050
+    // const testStage = "combine_mod2"; // CHANGE THIS TO JUMP
+    const testStage = "change_mod5"; // CHANGE THIS TO JUMP
 
     // 3. Create the test user with ONLY that stage active
     const testUser = new User({
