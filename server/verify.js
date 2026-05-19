@@ -171,6 +171,40 @@ async function verify() {
     assertSchemaQuestionShape(conceptMap.get(conceptId));
   }
 
+  let bundleUser = await User.create({
+    username: "bundle_student",
+    password: "password123",
+    role: "student",
+    mastery: {},
+    zpdNodes: ["combine_mod4"],
+  });
+
+  let bundleProblem = await getNextProblem(bundleUser);
+  assert.equal(bundleProblem.concept.id, "combine_mod4");
+  assert.equal(bundleProblem.question.moduleStage, "schema_bar_model");
+  const bundleText = bundleProblem.question.text;
+
+  await updateMastery(bundleUser, "combine_mod4", false);
+  bundleProblem = await getNextProblem(bundleUser);
+  assert.equal(bundleProblem.question.moduleStage, "schema_equation");
+  assert.equal(bundleProblem.question.text, bundleText);
+  assert.equal(bundleUser.mastery.get("combine_mod4").attemptCount, 0);
+  assert.equal(bundleUser.mastery.get("combine_mod4").adaptiveState.timesPlayed, 1);
+
+  await updateMastery(bundleUser, "combine_mod4", true);
+  bundleProblem = await getNextProblem(bundleUser);
+  assert.equal(bundleProblem.question.moduleStage, "schema_solve");
+  assert.equal(bundleProblem.question.text, bundleText);
+  assert.equal(bundleUser.mastery.get("combine_mod4").attemptCount, 0);
+  assert.equal(bundleUser.mastery.get("combine_mod4").adaptiveState.timesPlayed, 2);
+
+  await updateMastery(bundleUser, "combine_mod4", true);
+  const failedBundleEntry = bundleUser.mastery.get("combine_mod4");
+  assert.equal(failedBundleEntry.adaptiveState.timesPlayed, 3);
+  assert.equal(failedBundleEntry.attemptCount, 1);
+  assert.equal(failedBundleEntry.successCount, 0);
+  assert.deepEqual(failedBundleEntry.lastAttempts, [false]);
+
   let user = await User.create({
     username: "adaptive_student",
     password: "password123",

@@ -17,8 +17,204 @@ export const getEditableEquationItems = (question) =>
     (item) => item.type === "slot" && item.editable !== false,
   );
 
+export const getEquationSlotItems = (question) =>
+  (question?.equationSpec?.template || []).filter(
+    (item) => item.type === "slot" && item.key,
+  );
+
+export const isEquationBuilderStage = (question) =>
+  ["bar_to_equation", "schema_equation"].includes(question?.moduleStage);
+
 export const getEditableBarKeys = (question) =>
   question?.barModelSpec?.editableKeys || [];
+
+const hasOwn = (object, key) =>
+  Object.prototype.hasOwnProperty.call(object || {}, key);
+
+const getBarModelBoxes = (question) => {
+  const spec = question?.barModelSpec || {};
+  const boxes = [
+    spec.total,
+    spec.left,
+    spec.right,
+    spec.start,
+    spec.change,
+    spec.end,
+    spec.result,
+    spec.bigger,
+    spec.smaller,
+    spec.difference,
+  ].filter(Boolean);
+
+  return Array.from(new Map(boxes.map((box) => [box.key, box])).values());
+};
+
+const getExpectedBarValue = (question, box) => {
+  if (!box?.key) return "";
+
+  if (hasOwn(question?.validation?.slots, box.key)) {
+    return String(question.validation.slots[box.key] ?? "").trim();
+  }
+
+  return String(box.value ?? "").trim();
+};
+
+const getCalculatedBarValue = (question, key) => {
+  if (hasOwn(question?.validation?.alternateSlots, key)) {
+    const value = String(question.validation.alternateSlots[key] ?? "").trim();
+    return value && value !== "?" ? value : "";
+  }
+
+  return "";
+};
+
+const isUnknownValue = (value) => value === "" || value === "?";
+
+export const evaluateBarModelStageResponse = (question, response = {}) => {
+  const slots = response?.slots || {};
+  const feedback = {};
+  const canonicalSlots = {};
+  let isCorrect = true;
+
+  getBarModelBoxes(question).forEach((box) => {
+    const key = box.key;
+    const student = String(slots[key] || "").trim();
+    const expected = getExpectedBarValue(question, box);
+    const calculated = getCalculatedBarValue(question, key);
+    const isUnknown = isUnknownValue(expected);
+
+    let isSlotCorrect;
+
+    if (isUnknown) {
+      isSlotCorrect =
+        student === "" ||
+        student === "?" ||
+        (calculated !== "" && normalizeString(student) === normalizeString(calculated));
+      canonicalSlots[key] = student === "" ? "?" : student;
+    } else {
+      isSlotCorrect = normalizeString(student) === normalizeString(expected);
+      canonicalSlots[key] = student;
+    }
+
+    if (!isSlotCorrect) {
+      isCorrect = false;
+    }
+
+    feedback[key] = { isCorrect: isSlotCorrect };
+  });
+
+  return {
+    isCorrect,
+    feedback,
+    canonicalSlots,
+  };
+};
+
+const getTemplateSlotValue = (question, key) => {
+  const item = getEquationSlotItems(question).find((slot) => slot.key === key);
+  return String(
+    item?.value ?? question?.equationSpec?.values?.[key] ?? "",
+  ).trim();
+};
+
+const getExpectedEquationSlotValue = (question, key) => {
+  if (hasOwn(question?.validation?.slots, key)) {
+    return String(question.validation.slots[key] ?? "").trim();
+  }
+
+  return getTemplateSlotValue(question, key);
+};
+
+const getCalculatedEquationSlotValue = (question, key) => {
+  if (hasOwn(question?.validation?.alternateSlots, key)) {
+    const value = String(question.validation.alternateSlots[key] ?? "").trim();
+    return value && value !== "?" ? value : "";
+  }
+
+  return "";
+};
+
+const isUnknownEquationSlot = isUnknownValue;
+
+export const evaluateEquationStageResponse = (question, response = {}) => {
+  const slots = response?.slots || {};
+  const slotItems = getEquationSlotItems(question);
+  const feedback = {};
+  const canonicalSlots = {};
+  const isCombine = question?.schemaKind?.toLowerCase() === "combine";
+
+  let isCorrect = true;
+  let combinePartsSwapped = false;
+
+  if (isCombine && slotItems.length >= 2) {
+    const leftKey = slotItems[0].key;
+    const rightKey = slotItems[1].key;
+    const leftStudent = String(slots[leftKey] || "").trim();
+    const rightStudent = String(slots[rightKey] || "").trim();
+    const leftExpected = getExpectedEquationSlotValue(question, leftKey);
+    const rightExpected = getExpectedEquationSlotValue(question, rightKey);
+
+    combinePartsSwapped =
+      leftStudent !== "" &&
+      rightStudent !== "" &&
+      leftStudent === rightExpected &&
+      rightStudent === leftExpected &&
+      !isUnknownEquationSlot(leftExpected) &&
+      !isUnknownEquationSlot(rightExpected);
+  }
+
+  slotItems.forEach((item, index) => {
+    const key = item.key;
+    const student = String(slots[key] || "").trim();
+    const expected = getExpectedEquationSlotValue(question, key);
+    const calculated = getCalculatedEquationSlotValue(question, key);
+    const isUnknown = isUnknownEquationSlot(expected);
+
+    let isSlotCorrect;
+
+    if (isUnknown) {
+      isSlotCorrect =
+        student === "" ||
+        student === "?" ||
+        (calculated !== "" && normalizeString(student) === normalizeString(calculated));
+      canonicalSlots[key] = student === "" ? "?" : student;
+    } else if (combinePartsSwapped && (index === 0 || index === 1)) {
+      isSlotCorrect = true;
+      canonicalSlots[key] = expected;
+    } else {
+      isSlotCorrect = normalizeString(student) === normalizeString(expected);
+      canonicalSlots[key] = student;
+    }
+
+    if (!isSlotCorrect) {
+      isCorrect = false;
+    }
+
+    feedback[key] = { isCorrect: isSlotCorrect };
+  });
+
+  const expectedOperator =
+    question?.validation?.operator || question?.equationSpec?.operator || "";
+  let operatorFeedback = null;
+
+  if (expectedOperator && question?.schemaKind !== "combine") {
+    const isOperatorCorrect =
+      normalizeString(response?.operator) === normalizeString(expectedOperator);
+
+    if (!isOperatorCorrect) {
+      isCorrect = false;
+    }
+
+    operatorFeedback = { isCorrect: isOperatorCorrect };
+  }
+
+  return {
+    isCorrect,
+    feedback,
+    operatorFeedback,
+    canonicalSlots,
+  };
+};
 
 export const buildEquationString = (question, response = {}) =>
   (question?.equationSpec?.template || [])
@@ -58,17 +254,13 @@ export const createInitialResponse = (question) => {
   }
 
   if (isVariableIdentificationQuestion(question)) {
-    const variables = question?.visualData?.variables || [];
-    const expectedVars = question?.validation?.variables || {};
     return {
       variables: Object.fromEntries(
-        variables.map((variable) => [
+        (question?.visualData?.variables || []).map((variable) => [
           variable.key,
           {
-            sentence: "",
-            // Pre-fill "?" for unknown variables so students
-            // don't need to type it — their value box will be locked.
-            value: expectedVars[variable.key]?.value === "?" ? "?" : "",
+            role: "",
+            value: "",
           },
         ]),
       ),
@@ -126,19 +318,16 @@ export const isQuestionResponseReady = (question, response) => {
 
   if (isVariableIdentificationQuestion(question)) {
     const variables = question?.visualData?.variables || [];
-    const expectedVars = question?.validation?.variables || {};
     return variables.every((variable) => {
       const answer = response?.variables?.[variable.key] || {};
-      const isUnknown = expectedVars[variable.key]?.value === "?";
-      // Unknown variables only need a sentence selection (value is auto "?").
-      // Known variables need both sentence and value.
-      if (isUnknown) {
-        return normalizeString(answer.sentence) !== "";
+      // Every variable must have a role selected
+      if (!answer.role) return false;
+      // "given" variables must also have a value entered
+      if (answer.role === "given") {
+        return normalizeString(answer.value) !== "";
       }
-      return (
-        normalizeString(answer.sentence) !== "" &&
-        normalizeString(answer.value) !== ""
-      );
+      // "find" variables only need the role
+      return true;
     });
   }
 

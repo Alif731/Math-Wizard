@@ -254,6 +254,7 @@ const Home = () => {
 
   // --- SINGLE MODULE MASTERY TRACKER ---
   const [masteredModalInfo, setMasteredModalInfo] = useState(null);
+  const pendingMasteryRef = useRef(null); // Buffer mastery until question interaction completes
   const prevConceptStatus = useRef({});
   const currentConceptId = problem?.concept?.id;
 
@@ -263,17 +264,27 @@ const Home = () => {
     const currentStatus = status.mastery[currentConceptId]?.status;
     const previousStatus = prevConceptStatus.current[currentConceptId];
 
-    // If the module's status changes from anything else TO "mastered" while they are playing it!
+    // If the module's status changes from anything else TO "mastered" while they are playing it,
+    // DON'T show the modal yet — buffer it until the student finishes the current question.
     if (
       previousStatus &&
       previousStatus !== "mastered" &&
       currentStatus === "mastered"
     ) {
-      setMasteredModalInfo({
+      // Compute recent window accuracy (distinct from lifetime "Skill %")
+      const entry = status.mastery[currentConceptId];
+      const window = entry?.lastAttempts || [];
+      const windowSuccesses = window.filter(Boolean).length;
+      const windowAccuracy = window.length > 0
+        ? Math.round((windowSuccesses / window.length) * 100)
+        : 100;
+
+      pendingMasteryRef.current = {
         id: currentConceptId,
         name: currentConceptId.replace(/_/g, " "),
-        attempts: status.mastery[currentConceptId]?.attemptCount || 1,
-      });
+        attempts: entry?.attemptCount || 1,
+        accuracy: windowAccuracy,
+      };
     }
 
     // Keep track for the next render
@@ -306,6 +317,14 @@ const Home = () => {
   };
 
   const handleNextProblem = () => {
+    // Flush any pending mastery modal BEFORE loading the next question.
+    // This ensures the modal only appears after the student finishes
+    // all interactions (both tries / reveal) on the final question.
+    if (pendingMasteryRef.current) {
+      setMasteredModalInfo(pendingMasteryRef.current);
+      pendingMasteryRef.current = null;
+      return; // Don't refetch yet — let the modal show first
+    }
     refetchProblem();
   };
 
@@ -471,7 +490,7 @@ const Home = () => {
         isOpen={!!masteredModalInfo}
         moduleName={masteredModalInfo?.name || "Concept"}
         moduleId={masteredModalInfo?.id}
-        score={100}
+        score={masteredModalInfo?.accuracy ?? 100}
         attempts={masteredModalInfo?.attempts || 1}
         onClose={() => setMasteredModalInfo(null)}
       />

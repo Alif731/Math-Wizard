@@ -589,7 +589,7 @@ const TotalPartsBarModel = ({
   const getCorrectMathValue = (boxSpec) => {
     const expected = getExpectedVal(question, boxSpec);
     return expected === "?" || expected === ""
-      ? solveMath(question, spec)
+      ? "?"
       : expected;
   };
 
@@ -603,7 +603,13 @@ const TotalPartsBarModel = ({
     if (isRevealed || (isDummyMode && isCorrect && isUnk)) {
       return getCorrectMathValue(boxSpec);
     }
-    return !isDummyMode ? response?.slots?.[boxSpec.key] || "" : currentVal;
+    if (isDummyMode) {
+      if (response?.slots && response.slots[boxSpec.key] !== undefined) {
+        return response.slots[boxSpec.key];
+      }
+      return currentVal === "?" ? "" : currentVal;
+    }
+    return response?.slots?.[boxSpec.key] || "";
   };
 
   const getFeedbackStatus = (boxKey, boxSpec) => {
@@ -683,6 +689,7 @@ const TotalPartsBarModel = ({
               !isReadOnly &&
               !isRevealed &&
               !isCorrect &&
+              (!isAttempted || isDummyMode) &&
               activeField === spec.total.key
             }
             onClick={() => {
@@ -716,6 +723,7 @@ const TotalPartsBarModel = ({
             !isReadOnly &&
             !isRevealed &&
             !isCorrect &&
+            (!isAttempted || isDummyMode) &&
             activeField === spec.left.key
           }
           onClick={() => {
@@ -745,6 +753,7 @@ const TotalPartsBarModel = ({
             !isReadOnly &&
             !isRevealed &&
             !isCorrect &&
+            (!isAttempted || isDummyMode) &&
             activeField === spec.right.key
           }
           onClick={() => {
@@ -834,7 +843,7 @@ const ChangeBarModel = ({
   const getCorrectMathValue = (boxSpec) => {
     const expected = getExpectedVal(question, boxSpec);
     return expected === "?" || expected === ""
-      ? solveMath(question, spec, isSubtraction)
+      ? "?"
       : expected;
   };
 
@@ -848,7 +857,13 @@ const ChangeBarModel = ({
     if (isRevealed || (isDummyMode && isCorrect && isUnk)) {
       return getCorrectMathValue(boxSpec);
     }
-    return !isDummyMode ? response?.slots?.[boxSpec.key] || "" : currentVal;
+    if (isDummyMode) {
+      if (response?.slots && response.slots[boxSpec.key] !== undefined) {
+        return response.slots[boxSpec.key];
+      }
+      return currentVal === "?" ? "" : currentVal;
+    }
+    return response?.slots?.[boxSpec.key] || "";
   };
 
   const getFeedbackStatus = (boxKey, boxSpec) => {
@@ -931,6 +946,7 @@ const ChangeBarModel = ({
             !isReadOnly &&
             !isRevealed &&
             !isCorrect &&
+            (!isAttempted || isDummyMode) &&
             activeField === topBox.key
           }
           onClick={() => {
@@ -960,7 +976,11 @@ const ChangeBarModel = ({
             label={getBarLabel(b1, spec)}
             value={getDisplayValue(b1, valB1)}
             active={
-              !isReadOnly && !isRevealed && !isCorrect && activeField === b1.key
+              !isReadOnly &&
+              !isRevealed &&
+              !isCorrect &&
+              (!isAttempted || isDummyMode) &&
+              activeField === b1.key
             }
             onClick={() => {
               if (isReadOnly) return;
@@ -988,7 +1008,11 @@ const ChangeBarModel = ({
             label={getBarLabel(b2, spec)}
             value={getDisplayValue(b2, valB2)}
             active={
-              !isReadOnly && !isRevealed && !isCorrect && activeField === b2.key
+              !isReadOnly &&
+              !isRevealed &&
+              !isCorrect &&
+              (!isAttempted || isDummyMode) &&
+              activeField === b2.key
             }
             onClick={() => {
               if (isReadOnly) return;
@@ -1014,6 +1038,11 @@ const CompareStackedBarModel = ({
   response,
   activeField,
   setActiveField,
+  question,
+  isAttempted,
+  isCorrect,
+  isRevealed,
+  isDummyMode,
 }) => {
   const {
     bigger: biggerMagnitude,
@@ -1026,14 +1055,30 @@ const CompareStackedBarModel = ({
     biggerMagnitude,
   );
 
+  const isBoxUnknown = (boxSpec) => {
+    if (!boxSpec) return false;
+    let expected = getExpectedVal(question, boxSpec);
+    return expected === "?" || expected === "";
+  };
+
+  const isActive = (key) =>
+    !isRevealed &&
+    !isCorrect &&
+    (!isAttempted || isDummyMode) &&
+    activeField === key;
+
   return (
     <div className="bar-model bar-model--compare">
       <div className="bar-model__compare-top">
         <BarBox
           box={spec.bigger}
           label={getBarLabel(spec.bigger, spec)}
-          value={getBarValue(response, spec.bigger)}
-          active={activeField === spec.bigger.key}
+          value={
+            isRevealed && isBoxUnknown(spec.bigger)
+              ? "?"
+              : getBarValue(response, spec.bigger)
+          }
+          active={isActive(spec.bigger.key)}
           onClick={() => setActiveField(spec.bigger.key)}
           className="bar-box--wide"
         />
@@ -1043,8 +1088,12 @@ const CompareStackedBarModel = ({
           <BarBox
             box={spec.smaller}
             label={getBarLabel(spec.smaller, spec)}
-            value={getBarValue(response, spec.smaller)}
-            active={activeField === spec.smaller.key}
+            value={
+              isRevealed && isBoxUnknown(spec.smaller)
+                ? "?"
+                : getBarValue(response, spec.smaller)
+          }
+            active={isActive(spec.smaller.key)}
             onClick={() => setActiveField(spec.smaller.key)}
             className="bar-box--segment"
             style={{ flex: `0 0 ${percentages.first}%` }}
@@ -1052,8 +1101,12 @@ const CompareStackedBarModel = ({
           <BarBox
             box={spec.difference}
             label={getBarLabel(spec.difference, spec)}
-            value={getBarValue(response, spec.difference)}
-            active={activeField === spec.difference.key}
+            value={
+              isRevealed && isBoxUnknown(spec.difference)
+                ? "?"
+                : getBarValue(response, spec.difference)
+          }
+            active={isActive(spec.difference.key)}
             onClick={() => setActiveField(spec.difference.key)}
             className="bar-box--segment"
             style={{ flex: `0 0 ${percentages.second}%` }}
@@ -1100,6 +1153,11 @@ const CompareGapBarModel = ({
   response,
   activeField,
   setActiveField,
+  question,
+  isAttempted,
+  isCorrect,
+  isRevealed,
+  isDummyMode,
 }) => {
   const {
     bigger: biggerMagnitude,
@@ -1113,37 +1171,61 @@ const CompareGapBarModel = ({
   );
   const guideWidth = percentages.first;
 
+  const isBoxUnknown = (boxSpec) => {
+    if (!boxSpec) return false;
+    let expected = getExpectedVal(question, boxSpec);
+    return expected === "?" || expected === "";
+  };
+
+  const isActive = (key) =>
+    !isRevealed &&
+    !isCorrect &&
+    (!isAttempted || isDummyMode) &&
+    activeField === key;
+
   return (
     <div className="bar-model bar-model--compare-gap">
       <div className="bar-model__compare-top">
         <BarBox
           box={spec.bigger}
           label={getBarLabel(spec.bigger, spec)}
-          value={getBarValue(response, spec.bigger)}
-          active={activeField === spec.bigger.key}
+          value={
+            isRevealed && isBoxUnknown(spec.bigger)
+              ? "?"
+              : getBarValue(response, spec.bigger)
+          }
+          active={isActive(spec.bigger.key)}
           onClick={() => setActiveField(spec.bigger.key)}
           className="bar-box--wide"
         />
       </div>
       <div className="bar-model__compare-gap-track">
         <div
-          className={`compare-gap__measure compare-gap__measure--track ${activeField === spec.smaller.key ? "is-active" : ""}`}
+          className={`compare-gap__measure compare-gap__measure--track ${isActive(spec.smaller.key) ? "is-active" : ""}`}
           style={{ width: `${guideWidth}%` }}
           aria-hidden="true"
         />
         <CompareGapSegment
           box={spec.smaller}
           label={getBarLabel(spec.smaller, spec)}
-          value={getBarValue(response, spec.smaller)}
-          active={activeField === spec.smaller.key}
+          value={
+            isRevealed && isBoxUnknown(spec.smaller)
+              ? "?"
+              : getBarValue(response, spec.smaller)
+          }
+          active={isActive(spec.smaller.key)}
           onClick={() => setActiveField(spec.smaller.key)}
           style={{ flex: `0 0 ${percentages.first}%` }}
         />
         <BarBox
           box={spec.difference}
           label={getBarLabel(spec.difference, spec)}
-          value={getBarValue(response, spec.difference)}
-          active={activeField === spec.difference.key}
+          value={
+            isRevealed && isBoxUnknown(spec.difference)
+              ? "?"
+              : getBarValue(response, spec.difference)
+          }
+          active={isActive(spec.difference.key)}
           onClick={() => setActiveField(spec.difference.key)}
           className="bar-box--segment compare-gap__difference"
           style={{ flex: `0 0 ${percentages.second}%` }}
@@ -1322,6 +1404,11 @@ const BarModel = ({
         response={response}
         activeField={response?.activeField}
         setActiveField={setActiveField}
+        question={question}
+        isAttempted={isAttempted}
+        isCorrect={isCorrect}
+        isRevealed={isRevealed}
+        isDummyMode={isDummyMode}
       />
     );
   }
@@ -1333,6 +1420,11 @@ const BarModel = ({
         response={response}
         activeField={response?.activeField}
         setActiveField={setActiveField}
+        question={question}
+        isAttempted={isAttempted}
+        isCorrect={isCorrect}
+        isRevealed={isRevealed}
+        isDummyMode={isDummyMode}
       />
     );
   }

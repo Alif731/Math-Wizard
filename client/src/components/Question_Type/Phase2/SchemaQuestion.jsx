@@ -865,7 +865,7 @@ import {
   EquationBoard,
 } from "./WorksheetParts";
 import BarModel, { CompareGuidedAnswerModel } from "./BarModelRenderer";
-import CustomSelect from "../../CustomSelect";
+// CustomSelect removed - no longer used in VariableIdentificationPanel
 
 // Deterministic shuffle
 const seededShuffle = (array, seed) => {
@@ -882,12 +882,26 @@ const seededShuffle = (array, seed) => {
 const hashString = (str) =>
   (str || "").split("").reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
 
+// Helper: highlight numbers in sentence text
+const highlightNumbers = (text) => {
+  const parts = text.split(/(\d+)/);
+  return parts.map((part, i) =>
+    /^\d+$/.test(part) ? (
+      <span key={i} className="variable-sentence__number">{part}</span>
+    ) : (
+      part
+    ),
+  );
+};
+
 const VariableIdentificationPanel = ({
   question,
   response,
   setResponse,
   disabled,
   hasFeedback,
+  isDummyMode,
+  isRevealed,
 }) => {
   const sentences = question?.visualData?.sentences || [];
   const variables = question?.visualData?.variables || [];
@@ -899,7 +913,7 @@ const VariableIdentificationPanel = ({
   );
 
   const updateVariable = (key, field, value) => {
-    if (disabled) return;
+    if (disabled && !isDummyMode) return;
     setResponse((current) => ({
       ...(current || {}),
       variables: {
@@ -907,20 +921,36 @@ const VariableIdentificationPanel = ({
         [key]: {
           ...(current?.variables?.[key] || {}),
           [field]: value,
+          // When switching to "find", clear the value
+          ...(field === "role" && value === "find" ? { value: "" } : {}),
         },
       },
     }));
   };
 
-  const sentenceOptions = useMemo(() => {
-    return sentences.map((sentence, index) => ({
-      value: String(index + 1),
-      label: String(index + 1),
-    }));
-  }, [sentences]);
+  // Determine per-card feedback state
+  const getCardState = (variable) => {
+    const answer = response?.variables?.[variable.key] || {};
+    const expected = expectedVars[variable.key];
+    if (!expected) return "";
+
+    if (isRevealed) return "is-revealed";
+
+    if (!hasFeedback) return "";
+
+    // Check role correctness
+    const isRoleCorrect = answer.role === expected.role;
+    // For "given" variables, also check value
+    const isValueCorrect =
+      expected.role === "find" || String(answer.value) === String(expected.value);
+
+    if (isRoleCorrect && isValueCorrect) return "is-correct";
+    return "is-wrong";
+  };
 
   return (
     <div className="variable-identification">
+      {/* Sentences at top */}
       <div className="variable-identification__sentences">
         {sentences.map((sentence, index) => (
           <div className="variable-sentence" key={`${index}-${sentence}`}>
@@ -930,69 +960,115 @@ const VariableIdentificationPanel = ({
         ))}
       </div>
 
-      <div className="variable-table">
+      {/* Instruction text */}
+      <p className="variable-identification__instruction">
+        For each variable, decide: is it <strong>given</strong> in the problem, or is
+        it what we <strong>need to find</strong>?
+        For given variables, enter the value.
+      </p>
+
+      {/* Variable cards */}
+      <div className="variable-cards">
         {shuffledVariables.map((variable) => {
           const answer = response?.variables?.[variable.key] || {};
-          const isUnknown = expectedVars[variable.key]?.value === "?";
+          const expected = expectedVars[variable.key];
+          const cardState = getCardState(variable);
+          const isCardLocked =
+            cardState === "is-correct" || cardState === "is-revealed";
 
-          let rowStateClass = "";
-
-          if (hasFeedback) {
-            const isRowComplete =
-              answer.sentence && (answer.value || isUnknown);
-            if (isRowComplete) {
-              const expected = expectedVars[variable.key];
-              const isSentenceCorrect =
-                String(answer.sentence) === String(expected.sentence);
-              const isValueCorrect =
-                isUnknown || String(answer.value) === String(expected.value);
-
-              if (isSentenceCorrect && isValueCorrect) {
-                rowStateClass = "is-correct";
-              } else {
-                rowStateClass = "is-wrong";
-              }
-            }
-          }
+          // In revealed state, show correct answers
+          const displayRole = isRevealed ? expected?.role : answer.role;
+          const displayValue = isRevealed ? expected?.value : answer.value;
 
           return (
-            <div className={`variable-row ${rowStateClass}`} key={variable.key}>
-              <div className="variable-row__label">{variable.label}</div>
+            <div
+              className={`variable-card ${cardState}`}
+              key={variable.key}
+            >
+              {/* Card header with name and badge */}
+              <div className="variable-card__header">
+                <div className="variable-card__name">{variable.label}</div>
+                {displayRole && (
+                  <span
+                    className={`variable-card__badge variable-card__badge--${
+                      displayRole === "given" ? "given" : "find"
+                    }`}
+                  >
+                    {displayRole === "given" ? "Given" : "Find?"}
+                  </span>
+                )}
+              </div>
 
-              <label>
-                <span>Sentence</span>
-                <CustomSelect
-                  options={sentenceOptions}
-                  value={answer.sentence || ""}
-                  disabled={disabled || rowStateClass === "is-correct"}
-                  onChange={(selectedValue) =>
-                    updateVariable(variable.key, "sentence", selectedValue)
-                  }
-                  placeholder="Select"
-                />
-              </label>
+              {/* Toggle buttons */}
+              <div className="variable-card__toggles">
+                <button
+                  type="button"
+                  className={`variable-toggle variable-toggle--given ${
+                    displayRole === "given" ? "is-active" : ""
+                  }`}
+                  disabled={isCardLocked}
+                  onClick={() => updateVariable(variable.key, "role", "given")}
+                >
+                  ✓ Given in the problem
+                </button>
+                <button
+                  type="button"
+                  className={`variable-toggle variable-toggle--find ${
+                    displayRole === "find" ? "is-active" : ""
+                  }`}
+                  disabled={isCardLocked}
+                  onClick={() => updateVariable(variable.key, "role", "find")}
+                >
+                  ? We need to find this
+                </button>
+              </div>
 
-              <label>
-                <span>Value</span>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={isUnknown ? "?" : answer.value || ""}
-                  disabled={
-                    disabled || isUnknown || rowStateClass === "is-correct"
-                  }
-                  placeholder="?"
-                  className={isUnknown ? "variable-value--locked" : ""}
-                  onChange={(event) =>
-                    !isUnknown &&
-                    updateVariable(variable.key, "value", event.target.value)
-                  }
-                />
-              </label>
+              {/* Conditional content based on role */}
+              {displayRole === "given" && (
+                <label className="variable-card__value-row">
+                  <span>How many?</span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={displayValue || ""}
+                    disabled={isCardLocked}
+                    placeholder="Enter value"
+                    onChange={(e) =>
+                      updateVariable(variable.key, "value", e.target.value)
+                    }
+                  />
+                </label>
+              )}
+              {displayRole === "find" && (
+                <p className="variable-card__find-note">
+                  <em>This is what we need to find.</em>
+                </p>
+              )}
             </div>
           );
         })}
       </div>
+
+      {/* Feedback bar */}
+      {hasFeedback && !isDummyMode && (
+        <div
+          className={`variable-feedback-bar ${
+            shuffledVariables.every((v) => getCardState(v) === "is-correct")
+              ? "variable-feedback-bar--success"
+              : "variable-feedback-bar--error"
+          }`}
+        >
+          {shuffledVariables.every((v) => getCardState(v) === "is-correct")
+            ? "Correct! You have identified all given and unknown variables."
+            : "Some classifications or values are wrong — check the highlighted cards."}
+        </div>
+      )}
+
+      {isRevealed && (
+        <div className="variable-feedback-bar variable-feedback-bar--success">
+          Correct answers have been revealed above.
+        </div>
+      )}
     </div>
   );
 };
@@ -1292,16 +1368,22 @@ const SchemaQuestion = ({
           }
 
           if (isRevealed) {
+            const isFinalAnswerStage = 
+              question?.moduleStage === "schema_solve" || 
+              question?.moduleStage === "schema_direct_solve" ||
+              (question?.stageTotal === 3 && question?.stageIndex === 3) ||
+              question?.moduleStage === "direct";
+
             if (isUnknown) {
-              item.value = mathResult || "?";
+              item.value = isFinalAnswerStage ? (mathResult || "?") : "?";
             } else {
               item.value = getTrueExpectedValue(question, item.key);
             }
             item.editable = true;
             item.isUnknown = false;
           } else if (isCorrect) {
-            if (isUnknown) {
-              item.value = mathResult || "?";
+            if (isUnknown && (!item.value || String(item.value).trim() === "")) {
+              item.value = "?";
             }
             item.editable = true;
             item.isUnknown = false;
@@ -1315,7 +1397,11 @@ const SchemaQuestion = ({
               item.isUnknown = false;
             }
           } else {
-            if (String(item.value).trim() === "?") item.value = "";
+            if (isUnknown && (!item.value || String(item.value).trim() === "")) {
+              item.value = "?";
+            } else if (!isUnknown && String(item.value).trim() === "?") {
+              item.value = "";
+            }
             item.editable = true;
             item.isUnknown = false;
           }
@@ -1456,27 +1542,19 @@ const SchemaQuestion = ({
 
     if (requiredKeys.length === 0) return false;
 
-    return requiredKeys.every((key) => {
-      if (!key) return true;
-
+    const requiredCount = requiredKeys.filter((key) => {
       const correctVal = String(
         question?.validation?.slots?.[key] ?? spec?.[key]?.value ?? "",
       ).trim();
+      return correctVal !== "" && correctVal !== "?";
+    }).length;
 
-      // 1. YOUR ORIGINAL SHORTCUT: Ignore the "?" box in Dummy Mode
-      if (isDummyMode && (correctVal === "?" || correctVal === "")) return true;
+    const enteredCount = requiredKeys.filter((key) => {
+      const val = String(response?.slots?.[key] || "").trim();
+      return val !== "" && val !== "?";
+    }).length;
 
-      // 2. YOUR ORIGINAL CHECK: Is the box filled?
-      const val = response?.slots?.[key];
-      const strVal = String(val || "").trim();
-
-      if (val === undefined || strVal === "") return false;
-
-      // 3. 🔥 THE ONLY NEW THING: Prevent using "?" key to cheat
-      if (strVal.includes("?")) return false;
-
-      return true;
-    });
+    return enteredCount >= requiredCount;
   }, [
     isBarModelStage,
     isEquationStage,
@@ -1528,33 +1606,39 @@ const SchemaQuestion = ({
 
     if (currentKeys.length === 0) return false;
 
-    // 2. The equation is only "filled" if every box has a valid input
-    return currentKeys.every((key) => {
-      const val = String(slots[key] || "").trim();
+    const isFinalAnswerStage = 
+      question?.moduleStage === "schema_solve" || 
+      question?.moduleStage === "schema_direct_solve" ||
+      (question?.stageTotal === 3 && question?.stageIndex === 3) ||
+      question?.moduleStage === "direct";
 
-      // Box must not be empty
-      if (val === "") return false;
+    const opItem = (question?.equationSpec?.template || []).find((i) => i.type === 'operator');
+    const requiresOperator = opItem && opItem.editable !== false && question?.schemaKind !== 'combine';
+    const hasOperator = !requiresOperator || Boolean(response?.operator);
+    if (isFinalAnswerStage) {
+      return currentKeys.every((key) => {
+        const val = String(slots[key] || "").trim();
+        return val !== "" && val !== "?";
+      }) && hasOperator;
+    } else {
+      const requiredCount = currentKeys.filter((key) => {
+        const correctVal = getTrueExpectedValue(question, key);
+        return correctVal !== "" && correctVal !== "?";
+      }).length;
 
-      // 🔥 THE FIX: "?" Protection
-      if (!isDummyMode) {
-        // MAIN SCREEN: No box is allowed to be "?" to unlock submit.
-        // Even the unknown box must be filled with a number.
-        if (val === "?") return false;
-      } else {
-        // DUMMY SCREEN: Only the pre-filled unknown box is allowed to be "?".
-        // The numbers the user is typing (the parts) cannot be "?".
-        const templateValue = getTrueExpectedValue(question, key);
-        const isTrueUnknown = templateValue === "?" || templateValue === "";
-        if (!isTrueUnknown && val === "?") return false;
-      }
+      const enteredCount = currentKeys.filter((key) => {
+        const val = String(slots[key] || "").trim();
+        return val !== "" && val !== "?";
+      }).length;
 
-      return true;
-    });
+      return enteredCount >= requiredCount && hasOperator;
+    }
     // 🔥 Make sure isDummyMode is in the dependency array
   }, [
     isEquationBoardActive,
     isEquationStage,
     response?.slots,
+    response?.operator,
     question,
     isDummyMode,
   ]);
@@ -1566,17 +1650,24 @@ const SchemaQuestion = ({
   //   !isSubmitting &&
   //   !hasFeedback;
 
+  const isDirectSchemaSolve = question?.moduleStage === "schema_direct_solve";
+  const isSolveStage =
+    question?.moduleStage === "schema_solve" || isDirectSchemaSolve; // 🔥 Added helper
+
   const canCheck =
-    (isEquationBoardActive ? isEquationFilled : isBarModelFullyFilled) &&
+    (isVariableIdentificationQuestion(question)
+      ? isQuestionResponseReady(question, response)
+      : isEquationBoardActive
+        ? isEquationFilled
+        : isBarModelStage
+          ? isBarModelFullyFilled
+          : isQuestionResponseReady(question, response)) &&
     !isSubmitting &&
     !hasFeedback;
 
   const isSchemaStage = question?.stageTotal === 3;
   const isCompareAnswerInput = isCompareAnswerInputQuestion(question);
   const isVariableIdentification = isVariableIdentificationQuestion(question);
-  const isDirectSchemaSolve = question?.moduleStage === "schema_direct_solve";
-  const isSolveStage =
-    question?.moduleStage === "schema_solve" || isDirectSchemaSolve; // 🔥 Added helper
   const mathResult = solveMissingValue(question); // 🔥 Pre-calculate answer for reveal
   const showPromptStrip = !["practice", "equations"].includes(
     question?.moduleStage,
@@ -1716,6 +1807,11 @@ const SchemaQuestion = ({
   useEffect(() => {
     if ((hasFeedback && feedback?.isCorrect) || isRevealed) {
       const numericResult = solveMissingValue(question);
+      const isFinalAnswerStage = 
+        question?.moduleStage === "schema_solve" || 
+        question?.moduleStage === "schema_direct_solve" ||
+        (question?.stageTotal === 3 && question?.stageIndex === 3) ||
+        question?.moduleStage === "direct";
 
       setResponse((prev) => {
         const newSlots = { ...prev.slots };
@@ -1729,10 +1825,11 @@ const SchemaQuestion = ({
           const trueExpected = getTrueExpectedValue(question, key);
           const isTrueUnknown = trueExpected === "?";
 
-          // 1. Inject the math answer
+          // 1. Inject the math answer if final stage, otherwise keep "?"
           if (isTrueUnknown && numericResult) {
-            if (newSlots[key] !== numericResult) {
-              newSlots[key] = numericResult;
+            const desiredUnknownValue = isFinalAnswerStage ? numericResult : "?";
+            if (newSlots[key] !== desiredUnknownValue) {
+              newSlots[key] = desiredUnknownValue;
               changed = true;
             }
           }
@@ -1754,6 +1851,117 @@ const SchemaQuestion = ({
       });
     }
   }, [hasFeedback, feedback?.isCorrect, isRevealed, question, setResponse]);
+
+  const handleTryAgain = () => {
+    setIsDummyMode(true);
+    // --- Scenario D: Solve Stage ---
+    if (isSolveStage) {
+      setResponse((prev) => ({
+        ...(prev || {}),
+        textAnswer: "",
+      }));
+      return;
+    }
+
+    // --- Scenario A: Equation Stage ---
+    if (isEquationStage) {
+      const newSlots = {};
+      let autoFocusKey = null;
+
+      const templateKeys = (question?.equationSpec?.template || [])
+        .filter((item) => item.type === "slot" && item.key)
+        .map((item) => item.key);
+
+      templateKeys.forEach((key) => {
+        const isTrueUnknown = getTrueExpectedValue(question, key) === "?";
+
+        if (isTrueUnknown) {
+          newSlots[key] = "?";
+        } else {
+          newSlots[key] = "";
+          if (!autoFocusKey && key !== "operator") autoFocusKey = key;
+        }
+      });
+
+      // Find the exact operator (+ or -) from the template blueprint
+      const expectedOp =
+        (question?.equationSpec?.template || []).find(
+          (item) =>
+            item.type === "operator" &&
+            (item.value === "+" || item.value === "-"),
+        )?.value || (question?.schemaKind === "combine" ? "+" : "");
+
+      setResponse((prev) => ({
+        ...prev,
+        slots: newSlots,
+        operator: expectedOp, // Automatically sets the + or - sign!
+        activeField: autoFocusKey || "leftTerm",
+      }));
+      return;
+    }
+
+    // --- Scenario C: Variable Identification Stage ---
+    if (isVariableIdentification) {
+      // In dummy mode for variable ID, clear wrong cards' responses
+      // but keep correct ones intact
+      const newVars = {};
+      const currentVars = response?.variables || {};
+      const expected = question?.validation?.variables || {};
+
+      Object.keys(expected).forEach((key) => {
+        const submitted = currentVars[key] || {};
+        const exp = expected[key];
+        const isRoleCorrect = submitted.role === exp.role;
+        const isValueCorrect =
+          exp.role === "find" ||
+          String(submitted.value) === String(exp.value);
+
+        if (isRoleCorrect && isValueCorrect) {
+          // Keep correct answers locked
+          newVars[key] = { ...submitted };
+        } else {
+          // Reset wrong answers
+          newVars[key] = { role: "", value: "" };
+        }
+      });
+
+      setResponse((prev) => ({
+        ...prev,
+        variables: newVars,
+      }));
+      return;
+    }
+
+    // --- Scenario B: Bar Model Stage (RESTORED TO ORIGINAL) ---
+    const spec = question?.barModelSpec;
+    let autoFocusKey = null;
+
+    if (spec) {
+      const keys =
+        question?.schemaKind === "change" ||
+        spec.layout === "change" ||
+        spec.change
+          ? [
+              (spec.start || spec.left)?.key,
+              (spec.change || spec.right)?.key,
+              (spec.end || spec.total || spec.result)?.key,
+            ]
+          : [spec.total?.key, spec.left?.key, spec.right?.key];
+
+      autoFocusKey = keys.find((key) => {
+        const expected = String(
+          question?.validation?.slots?.[key] ?? spec?.[key]?.value ?? "",
+        ).trim();
+        return expected !== "?" && expected !== "";
+      });
+    }
+
+    setResponse((prev) => ({
+      ...prev,
+      slots: {},
+      activeField: autoFocusKey,
+    }));
+  };
 
   useEffect(() => {
     if (!question || hasFeedback || isSubmitting) return;
@@ -1783,6 +1991,59 @@ const SchemaQuestion = ({
   }, [question?.id, isEquationStage, isDummyMode]);
   useEffect(() => {
     const handleKeyDown = (event) => {
+      // 1. Global Enter key handler for workflow progression
+      if (event.key === "Enter") {
+        if (canCheck && !isSubmitting) {
+          event.preventDefault();
+          triggerCheck();
+          return;
+        }
+
+        const showNext =
+          feedback?.isCorrect ||
+          isRevealed ||
+          (!isBarModelStage &&
+            !isVariableIdentification &&
+            !isSolveStage &&
+            !isPracticeStage &&
+            hasFeedback &&
+            !feedback?.isCorrect);
+
+        if (showNext && !isSubmitting) {
+          event.preventDefault();
+          onNext();
+          return;
+        }
+
+        const showTryAgain =
+          hasFeedback &&
+          !feedback?.isCorrect &&
+          (isBarModelStage ||
+            isEquationStage ||
+            isVariableIdentification ||
+            isSolveStage) &&
+          !isDummyMode &&
+          !isRevealed;
+
+        if (showTryAgain && !isSubmitting) {
+          event.preventDefault();
+          handleTryAgain();
+          return;
+        }
+
+        const showReveal =
+          (isDummyMode || isPracticeStage) &&
+          hasFeedback &&
+          !feedback?.isCorrect &&
+          !isRevealed;
+
+        if (showReveal && !isSubmitting) {
+          event.preventDefault();
+          setIsRevealed(true);
+          return;
+        }
+      }
+
       const targetTag = event.target?.tagName;
       const isTypingField =
         targetTag === "INPUT" ||
@@ -1790,21 +2051,12 @@ const SchemaQuestion = ({
         event.target?.isContentEditable;
 
       if (question?.inputMode === "text_answer" || isCompareAnswerInput) {
-        if (isTypingField && event.key === "Enter" && canCheck) {
-          event.preventDefault();
-          triggerCheck();
-        }
+        // Handled enter above for text inputs
         return;
       }
 
-      // if (isTypingField || hasFeedback || isSubmitting) return;
-      // if (/^\d$/.test(event.key)) {
-      //   event.preventDefault();
-      //   updateActiveSlotValue(event.key);
-      //   return;
-      // }
       if (isTypingField || hasFeedback || isSubmitting) return;
-      if (/^\d$/.test(event.key)) {
+      if (/^\d$/.test(event.key) || event.key === "?") {
         event.preventDefault();
         if (response?.activeField === "__operator__") return; // Drops the keypress completely
         updateActiveSlotValue(event.key);
@@ -1820,11 +2072,6 @@ const SchemaQuestion = ({
         handleClear();
         return;
       }
-      if (event.key === "?" && showUnknownButton) {
-        event.preventDefault();
-        updateActiveSlotValue("?");
-        return;
-      }
       if (
         response?.activeField === "__operator__" &&
         (event.key === "+" || event.key === "-")
@@ -1832,10 +2079,6 @@ const SchemaQuestion = ({
         event.preventDefault();
         setResponse((current) => ({ ...(current || {}), operator: event.key }));
         return;
-      }
-      if (event.key === "Enter" && canCheck) {
-        event.preventDefault();
-        triggerCheck();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -1849,6 +2092,17 @@ const SchemaQuestion = ({
     response,
     setResponse,
     showUnknownButton,
+    feedback,
+    isRevealed,
+    isBarModelStage,
+    isVariableIdentification,
+    isSolveStage,
+    isPracticeStage,
+    isDummyMode,
+    isEquationStage,
+    onNext,
+    question,
+    setIsRevealed,
   ]);
 
   const [showHint, setShowHint] = useState(false);
@@ -1991,6 +2245,8 @@ const SchemaQuestion = ({
           setResponse={setResponse}
           disabled={hasFeedback || isSubmitting}
           hasFeedback={hasFeedback}
+          isDummyMode={isDummyMode}
+          isRevealed={isRevealed}
         />
       )}
 
@@ -2120,86 +2376,18 @@ const SchemaQuestion = ({
 
         {hasFeedback &&
           !feedback?.isCorrect &&
-          (isBarModelStage || isEquationStage) &&
-          !isDummyMode && (
+          (isBarModelStage ||
+            isEquationStage ||
+            isVariableIdentification ||
+            isSolveStage) &&
+          !isDummyMode &&
+          !isRevealed && (
             <button
               type="button"
               className="worksheet-button worksheet-button--primary"
-              onClick={() => {
-                setIsDummyMode(true);
-                // --- Scenario A: Equation Stage ---
-                if (isEquationStage) {
-                  const newSlots = {};
-                  let autoFocusKey = null;
-
-                  const templateKeys = (question?.equationSpec?.template || [])
-                    .filter((item) => item.type === "slot" && item.key)
-                    .map((item) => item.key);
-
-                  templateKeys.forEach((key) => {
-                    const isTrueUnknown =
-                      getTrueExpectedValue(question, key) === "?";
-
-                    if (isTrueUnknown) {
-                      newSlots[key] = "?";
-                    } else {
-                      newSlots[key] = "";
-                      if (!autoFocusKey && key !== "operator")
-                        autoFocusKey = key;
-                    }
-                  });
-
-                  // 🔥 THE FIX: Find the exact operator (+ or -) from the template blueprint
-                  const expectedOp =
-                    (question?.equationSpec?.template || []).find(
-                      (item) =>
-                        item.type === "operator" &&
-                        (item.value === "+" || item.value === "-"),
-                    )?.value || (question?.schemaKind === "combine" ? "+" : "");
-
-                  setResponse((prev) => ({
-                    ...prev,
-                    slots: newSlots,
-                    operator: expectedOp, // Automatically sets the + or - sign!
-                    activeField: autoFocusKey || "leftTerm",
-                  }));
-                  return;
-                }
-
-                // --- Scenario B: Bar Model Stage (RESTORED TO ORIGINAL) ---
-                const spec = question?.barModelSpec;
-                let autoFocusKey = null;
-
-                if (spec) {
-                  const keys =
-                    question?.schemaKind === "change" ||
-                    spec.layout === "change" ||
-                    spec.change
-                      ? [
-                          (spec.start || spec.left)?.key,
-                          (spec.change || spec.right)?.key,
-                          (spec.end || spec.total || spec.result)?.key,
-                        ]
-                      : [spec.total?.key, spec.left?.key, spec.right?.key];
-
-                  autoFocusKey = keys.find((key) => {
-                    const expected = String(
-                      question?.validation?.slots?.[key] ??
-                        spec?.[key]?.value ??
-                        "",
-                    ).trim();
-                    return expected !== "?" && expected !== "";
-                  });
-                }
-
-                setResponse((prev) => ({
-                  ...prev,
-                  slots: {}, // 🔥 RESTORED: Completely wipe memory so button locks correctly
-                  activeField: autoFocusKey,
-                }));
-              }}
+              onClick={handleTryAgain}
             >
-              Retry with Hint
+              Try Again
             </button>
           )}
 
@@ -2208,15 +2396,15 @@ const SchemaQuestion = ({
             type="button"
             className="worksheet-button worksheet-button--primary"
             onClick={() => {
-              if (isEquationStage) {
-                triggerCheck();
-              } else {
-                triggerCheck();
-              }
+              triggerCheck();
             }}
             disabled={!canCheck || isSubmitting}
           >
-            {isEquationStage ? "CHECK EQUATION ✓" : "CHECK MODEL ✓"}
+            {isVariableIdentification
+              ? "SUBMIT ✓"
+              : isEquationStage
+                ? "SUBMIT ✓"
+                : "SUBMIT ✓"}
           </button>
         )}
 
@@ -2230,8 +2418,9 @@ const SchemaQuestion = ({
           </button>
         )} */}
 
-        {/* 4. REVEAL BUTTON: Now triggers for Dummy Mode OR Solve Stage */}
-        {(isDummyMode || isSolveStage || isPracticeStage) &&
+        {/* 4. REVEAL BUTTON: For variable identification, only show on 2nd failure (isDummyMode + hasFeedback + wrong) */}
+        {/* For other stages: show when isDummyMode or solve/practice stage fails */}
+        {(isDummyMode || isPracticeStage) &&
           hasFeedback &&
           !feedback?.isCorrect &&
           !isRevealed && (
@@ -2244,10 +2433,12 @@ const SchemaQuestion = ({
             </button>
           )}
 
-        {/* 5. NEXT PROBLEM: Holds back during Solve Stage until Revealed */}
+        {/* 5. NEXT PROBLEM: Show after correct answer OR after reveal */}
+        {/* For variable identification: only after correct or revealed (never on wrong without reveal) */}
         {(feedback?.isCorrect ||
           isRevealed ||
           (!isBarModelStage &&
+            !isVariableIdentification &&
             !isSolveStage &&
             !isPracticeStage &&
             hasFeedback &&

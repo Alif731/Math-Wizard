@@ -61,6 +61,136 @@ function verifySchemaQuestions() {
     false,
   );
 
+  const combineStageQuestion = {
+    interactionMode: "equation_builder",
+    moduleStage: "bar_to_equation",
+    schemaKind: "combine",
+    equationSpec,
+    validation: {
+      slots: { rightTerm: "4", result: "10" },
+      alternateSlots: { leftTerm: "6", rightTerm: "4", result: "10" },
+      operator: "+",
+    },
+  };
+
+  assert.equal(
+    validateQuestionResponse(combineStageQuestion, {
+      slots: { leftTerm: "?", rightTerm: "4", result: "10" },
+      operator: "+",
+    }),
+    true,
+  );
+  assert.equal(
+    validateQuestionResponse(combineStageQuestion, {
+      slots: { rightTerm: "4", result: "10" },
+      operator: "+",
+    }),
+    true,
+  );
+  assert.equal(
+    validateQuestionResponse(combineStageQuestion, {
+      slots: { leftTerm: "6", rightTerm: "4", result: "10" },
+      operator: "+",
+    }),
+    true,
+  );
+  assert.equal(
+    validateQuestionResponse(combineStageQuestion, {
+      slots: { leftTerm: "5", rightTerm: "4", result: "10" },
+      operator: "+",
+    }),
+    false,
+  );
+  assert.equal(
+    validateQuestionResponse(combineStageQuestion, {
+      slots: { leftTerm: "?", rightTerm: "5", result: "10" },
+      operator: "+",
+    }),
+    false,
+  );
+
+  const changeEquationSpec = {
+    values: { leftTerm: 15, rightTerm: "?", result: 11 },
+    operator: "-",
+    template: createEquationTemplate({
+      operator: "-",
+      left: { key: "leftTerm", label: "start", value: 15 },
+      right: { key: "rightTerm", label: "flew away", value: "?" },
+      result: { key: "result", label: "left over", value: 11 },
+      editableKeys: ["leftTerm", "result"],
+      operatorEditable: true,
+    }),
+  };
+
+  const changeStageQuestion = {
+    interactionMode: "equation_builder",
+    moduleStage: "schema_equation",
+    schemaKind: "change",
+    equationSpec: changeEquationSpec,
+    validation: {
+      slots: { leftTerm: "15", result: "11" },
+      alternateSlots: { leftTerm: "15", rightTerm: "4", result: "11" },
+      operator: "-",
+    },
+  };
+
+  assert.equal(
+    validateQuestionResponse(changeStageQuestion, {
+      slots: { leftTerm: "15", rightTerm: "4", result: "11" },
+      operator: "-",
+    }),
+    true,
+  );
+  assert.equal(
+    validateQuestionResponse(changeStageQuestion, {
+      slots: { leftTerm: "15", rightTerm: "4", result: "11" },
+      operator: "+",
+    }),
+    false,
+  );
+
+  const combineBarQuestion = {
+    interactionMode: "bar_model_builder",
+    moduleStage: "word_to_bar",
+    schemaKind: "combine",
+    barModelSpec: createBarModelSpec({
+      schemaKind: "combine",
+      unknownSlot: "partA",
+      values: { total: "10", partA: "?", partB: "4" },
+      scaleValues: { total: 10, partA: 6, partB: 4 },
+      labels: { total: "total", partA: "first part", partB: "second part" },
+    }),
+    validation: {
+      slots: { total: "10", partB: "4" },
+      alternateSlots: { total: "10", partA: "6", partB: "4" },
+    },
+  };
+
+  assert.equal(
+    validateQuestionResponse(combineBarQuestion, {
+      slots: { total: "10", partA: "?", partB: "4" },
+    }),
+    true,
+  );
+  assert.equal(
+    validateQuestionResponse(combineBarQuestion, {
+      slots: { total: "10", partB: "4" },
+    }),
+    true,
+  );
+  assert.equal(
+    validateQuestionResponse(combineBarQuestion, {
+      slots: { total: "10", partA: "6", partB: "4" },
+    }),
+    true,
+  );
+  assert.equal(
+    validateQuestionResponse(combineBarQuestion, {
+      slots: { total: "10", partA: "5", partB: "4" },
+    }),
+    false,
+  );
+
   const compareBigger = createBarModelSpec({
     schemaKind: "compare",
     unknownSlot: "bigger",

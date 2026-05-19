@@ -32,16 +32,20 @@ $text-muted: #64748b;
         display: flex;
         align-items: center;
         gap: 10px;
+
         @include ut.breakpoint(large) {
           font-size: 1.2rem;
         }
+
         @include ut.breakpoint(medium) {
           font-size: 1rem;
         }
+
         @include ut.breakpoint(xSmall) {
           font-size: 0.9rem;
         }
       }
+
       p {
         color: $text-muted;
         font-size: 0.9rem;
@@ -68,6 +72,7 @@ $text-muted: #64748b;
         font-size: 0.9rem;
         color: $text-dark;
       }
+
       svg {
         color: #0071e9;
       }
@@ -96,6 +101,7 @@ $text-muted: #64748b;
       width: fit-content;
       gap: 1rem;
     }
+
     @include ut.breakpoint(xSmall) {
       gap: 0.5rem;
     }
@@ -133,6 +139,7 @@ $text-muted: #64748b;
       .name-group {
         display: flex;
         flex-direction: column;
+
         .student-name {
           font-weight: 800;
           color: #d97706;
@@ -143,6 +150,7 @@ $text-muted: #64748b;
           display: flex;
           gap: 8px;
           margin-top: 4px;
+
           .stat-item {
             display: flex;
             align-items: center;
@@ -172,20 +180,23 @@ $text-muted: #64748b;
     }
   }
 }
+
 .mini-accuracy,
 .node-count {
   @include ut.breakpoint(large) {
     font-size: 0.9rem;
   }
+
   @include ut.breakpoint(medium) {
     font-size: 0.8rem;
   }
+
   @include ut.breakpoint(small) {
     font-size: 0.7rem;
   }
 }
 
-/* --- Mastery Modal Overlay --- */
+/* --- Mastery-modal Overlay --- */
 .mastery-modal-overlay {
   position: fixed;
   top: 0;
@@ -225,6 +236,7 @@ $text-muted: #64748b;
       color: $text-dark;
       margin: 0;
     }
+
     p {
       font-size: 0.85rem;
       color: $text-muted;
@@ -238,6 +250,7 @@ $text-muted: #64748b;
       padding: 8px;
       cursor: pointer;
       color: $text-muted;
+
       &:hover {
         color: #ef4444;
         background: #fee2e2;
@@ -275,10 +288,12 @@ $text-muted: #64748b;
           font-weight: 800;
           margin-bottom: 6px;
         }
+
         strong {
           font-size: 1.2rem;
           color: $text-dark;
           font-weight: 900;
+
           small {
             font-size: 0.75rem;
             color: #94a3b8;
@@ -315,6 +330,7 @@ $text-muted: #64748b;
         .node-badges {
           display: flex;
           gap: 8px;
+
           .badge.warning {
             background: #fffbeb;
             color: #d97706;
@@ -324,6 +340,7 @@ $text-muted: #64748b;
             border-radius: 20px;
             font-weight: 800;
           }
+
           .attempts-badge {
             font-size: 0.7rem;
             background: #f1f5f9;
@@ -342,6 +359,7 @@ $text-muted: #64748b;
           margin-bottom: 8px;
           display: flex;
           justify-content: space-between;
+
           strong {
             color: $wizard-purple;
             font-weight: 900;
@@ -366,6 +384,7 @@ $text-muted: #64748b;
     }
   }
 }
+
 .student-stats-summary {
   display: flex;
   justify-content: space-between;
@@ -411,6 +430,7 @@ $text-muted: #64748b;
     }
   }
 }
+
 .node-stats-badges {
   display: flex;
   gap: 8px;
@@ -431,7 +451,8 @@ $text-muted: #64748b;
 
     &.correct {
       background: #f0fdf4;
-      color: #16a34a; /* Green for success */
+      color: #16a34a;
+      /* Green for success */
       border: 1px solid #dcfce7;
     }
   }

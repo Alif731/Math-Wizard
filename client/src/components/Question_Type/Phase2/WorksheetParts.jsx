@@ -93,8 +93,8 @@ export const BarBox = ({
   style,
   className = "",
 }) => {
-  const displayValue =
-    box.editable && String(value || "").trim() === "?" ? "" : value;
+  // Allow "?" to be displayed if it was explicitly typed, but hide it if it's just the default empty state?
+  const displayValue = value;
 
   return (
     <button
@@ -154,10 +154,7 @@ export const EquationBoard = ({
             ? "+"
             : response?.operator || (item.editable ? "" : item.value) || "?";
 
-          const displayOperator =
-            item.editable && String(operatorValue || "").trim() === "?"
-              ? ""
-              : operatorValue;
+          const displayOperator = operatorValue;
 
           // 🔥 FIX 1: Check individual Operator feedback
           let opClass = "";
@@ -190,9 +187,10 @@ export const EquationBoard = ({
 
         const isEditable = item.editable !== false;
         const slotValue = getSlotDisplayValue(response, item.key);
+        
         const displayValue =
-          isEditable && String(slotValue || "").trim() !== "?" ? (
-            slotValue || <span className="hide-on-focus">?</span>
+          isEditable && String(slotValue || "").trim() !== "" ? (
+            slotValue
           ) : isEditable ? (
             <span className="hide-on-focus">?</span>
           ) : (
@@ -405,11 +403,10 @@ export const Keypad = ({
         <button
           type="button"
           className="worksheet-keypad__key"
-          onClick={showUnknown ? onUnknown : onClear}
+          onClick={showUnknown ? onUnknown : () => onDigit("?")}
           disabled={disabled}
         >
-          {showUnknown ? "?" : "AC"}
-          {/* {showUnknown ? "AC" : "AC"} */}
+          ?
         </button>
       </div>
     )}
