@@ -32,6 +32,21 @@
     cursor: pointer;
     transition: all 0.2s ease;
 
+    @include ut.breakpoint(larger) {
+    }
+    @include ut.breakpoint(large) {
+      height: 2.5rem;
+    }
+    @include ut.breakpoint(medium) {
+      // font-size: 1rem;
+    }
+    @include ut.breakpoint(small) {
+      // font-size: 0.9rem;
+    }
+    @include ut.breakpoint(xSmall) {
+      // font-size: 0.7rem;
+    }
+
     span.is-placeholder {
       color: #5f91e0;
     }

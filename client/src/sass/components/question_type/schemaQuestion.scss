@@ -89,6 +89,9 @@ $worksheet-shadow:
   justify-content: center;
   gap: 0;
   margin-bottom: 2rem;
+  @include ut.breakpoint(medium) {
+    margin-bottom: 0.5rem;
+  }
 }
 
 /* 2. Base Tab Styles */
@@ -99,11 +102,27 @@ $worksheet-shadow:
   justify-content: center;
   gap: 6px;
   padding: 8px 18px;
+  // padding: 1rem;
   border-radius: 30px;
   font-weight: 700;
   font-size: 0.95rem;
   transition: all 0.3s ease;
   margin-right: 24px;
+  @include ut.breakpoint(large) {
+    font-size: 0.8rem;
+  }
+  @include ut.breakpoint(medium) {
+    padding: 0.5rem;
+    font-size: 0.6rem;
+  }
+  @include ut.breakpoint(small) {
+    padding: 0.3rem;
+    font-size: 0.55rem;
+  }
+  @include ut.breakpoint(xSmall) {
+    padding: 0.1rem;
+    font-size: 0.45rem;
+  }
 }
 
 /* Remove margin from the very last pill */
@@ -178,7 +197,7 @@ $worksheet-shadow:
 
 .worksheet__topline {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   gap: 1rem;
   align-items: flex-start;
   flex-wrap: wrap;
@@ -222,10 +241,10 @@ $worksheet-shadow:
     font-size: 1rem;
   }
   @include ut.breakpoint(small) {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
   }
   @include ut.breakpoint(xSmall) {
-    font-size: 0.7rem;
+    font-size: 0.6rem;
   }
 }
 
@@ -254,152 +273,18 @@ $worksheet-shadow:
   background-color: rgba(129, 178, 154, 0.1450980392);
   font-size: 1.2rem;
   border-radius: 10px;
+  @include ut.breakpoint(medium) {
+    font-size: 1rem;
+  }
+  @include ut.breakpoint(small) {
+    font-size: 0.9rem;
+  }
+  @include ut.breakpoint(xSmall) {
+    font-size: 0.7rem;
+  }
 }
 
-// ---------------------------------------------- Module 1 ----------------------------------------
-// .variable-identification {
-//   display: flex;
-//   flex-direction: column;
-//   gap: 1.5rem;
-//   padding: 0rem 0.5rem;
-// }
-
-// /* --- CLUES (Sentences) --- */
-// .variable-identification__sentences {
-//   display: flex;
-//   flex-direction: column;
-//   gap: 0.75rem;
-// }
-
-// .variable-sentence {
-//   display: grid;
-//   grid-template-columns: 2.2rem 1fr;
-//   gap: 1rem;
-//   align-items: center;
-//   padding: 0.8rem 1.2rem;
-//   border: 2px solid #e2e8f0;
-//   border-radius: 12px;
-//   background: #fff;
-//   box-shadow: 0 4px 0 #f1f5f9;
-
-//   span {
-//     display: flex;
-//     align-items: center;
-//     justify-content: center;
-//     width: 2.2rem;
-//     height: 2.2rem;
-//     border-radius: 8px;
-//     background: #3d405b;
-//     font-weight: 900;
-//     color: #fff;
-//     box-shadow: 3px 3px 0 #e9b50b; // Gold shadow
-//   }
-
-//   p {
-//     margin: 0;
-//     font-size: 1.05rem;
-//     font-weight: 600;
-//     color: #3d405b;
-//   }
-// }
-
-// .variable-table {
-//   display: flex;
-//   flex-direction: column;
-//   gap: 1.25rem;
-// }
-
-// .variable-row {
-//   display: grid;
-//   grid-template-columns: minmax(130px, 1.2fr) minmax(110px, 1fr) minmax(
-//       110px,
-//       1fr
-//     );
-//   gap: 1.5rem;
-//   align-items: flex-end;
-//   padding: 1.25rem 1.5rem;
-//   border: 3px solid #e2e8f0;
-//   border-radius: 16px;
-//   background: #fff;
-//   box-shadow: 0 4px 0 #e2e8f0;
-//   transition: all 0.2s ease;
-
-//   &:focus-within {
-//     border-color: #6fa3f8;
-//     box-shadow: 0 6px 0 #6fa3f8;
-//     transform: translateY(-2px);
-//   }
-
-//   /* The wrapper for 'Sentence' and 'Value' */
-//   label {
-//     display: flex;
-//     flex-direction: column;
-//     gap: 0.4rem;
-//     min-width: 0; /* Prevents grid blowout */
-//     font-size: 0.75rem;
-//     font-weight: 800;
-//     color: #64748b;
-//     text-transform: uppercase;
-//     letter-spacing: 0.05em;
-//   }
-
-//   select,
-//   input {
-//     width: 100%;
-//     height: 3.2rem; /* Fixed height instead of min-height */
-//     border: 2px solid #cbd5e1;
-//     border-radius: 10px;
-//     padding: 0 1rem;
-//     font-size: 1.1rem;
-//     font-weight: 700;
-//     color: #3d405b;
-//     background: #fff;
-//     box-sizing: border-box;
-
-//     &:focus {
-//       border-color: #6fa3f8;
-//       outline: none;
-//       box-shadow: 0 0 0 3px rgba(111, 163, 248, 0.2);
-//     }
-//   }
-// }
-
-// .variable-row__label {
-//   font-size: 1.2rem;
-//   font-weight: 900;
-//   color: #3d405b;
-//   padding-bottom: 0.5rem;
-//   &::before {
-//     content: "";
-//     display: inline-block;
-//     width: 6px;
-//     height: 1.2rem;
-//     background: #e9b50b;
-//     border-radius: 10px;
-//     margin-right: 12px;
-//     vertical-align: text-bottom;
-//   }
-// }
-
-// .variable-value--locked {
-//   background: #f1f5f9 !important;
-//   border: 2px dashed #94a3b8 !important;
-//   color: #64748b !important;
-//   cursor: not-allowed;
-//   font-size: 1.4rem;
-//   font-weight: 900;
-//   text-align: center;
-// }
-
-// @media (max-width: 720px) {
-//   .variable-row {
-//     grid-template-columns: 1fr;
-//     align-items: flex-start;
-//   }
-//   .variable-row__label {
-//     padding-bottom: 0;
-//   }
-// }
+// ---------------------------------------------- Module 1 (Card-Based Toggle UI) ----------------------------------------
 
 .variable-identification {
   display: flex;
@@ -408,7 +293,6 @@ $worksheet-shadow:
   padding: 0rem 0.5rem;
 }
 
-/* --- CLUES (Sentences) --- */
 .variable-identification__sentences {
   display: flex;
   flex-direction: column;
@@ -427,7 +311,9 @@ $worksheet-shadow:
   box-shadow: 0 4px 0 #f1f5f9;
   transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 
-  // Slight lift on hover to feel interactive
+  @include ut.breakpoint(medium) { font-size: 0.85rem; }
+  @include ut.breakpoint(small) { font-size: 0.75rem; }
+
   &:hover {
     transform: translateY(-2px);
     border-color: #cbd5e1;
@@ -443,7 +329,8 @@ $worksheet-shadow:
     background: #3d405b;
     font-weight: 900;
     color: #fff;
-    box-shadow: 3px 3px 0 #e9b50b; // Gold shadow
+    box-shadow: 3px 3px 0 #e9b50b;
+    @include ut.breakpoint(medium) { width: 1.7rem; height: 1.7rem; }
   }
 
   p {
@@ -452,124 +339,163 @@ $worksheet-shadow:
     font-weight: 600;
     color: #3d405b;
     line-height: 1.4;
+    @include ut.breakpoint(medium) { font-size: 0.85rem; }
+    @include ut.breakpoint(small) { font-size: 0.75rem; }
   }
+
 }
 
-/* --- TASKS (Table & Rows) --- */
-.variable-table {
+.variable-identification__instruction {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #64748b;
+  line-height: 1.5;
+  margin: 0;
+  padding: 0 0.25rem;
+  strong {
+    color: #3d405b;
+  }
+  @include ut.breakpoint(small) { font-size: 0.8rem; }
+}
+
+/* --- Variable Cards --- */
+.variable-cards {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
 }
 
-.variable-row {
-  display: grid;
-  grid-template-columns: minmax(130px, 1.2fr) minmax(110px, 1fr) minmax(
-      110px,
-      1fr
-    );
-  gap: 1.5rem;
-  // align-items: flex-end;
-  align-items: center;
-  // padding: 1.25rem 1.5rem;
-  padding: 0.7rem;
+.variable-card {
   border: 3px solid #d7dde5;
   border-radius: 16px;
   background: #fff;
   box-shadow: 0 5px 0 #d7dde5;
+  padding: 1rem 1.2rem;
   transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
   position: relative;
-  z-index: 1;
-  //  3D press effect
-  &:focus-within {
-    border-color: #3d405b;
-    box-shadow: 0 2px 0 #3d405b;
-    transform: translateY(3px); // Pushes DOWN instead of up
-    background: #f8fbff;
-    z-index: 50;
-  }
 
-  label {
+  @include ut.breakpoint(medium) { padding: 0.75rem 0.9rem; }
+
+  &__header {
     display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    min-width: 0;
-    font-size: 0.75rem;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+  }
+
+  &__name {
+    font-size: 1.2rem;
+    font-weight: 900;
+    color: #3d405b;
+    text-transform: capitalize;
+    &::before {
+      content: "";
+      display: inline-block;
+      width: 6px;
+      height: 1.2rem;
+      background: #e9b50b;
+      border-radius: 10px;
+      margin-right: 10px;
+      vertical-align: text-bottom;
+    }
+    @include ut.breakpoint(medium) { font-size: 1.05rem; }
+    @include ut.breakpoint(small) { font-size: 0.95rem; }
+  }
+
+  &__badge {
+    font-size: 0.7rem;
     font-weight: 800;
-    color: #64748b;
+    padding: 0.25rem 0.6rem;
+    border-radius: 8px;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  input {
-    width: 100%;
-    height: 3.2rem;
-    border: 2px solid #cbd5e1;
-    border-radius: 10px;
-    padding: 0 1rem;
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #5f91e0;
-    background: #fff;
-    box-sizing: border-box;
-    transition: all 0.2s ease;
-
-    &:hover:not(:disabled) {
-      border-color: #5f91e0;
+    letter-spacing: 0.04em;
+    &--given {
+      background: #dcfce7;
+      color: #166534;
+      border: 1.5px solid #86efac;
     }
-
-    &:focus {
-      border-color: #6fa3f8;
-      outline: none;
-      box-shadow: 0 0 0 4px rgba(111, 163, 248, 0.15);
+    &--find {
+      background: #ede9fe;
+      color: #5b21b6;
+      border: 1.5px solid #c4b5fd;
     }
   }
 
-  &:focus-within,
-  &:has(.is-open) {
-    border-color: #3d405b;
-    box-shadow: 0 2px 0 #3d405b;
-    transform: translateY(3px);
-    background: #f8fbff;
+  &__toggles {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+    @include ut.breakpoint(small) { gap: 0.5rem; }
   }
-  input {
-    text-align: center;
 
-    &::placeholder {
-      // color: #94a3b8;
+  &__value-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+
+    span {
+      font-size: 0.8rem;
       font-weight: 800;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+
+    input {
+      flex: 1;
+      height: 3rem;
+      border: 2px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 0 1rem;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #5f91e0;
+      background: #fff;
+      text-align: center;
+      transition: all 0.2s ease;
+
+      &:hover:not(:disabled) { border-color: #5f91e0; }
+      &:focus {
+        border-color: #6fa3f8;
+        outline: none;
+        box-shadow: 0 0 0 4px rgba(111, 163, 248, 0.15);
+      }
+      &:disabled {
+        background: #f8fafc;
+        cursor: not-allowed;
+      }
+      @include ut.breakpoint(medium) { height: 2.5rem; font-size: 1.1rem; }
     }
   }
-  position: relative; /* REQUIRED for the success/error badges to float correctly */
+
+  &__find-note {
+    margin: 0.5rem 0 0;
+    font-size: 0.9rem;
+    color: #7c3aed;
+    font-style: italic;
+    em { font-weight: 600; }
+  }
 
   // --- SUCCESS STATE ---
   &.is-correct {
     border-color: #10b981;
     box-shadow: 0 5px 0 #10b981;
     background: #f0fdf4;
-    pointer-events: none; // Locks the whole row so students can't change a correct answer
+    pointer-events: none;
 
-    // Change the gold accent bar to green
-    .variable-row__label::before {
-      background: #10b981;
-    }
+    .variable-card__name::before { background: #10b981; }
+    input { border-color: #10b981; background: #f0fdf4; color: #065f46; }
 
-    // Tint the inputs and custom select to match
-    input,
-    .wizard-select__trigger {
-      border-color: #10b981;
-      background: #f0fdf4;
-      color: #065f46;
-    }
-
-    // Floating Checkmark Badge
     &::after {
       content: "✓";
       position: absolute;
-      top: -12px;
-      right: -12px;
-      width: 32px;
-      height: 32px;
+      top: -10px;
+      right: -10px;
+      width: 28px;
+      height: 28px;
       background: #10b981;
       color: white;
       border: 3px solid #fff;
@@ -577,7 +503,7 @@ $worksheet-shadow:
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.2rem;
+      font-size: 1rem;
       font-weight: 900;
       box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
       z-index: 10;
@@ -592,27 +518,16 @@ $worksheet-shadow:
     background: #fff1f2;
     animation: rowShake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 
-    // Change the gold accent bar to red
-    .variable-row__label::before {
-      background: #f43f5e;
-    }
+    .variable-card__name::before { background: #f43f5e; }
+    input { border-color: #f43f5e; color: #9f1239; }
 
-    // Tint the inputs and custom select to match
-    input,
-    .wizard-select__trigger {
-      border-color: #f43f5e;
-      background: #fff;
-      color: #9f1239;
-    }
-
-    // Floating Cross Badge
     &::after {
       content: "✕";
       position: absolute;
-      top: -12px;
-      right: -12px;
-      width: 32px;
-      height: 32px;
+      top: -10px;
+      right: -10px;
+      width: 28px;
+      height: 28px;
       background: #f43f5e;
       color: white;
       border: 3px solid #fff;
@@ -620,73 +535,103 @@ $worksheet-shadow:
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.1rem;
+      font-size: 1rem;
       font-weight: 900;
       box-shadow: 0 4px 10px rgba(244, 63, 94, 0.4);
       z-index: 10;
     }
   }
-}
 
-.variable-row__label {
-  font-size: 1.25rem;
-  font-weight: 900;
-  color: #3d405b;
-  // padding-bottom: 0.5rem;
-
-  &::before {
-    content: "";
-    display: inline-block;
-    width: 6px;
-    height: 1.2rem;
-    background: #e9b50b;
-    border-radius: 10px;
-    margin-right: 12px;
-    vertical-align: text-bottom;
+  // --- REVEALED STATE ---
+  &.is-revealed {
+    border-color: #10b981;
+    box-shadow: 0 5px 0 #10b981;
+    background: #f0fdf4;
+    pointer-events: none;
+    .variable-card__name::before { background: #10b981; }
+    input { border-color: #10b981; background: #f0fdf4; color: #065f46; }
   }
 }
 
-/* Striped Locked Pattern for empty values */
-.variable-value--locked {
-  background: repeating-linear-gradient(
-    -45deg,
-    #f1f5f9,
-    #f1f5f9 8px,
-    #f8fafc 8px,
-    #f8fafc 16px
-  ) !important;
-  border: 2px dashed #94a3b8 !important;
-  color: #64748b !important;
-  cursor: not-allowed;
-  font-size: 1.4rem;
-  font-weight: 900;
+/* --- Toggle Buttons --- */
+.variable-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.65rem 0.5rem;
+  border: 2px solid #d1d5db;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
   text-align: center;
-  box-shadow: none !important;
+  line-height: 1.3;
+
+  @include ut.breakpoint(medium) { font-size: 0.78rem; padding: 0.5rem 0.4rem; }
+  @include ut.breakpoint(small) { font-size: 0.7rem; }
+
+  &:hover:not(:disabled) {
+    border-color: #94a3b8;
+    background: #f8fafc;
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+
+  &--given.is-active {
+    border-color: #10b981;
+    background: #f0fdf4;
+    color: #065f46;
+    box-shadow: 0 3px 0 #10b981;
+  }
+
+  &--find.is-active {
+    border-color: #7c3aed;
+    background: #f5f3ff;
+    color: #5b21b6;
+    box-shadow: 0 3px 0 #7c3aed;
+  }
 }
 
-.is-placeholder {
-  text-transform: capitalize;
+/* --- Feedback Bar --- */
+.variable-feedback-bar {
+  padding: 0.85rem 1.2rem;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-align: center;
+  animation: fadeIn 0.3s ease;
+
+  @include ut.breakpoint(small) { font-size: 0.82rem; padding: 0.7rem 0.9rem; }
+
+  &--success {
+    background: #dcfce7;
+    color: #166534;
+    border: 2px solid #86efac;
+  }
+
+  &--error {
+    background: #fff1f2;
+    color: #9f1239;
+    border: 2px solid #fda4af;
+  }
 }
 
-/* --- MOBILE RESPONSIVENESS --- */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Mobile Responsiveness --- */
 @media (max-width: 720px) {
-  .variable-identification {
-    padding: 0; // Remove outer padding on small screens
-  }
-
-  .variable-row {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-    align-items: flex-start;
-    padding: 1.25rem; // Tighter padding
-  }
-
-  .variable-row__label {
-    padding-bottom: 0;
-    border-bottom: 2px solid #f1f5f9; // Separator line for mobile
-    width: 100%;
-    margin-bottom: 0.5rem;
-  }
+  .variable-identification { padding: 0; }
+  .variable-card__toggles { grid-template-columns: 1fr; }
 }
 // ---------------------------------------------------------------------------------------------
 .equation-board {
@@ -696,6 +641,13 @@ $worksheet-shadow:
   align-items: center;
   padding: 0.5rem;
   gap: 0.8rem;
+  @include ut.breakpoint(medium) {
+    flex-wrap: nowrap;
+  }
+  @include ut.breakpoint(xSmall) {
+    flex-wrap: wrap;
+    // row-gap: 24px;
+  }
 }
 
 .equation-board__symbol {
@@ -728,16 +680,42 @@ $worksheet-shadow:
     box-shadow 0.2s ease,
     background 0.2s ease;
   border-bottom: 5px solid #f2cc8f;
+  @include ut.breakpoint(medium) {
+    min-width: 70px;
+    min-height: 70px;
+    padding: 0px 0.5rem;
+  }
+  @include ut.breakpoint(small) {
+    max-width: 60px;
+    min-height: 60px;
+    padding: 0px 0.5rem;
+  }
 
   strong {
-    font-size: 2.25rem;
+    font-size: 2.22rem;
     line-height: 1;
+
+    @include ut.breakpoint(medium) {
+      font-size: 1.4rem;
+    }
+    @include ut.breakpoint(small) {
+      font-size: 1.1rem;
+    }
   }
 
   span {
     font-size: 0.8rem;
     color: $worksheet-text-soft;
     text-transform: lowercase;
+    @include ut.breakpoint(medium) {
+      font-size: 0.6rem;
+    }
+    @include ut.breakpoint(small) {
+      font-size: 0.5rem;
+    }
+    @include ut.breakpoint(xSmall) {
+      font-size: 0.45rem;
+    }
   }
 }
 
@@ -746,10 +724,31 @@ $worksheet-shadow:
   border-color: rgba(199, 104, 79, 0.7);
   background: linear-gradient(180deg, #fff7f2 0%, #fffdf9 100%);
   cursor: pointer;
+  @include ut.breakpoint(medium) {
+    width: 70px;
+    min-width: 70px;
+    min-height: 70px;
+    padding: 0px 0.5rem;
+  }
+  @include ut.breakpoint(small) {
+    min-width: 60px;
+    min-height: 60px;
+    padding: 0px 0.5rem;
+  }
 }
 
 .equation-box.is-fixed {
   background: white !important;
+  @include ut.breakpoint(medium) {
+    min-width: 70px;
+    min-height: 70px;
+    padding: 0.5rem;
+  }
+  @include ut.breakpoint(small) {
+    max-width: 60px;
+    min-height: 60px;
+    padding: 0px 0.5rem;
+  }
 }
 
 /* Muted look for fixed boxes ONLY in the bar-to-equation stage */
@@ -761,6 +760,21 @@ $worksheet-shadow:
   box-shadow: none;
   cursor: default;
   opacity: 0.85;
+  @include ut.breakpoint(medium) {
+    width: 70px;
+    min-width: 70px;
+    min-height: 70px;
+    padding: 0px 0.5rem;
+  }
+  @include ut.breakpoint(small) {
+    // width: 58px;
+    // max-width: 60px;
+    // min-height: 70px;
+    // padding: 0px 0.5rem;
+    max-width: 60px;
+    min-height: 60px;
+    padding: 0px 0.5rem;
+  }
 }
 
 /* 1. Base operator styles  */
@@ -770,6 +784,30 @@ $worksheet-shadow:
   border-color: rgba(242, 204, 143, 0.98);
   cursor: pointer;
   position: relative;
+  @include ut.breakpoint(medium) {
+    width: 70px;
+    min-width: 70px;
+    min-height: 70px;
+    padding: 0px 0.5rem;
+  }
+  @include ut.breakpoint(small) {
+    // width: 58px;
+    // min-width: 58px;
+    // min-height: 70px;
+    // padding: 0px 0.5rem;
+    max-width: 60px;
+    min-height: 60px;
+    padding: 0px 0.5rem;
+  }
+  // @include ut.breakpoint(xSmall) {
+  //   // width: 58px;
+  //   // min-width: 58px;
+  //   // min-height: 70px;
+  //   // padding: 0px 0.5rem;
+  //   min-width: 40px;
+  //   min-height: 40px;
+  //   padding: 0px 0.5rem;
+  // }
 }
 
 /* 2. Add the bouncing red triangle when it is active! */
@@ -932,10 +970,20 @@ $worksheet-shadow:
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.95),
     0 10px 22px rgba(61, 64, 91, 0.05);
+  min-height: auto;
 
   strong {
     font-size: 1.95rem;
     line-height: 1;
+    @include ut.breakpoint(medium) {
+      font-size: 1.4rem;
+    }
+    @include ut.breakpoint(small) {
+      font-size: 1.2rem;
+    }
+    @include ut.breakpoint(xSmall) {
+      font-size: 1.1rem;
+    }
   }
 
   span {
@@ -1147,6 +1195,10 @@ $worksheet-shadow:
         border-color: #f87171;
         color: #ef4444;
         box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.08); /* Keeps it sunken */
+
+        .hide-on-focus {
+          display: none;
+        }
       }
     }
   }
@@ -1374,7 +1426,7 @@ $worksheet-shadow:
   background: #ffffff !important;
   z-index: 10; /* Keeps the glowing box above other elements */
   animation: breathingPulse 2s infinite ease-in-out;
-  cursor: hover;
+  cursor: pointer;
 }
 .equation-box.is-active:focus,
 .bar-box.is-active:focus {
@@ -1389,18 +1441,18 @@ $worksheet-shadow:
   content: "|";
   font-weight: 300;
   color: $worksheet-accent;
-  margin-left: 3px;
+  position: relative;
+  margin-left: 2px;
   animation: blinkCaret 1s step-end infinite;
 }
-.equation-box.is-active strong:has(.hide-on-focus)::after,
-.bar-box.is-active strong:has(.hide-on-focus)::after {
+
+.equation-box.is-active:has(.hide-on-focus) strong::after,
+.bar-box.is-active:has(.hide-on-focus) strong::after {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   margin-left: 0;
-}
-.equation-box:focus .hide-on-focus,
-.bar-box:focus .hide-on-focus,
-.equation-box.is-active .hide-on-focus,
-.bar-box.is-active .hide-on-focus {
-  display: none;
 }
 
 .equation-box strong span.hide-on-focus,
@@ -1411,11 +1463,26 @@ $worksheet-shadow:
   color: #3d405b;
 }
 
-.equation-box:focus .hide-on-focus,
-.bar-box:focus .hide-on-focus,
+// .equation-box:focus .hide-on-focus,
+// .bar-box:focus .hide-on-focus,
+// .equation-box.is-active .hide-on-focus,
+// .bar-box.is-active .hide-on-focus {
+//   display: none;
+// }
+
 .equation-box.is-active .hide-on-focus,
 .bar-box.is-active .hide-on-focus {
-  display: none;
+  /* Keep the ? in the DOM to prevent layout shifts (shrinking boxes), just make it invisible */
+  opacity: 0;
+}
+
+/* --- ADD THIS TO KILL THE BROWSER'S UGLY DEFAULT BLACK LINE --- */
+button.bar-box:focus,
+button.equation-box:focus,
+button.bar-box:active,
+button.equation-box:active {
+  outline: none !important; /* Kills the browser focus ring */
+  transform: none !important; /* Kills the browser native button press */
 }
 
 .equation-box.is-active:not(:has(.hide-on-focus)),
@@ -1426,6 +1493,60 @@ $worksheet-shadow:
   box-shadow:
     0 0 0 4px rgba(199, 104, 79, 0.18),
     0 10px 22px rgba(61, 64, 91, 0.08);
+}
+
+/* --- KILL THE CURSOR or Type ICON ON SUBMISSION --- */
+.equation-box,
+.bar-box {
+  // When any of the feedback/locked classes are added...
+  &.is-locked,
+  &.is-correct,
+  &.is-wrong {
+    // Target the specific strong tag that holds the cursor
+    strong::after {
+      display: none !important;
+      content: none !important;
+      animation: none !important;
+    }
+  }
+}
+
+/* --- THE 'COMPLETED' FOCUS STATE --- */
+.worksheet.is-completed {
+  //   /* 1. Heavily fade and slightly blur the keypad */
+  //   .worksheet-keypad {
+  //     opacity: 0.3;
+  //     filter: grayscale(100%) blur(1.5px);
+  //     pointer-events: none; // Extra safety so they can't click it
+  //     transition: all 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+  //   }
+
+  //   /* 2. Softly fade the headers and prompt to push attention downwards */
+  .worksheet__topline,
+  // .worksheet-prompt,
+  .worksheet-title,
+  .worksheet-help {
+    opacity: 0.4;
+    pointer-events: none;
+    transition: all 0.6s ease;
+  }
+
+  //   /* 3. Keep the Equation/Bar Model visible for review, but lock interaction */
+  // .equation-board,
+  // .bar-model {
+  // pointer-events: none;
+  /* Optional: drop opacity slightly to 0.8 so the Next button pops even more */
+  // opacity: 0.85;
+  // transition: opacity 0.6s ease;
+  // }
+
+  //   /* 4. Ensure the Actions (Next Button) stay at 100% focus */
+  //   .worksheet-actions {
+  //     position: relative;
+  //     z-index: 10;
+  //     opacity: 1 !important;
+  //     filter: none !important;
+  //   }
 }
 
 /* 4. The Caret Animation */
@@ -1453,18 +1574,11 @@ $worksheet-shadow:
   );
   box-shadow: $worksheet-shadow;
   overflow: hidden;
-  animation: keypadSlideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards;
-  transition: all 1s ease-in-out;
-}
-@keyframes keypadSlideUp {
-  0% {
-    opacity: 0;
-    transform: translateY(20px) scale(0.98);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  // animation-delay: 0.15s;
+  // transition: all 1s ease-in-out;
+  // // animation-delay: 0.15s;
+  // opacity: 0;
+  // transform-origin: bottom center;
 }
 
 .worksheet-keypad__title {
@@ -1579,6 +1693,15 @@ $worksheet-shadow:
   margin: 1.5rem auto;
   display: flex;
   flex-direction: column;
+  @include ut.breakpoint(medium) {
+    width: fit-content;
+  }
+  @include ut.breakpoint(small) {
+    // font-size: 0.9rem;
+  }
+  @include ut.breakpoint(xSmall) {
+    // font-size: 0.7rem;
+  }
 }
 
 .worksheet-solve__equation {
@@ -1592,6 +1715,15 @@ $worksheet-shadow:
   border-radius: 16px;
   letter-spacing: 1px;
   box-shadow: inset 0 2px 4px rgba(15, 23, 42, 0.03);
+  @include ut.breakpoint(medium) {
+    font-size: 1.6rem;
+  }
+  @include ut.breakpoint(small) {
+    font-size: 1.4rem;
+  }
+  @include ut.breakpoint(xSmall) {
+    font-size: 1.2rem;
+  }
 }
 
 @keyframes successPop {
@@ -1868,6 +2000,15 @@ $worksheet-shadow:
     border: 3px solid #3d405b;
     letter-spacing: 1px;
     transition: all 400ms ease;
+    @include ut.breakpoint(medium) {
+      font-size: 12px;
+    }
+    @include ut.breakpoint(small) {
+      // font-size: 1.4rem;
+    }
+    @include ut.breakpoint(xSmall) {
+      // font-size: 1.2rem;
+    }
   }
 
   input {
@@ -1885,6 +2026,15 @@ $worksheet-shadow:
     z-index: 3;
     text-align: center;
     border-radius: 12px;
+    @include ut.breakpoint(medium) {
+      font-size: 1.6rem;
+    }
+    @include ut.breakpoint(small) {
+      font-size: 1.4rem;
+    }
+    @include ut.breakpoint(xSmall) {
+      font-size: 1.2rem;
+    }
 
     &::placeholder {
       color: #aaa;
@@ -2106,8 +2256,22 @@ $worksheet-shadow:
 }
 
 .worksheet-actions {
-  width: 250px;
+  width: 260px;
   margin: 0 auto;
+  @include ut.breakpoint(larger) {
+  }
+  @include ut.breakpoint(large) {
+    width: 200px;
+  }
+  @include ut.breakpoint(medium) {
+    width: fit-content;
+  }
+  @include ut.breakpoint(small) {
+    // font-size: 0.9rem;
+  }
+  @include ut.breakpoint(xSmall) {
+    // font-size: 0.7rem;
+  }
 }
 
 // .worksheet-button {
@@ -2203,7 +2367,7 @@ $worksheet-shadow:
   border-radius: 99px;
   font-size: 1.3rem;
   font-weight: 900;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.05rem;
   text-transform: uppercase;
   cursor: pointer;
   transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -2211,6 +2375,25 @@ $worksheet-shadow:
   position: relative;
   z-index: 10;
   border: 4px solid #1e293b;
+  // @include ut.breakpoint(larger) {
+  //   min-height: 64px;
+  // }
+  @include ut.breakpoint(large) {
+    min-height: 54px;
+    font-size: 1.1rem;
+  }
+  @include ut.breakpoint(medium) {
+    font-size: 1rem;
+    // font-size: 1rem;
+  }
+  @include ut.breakpoint(small) {
+    font-size: 0.9rem;
+    // font-size: 1rem;
+  }
+  @include ut.breakpoint(xSmall) {
+    font-size: 0.8rem;
+    // font-size: 1rem;
+  }
 }
 .worksheet-button--primary {
   background: #f2cc8f;
@@ -2250,6 +2433,109 @@ $worksheet-shadow:
   }
 }
 
+.worksheet-button--reveal {
+  /* 1. Structural base for the shine effect */
+  position: relative;
+  overflow: hidden;
+
+  background: #f2cc8f;
+  color: #3d405b;
+
+  /* 2. The Secret Sauce: Smooth transitions for the 3D press */
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+
+  box-shadow:
+    0 8px 0 #3d405b,
+    inset 0 -5px 0 rgba(0, 0, 0, 0.15),
+    inset 0 4px 0 rgba(255, 255, 255, 0.7);
+
+  /* 3. Idle Animation: A subtle, friendly bounce to draw the eye */
+  animation: gentle-float 3s infinite ease-in-out;
+
+  /* --- HOVER STATE --- */
+  /* Using :not(:disabled) is slightly safer than :enabled in React */
+  &:hover:not(:disabled) {
+    background: #fcd34d;
+    // color: white;
+    // background: #81b29a;
+    transform: translateY(2px);
+
+    /* Kept the shadow color #3d405b consistent so it doesn't flash grayish-blue */
+    box-shadow:
+      0 6px 0 #3d405b,
+      inset 0 -5px 0 rgba(0, 0, 0, 0.1),
+      inset 0 4px 0 rgba(255, 255, 255, 0.9);
+
+    /* Pause the float animation when the user interacts with it */
+    animation-play-state: paused;
+  }
+
+  /* 4. Premium Shine Swipe on Hover */
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.5),
+      transparent
+    );
+    transform: skewX(-20deg);
+  }
+
+  &:hover:not(:disabled)::after {
+    animation: shine-swipe 0.6s ease-out;
+  }
+
+  /* --- ACTIVE (CLICK) STATE --- */
+  &:active:not(:disabled) {
+    transform: translateY(8px); /* Fully pressed down */
+    box-shadow:
+      0 0 0 #3d405b,
+      inset 0 -2px 0 rgba(0, 0, 0, 0.1),
+      inset 0 2px 0 rgba(255, 255, 255, 0.4);
+  }
+
+  /* --- DISABLED STATE --- */
+  &:disabled {
+    background: #e2e8f0;
+    color: #94a3b8;
+    border-color: #94a3b8;
+    box-shadow:
+      0 8px 0 #cbd5e1,
+      /* Lightened the shadow so it looks truly inactive */ inset 0 -4px 0
+        rgba(0, 0, 0, 0.05);
+    cursor: not-allowed;
+    transform: translateY(0);
+
+    /* Ensure disabled buttons never animate */
+    animation: none;
+  }
+}
+
+@keyframes gentle-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  } /* Gently lifts up and down */
+}
+
+@keyframes shine-swipe {
+  0% {
+    left: -150%;
+  }
+  100% {
+    left: 150%;
+  }
+}
+
 /* --- STATUS: CARTOON STRIPE --- */
 .worksheet-button--status {
   display: flex;
@@ -2257,7 +2543,7 @@ $worksheet-shadow:
   justify-content: center;
   padding: 0 1.5rem;
   color: #1e293b;
-  font-size: 1.2rem;
+  font-size: 1rem;
   font-style: italic;
   text-align: center;
   line-height: 1.3;
@@ -2270,6 +2556,9 @@ $worksheet-shadow:
   );
   background-size: 42px 42px;
   animation: toonStripe 1s linear infinite;
+  @include ut.breakpoint(medium) {
+    font-size: 0.7rem;
+  }
 }
 
 @keyframes toonStripe {
@@ -2299,15 +2588,14 @@ $worksheet-shadow:
     min-height: 96px;
     border-radius: 18px;
 
-    strong {
-      font-size: 1.8rem;
-    }
+    // strong {
+    //   font-size: 1.8rem;
+    // }
   }
 
   .worksheet-keypad,
   .worksheet-target-hint,
-  .worksheet-help,
-  .worksheet-actions {
+  .worksheet-help {
     width: 100%;
   }
 
@@ -2618,6 +2906,16 @@ $worksheet-shadow:
   justify-content: center;
   align-items: center;
   user-select: none;
+  @include ut.breakpoint(medium) {
+    min-height: 46px;
+    font-size: 1.2rem;
+  }
+  @include ut.breakpoint(small) {
+    font-size: 1.1rem;
+  }
+  @include ut.breakpoint(xSmall) {
+    font-size: 1rem;
+  }
 
   &:hover:enabled {
     background: #fff3eb;
@@ -2843,7 +3141,8 @@ $worksheet-shadow:
 .bar-box {
   position: relative;
   transition: all 0.3s ease;
-
+  font-family: "ActualComicSans", cursive;
+  color: #3d405b !important;
   &.is-correct {
     background-color: #ffffff !important;
     border: 1px solid #e5e5e5 !important;
@@ -2961,4 +3260,207 @@ $worksheet-shadow:
     transform: scale(1) rotate(0);
     opacity: 1;
   }
+}
+
+/* Specific Style for NEXT PROBLEM */
+.worksheet-button--continue {
+  background: #f2cc8f;
+  color: #3d405b;
+  box-shadow:
+    0 8px 0 #3d405b,
+    inset 0 -5px 0 rgba(0, 0, 0, 0.15),
+    inset 0 4px 0 rgba(255, 255, 255, 0.7);
+
+  /* REQUIRED FOR SHIMMER: Keeps the light beam inside the button */
+  position: relative;
+  overflow: hidden;
+
+  animation:
+    buttonPopIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+    buttonBreathe 2.5s infinite ease-in-out 0.4s; // Starts after PopIn
+
+  &:hover {
+    background-color: #81b29a; // Swaps to Sage Green
+    color: #ffffff; // Text turns White
+    transform: translateY(2px);
+
+    /* Shrink the main shadow to simulate pressing it down */
+    box-shadow:
+      0 6px 0 #3d405b,
+      inset 0 -5px 0 rgba(0, 0, 0, 0.15),
+      inset 0 4px 0 rgba(255, 255, 255, 0.7);
+  }
+
+  /* The Magical Shimmer/Glare Effect */
+  /* Update the ::after pseudo-element */
+  .worksheet-button--continue::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0; /* Anchor it to 0 instead of -150% */
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+      to right,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.5) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    /* Use translateX to move it off-screen initially */
+    transform: translateX(-200%) skewX(-25deg);
+    animation: glassShine 4s infinite;
+  }
+}
+
+/* --- ANIMATIONS --- */
+
+@keyframes buttonBreathe {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.04); // Subtle growth
+    filter: brightness(1.1); // Slight magic glow
+    /* Deepen the 3D shadow as it lifts off the page */
+    box-shadow:
+      0 10px 0 #3d405b,
+      inset 0 -5px 0 rgba(0, 0, 0, 0.15),
+      inset 0 4px 0 rgba(255, 255, 255, 0.7);
+  }
+}
+
+@keyframes buttonPopIn {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* The shiny glare that sweeps across the button */
+@keyframes glassShine {
+  0% {
+    transform: translateX(-200%) skewX(-25deg);
+  }
+  15% {
+    transform: translateX(250%) skewX(-25deg);
+  }
+  100% {
+    transform: translateX(250%) skewX(-25deg);
+  }
+}
+
+/* -------------------- KEYPAD EXIT ANIMATION --------------------- */
+@keyframes keypadUnfold {
+  0% {
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  100% {
+    max-height: 400px; /* Adjust if your keypad is taller */
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* --- 2. THE CLOSING ANIMATION --- */
+@keyframes keypadCollapse {
+  0% {
+    max-height: 400px;
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+    margin: 0; /* Sucks up the extra space */
+  }
+}
+
+.keypad-animator {
+  transform-origin: top center;
+  overflow: hidden;
+  will-change: max-height, opacity, transform;
+  animation: keypadUnfold 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+
+  /* Plays when the student hits Submit */
+  &.is-hidden {
+    animation: keypadCollapse 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    pointer-events: none; /* Stops accidental clicks while it shrinks */
+  }
+}
+
+/* Add this to your SASS file */
+.bar-box strong {
+  transition: all 0.4s ease-out;
+}
+
+/* This class is automatically applied when value changes */
+.is-correct strong,
+.is-revealed strong {
+  animation: pulse-reveal 0.6s ease-out;
+}
+
+@keyframes pulse-reveal {
+  0% {
+    transform: scale(1);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Animation for revealed number */
+.is-correct strong {
+  animation: pulse-reveal 0.6s ease-out forwards;
+}
+
+@keyframes pulse-reveal {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 1;
+    filter: brightness(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+/* 1. Option A: Give the whole equation area a soft background */
+.is-revealed-board {
+  background-color: #f8f9fa; /* A soft, neutral gray */
+  border-radius: 16px;
+  padding: 12px;
+  border: 2px dashed #dee2e6;
+}
+
+/* 2. Option B: Target the boxes inside to give them a "hint" color (like soft yellow/gold) */
+.is-revealed-board input, 
+.is-revealed-board .equation-slot /* <-- Use whatever class your boxes actually use! */ {
+  background-color: #fff3cd !important; /* Soft yellow */
+  border-color: #ffe69c !important;
+  color: #664d03 !important;
+}
+
+button.bar-box:active,
+.bar-box:active {
+  transform: none !important;
+  /* Or, if you want it to match your focus state: */
+  /* transform: translateY(-1px) !important; */
 }

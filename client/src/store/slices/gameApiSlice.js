@@ -21,6 +21,7 @@ export const gameApiSlice = apiSlice.injectEndpoints({
         body: payload,
       }),
       invalidatesTags: ["Leaderboard", "UserStatus", "Activity"],
+      // invalidatesTags: ["Leaderboard", "UserStatus", "Activity"],
     }),
 
     // Jump to a specific concept (used by Student Hub)

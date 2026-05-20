@@ -159,24 +159,163 @@ const getEditableSlotValues = (equationSpec) => {
   return expected;
 };
 
+const getEquationSlotItems = (question) =>
+  (question?.equationSpec?.template || []).filter(
+    (item) => item.type === "slot" && item.key,
+  );
+
+const isEquationBuilderStage = (question) =>
+  ["bar_to_equation", "schema_equation"].includes(question?.moduleStage);
+
+const hasOwn = (object, key) =>
+  Object.prototype.hasOwnProperty.call(object || {}, key);
+
+const getTemplateSlotValue = (question, key) => {
+  const item = getEquationSlotItems(question).find((slot) => slot.key === key);
+  return String(
+    item?.value ?? question?.equationSpec?.values?.[key] ?? "",
+  ).trim();
+};
+
+const getExpectedEquationSlotValue = (question, key) => {
+  if (hasOwn(question?.validation?.slots, key)) {
+    return String(question.validation.slots[key] ?? "").trim();
+  }
+
+  return getTemplateSlotValue(question, key);
+};
+
+const getCalculatedEquationSlotValue = (question, key) => {
+  if (hasOwn(question?.validation?.alternateSlots, key)) {
+    const value = String(question.validation.alternateSlots[key] ?? "").trim();
+    return value && value !== "?" ? value : "";
+  }
+
+  return "";
+};
+
+const isUnknownEquationSlot = (value) => value === "" || value === "?";
+
+const getBarModelBoxes = (question) => {
+  const spec = question?.barModelSpec || {};
+  const boxes = [
+    spec.total,
+    spec.left,
+    spec.right,
+    spec.start,
+    spec.change,
+    spec.end,
+    spec.result,
+    spec.bigger,
+    spec.smaller,
+    spec.difference,
+  ].filter(Boolean);
+
+  return Array.from(new Map(boxes.map((box) => [box.key, box])).values());
+};
+
+const getExpectedBarValue = (question, box) => {
+  if (!box?.key) return "";
+
+  if (hasOwn(question?.validation?.slots, box.key)) {
+    return String(question.validation.slots[box.key] ?? "").trim();
+  }
+
+  return String(box.value ?? "").trim();
+};
+
+const getCalculatedBarValue = (question, key) => {
+  if (hasOwn(question?.validation?.alternateSlots, key)) {
+    const value = String(question.validation.alternateSlots[key] ?? "").trim();
+    return value && value !== "?" ? value : "";
+  }
+
+  return "";
+};
+
+const validateSchemaBarModelBuilder = (question, response = {}) => {
+  const actualSlots = response?.slots || {};
+
+  for (const box of getBarModelBoxes(question)) {
+    const student = String(actualSlots[box.key] ?? "").trim();
+    const expected = getExpectedBarValue(question, box);
+    const calculated = getCalculatedBarValue(question, box.key);
+
+    if (isUnknownEquationSlot(expected)) {
+      const isUnknownCorrect =
+        student === "" ||
+        student === "?" ||
+        (calculated !== "" && normalizeString(student) === normalizeString(calculated));
+
+      if (!isUnknownCorrect) {
+        return false;
+      }
+
+      continue;
+    }
+
+    if (normalizeString(student) !== normalizeString(expected)) {
+      return false;
+    }
+  }
+
+  return true;
+};
+
+const validateEquationStageBuilder = (question, response = {}) => {
+  const actualSlots = response?.slots || {};
+
+  for (const item of getEquationSlotItems(question)) {
+    const key = item.key;
+    const student = String(actualSlots[key] ?? "").trim();
+    const expected = getExpectedEquationSlotValue(question, key);
+    const calculated = getCalculatedEquationSlotValue(question, key);
+
+    if (isUnknownEquationSlot(expected)) {
+      const isUnknownCorrect =
+        student === "" ||
+        student === "?" ||
+        (calculated !== "" && normalizeString(student) === normalizeString(calculated));
+
+      if (!isUnknownCorrect) {
+        return false;
+      }
+
+      continue;
+    }
+
+    if (normalizeString(student) !== normalizeString(expected)) {
+      return false;
+    }
+  }
+
+  if (question?.validation?.operator) {
+    return (
+      normalizeString(response?.operator) ===
+      normalizeString(question.validation.operator)
+    );
+  }
+
+  return true;
+};
+
 const compareSlotMap = (
   expectedSlots = {},
   actualSlots = {},
   alternateSlots = {},
-) =>
-  Object.entries(expectedSlots).every(([key, value]) => {
-    const actualValue = normalizeString(actualSlots?.[key]);
-    const expectedValue = normalizeString(value);
-    const alternateValue = normalizeString(alternateSlots?.[key]);
-
-    if (actualValue === expectedValue) {
-      return true;
-    }
-
-    return (
-      expectedValue === "?" && alternateValue && actualValue === alternateValue
-    );
+) => {
+  const matchesExpected = Object.entries(expectedSlots).every(([key, value]) => {
+    return normalizeString(actualSlots?.[key]) === normalizeString(value);
   });
+  if (matchesExpected) return true;
+  if (alternateSlots && Object.keys(alternateSlots).length > 0) {
+    const matchesAlternate = Object.entries(alternateSlots).every(([key, value]) => {
+      return normalizeString(actualSlots?.[key]) === normalizeString(value);
+    });
+    if (matchesAlternate) return true;
+  }
+  return false;
+};
 
 const validateDirectAnswer = (question, response) => {
   const expectedAnswers = question?.validation?.acceptableAnswers || [
@@ -190,6 +329,10 @@ const validateDirectAnswer = (question, response) => {
 };
 
 const validateEquationBuilder = (question, response) => {
+  if (isEquationBuilderStage(question)) {
+    return validateEquationStageBuilder(question, response);
+  }
+
   const expectedSlots =
     question?.validation?.slots ||
     getEditableSlotValues(question?.equationSpec);
@@ -226,12 +369,17 @@ const validateEquationBuilder = (question, response) => {
   );
 };
 
-const validateBarModelBuilder = (question, response) =>
-  compareSlotMap(
+const validateBarModelBuilder = (question, response) => {
+  if (["combine", "change"].includes(question?.schemaKind)) {
+    return validateSchemaBarModelBuilder(question, response);
+  }
+
+  return compareSlotMap(
     question?.validation?.slots || {},
     response?.slots || {},
     question?.validation?.alternateSlots || {},
   );
+};
 
 const validateFullModel = (question, response) => {
   if (
@@ -265,11 +413,16 @@ const validateQuestionResponse = (question, response) => {
 
     return Object.entries(expectedVariables).every(([key, expected]) => {
       const submitted = submittedVariables[key] || {};
-      return (
-        normalizeString(submitted.sentence) ===
-          normalizeString(expected.sentence) &&
-        normalizeString(submitted.value) === normalizeString(expected.value)
-      );
+      // Check role classification matches (given vs find)
+      if (normalizeString(submitted.role) !== normalizeString(expected.role)) {
+        return false;
+      }
+      // For "given" variables, also check the value
+      if (normalizeString(expected.role) === "given") {
+        return normalizeString(submitted.value) === normalizeString(expected.value);
+      }
+      // For "find" variables, role match is sufficient
+      return true;
     });
   }
 
@@ -657,3 +810,4 @@ module.exports = {
   serializeResponse,
   validateQuestionResponse,
 };
+

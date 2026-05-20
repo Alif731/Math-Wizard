@@ -10,7 +10,7 @@ const {
 exports.getClassroomStats = async (req, res) => {
   try {
     const students = await User.find({ role: "student" }).select(
-      "username mastery",
+      "username mastery avatar avatarSeed",
     );
 
     const classroomData = students.map((student) => {

@@ -95,11 +95,13 @@ export default function Profile() {
             to="/leaderboard"
             className="teacher-dashboard__secondaryAction"
           >
-            Open Full Leaderboard
+            Leaderboard
           </Link>
-          <Link to="/progress" className="teacher-dashboard__secondaryAction">
-            My Progress
-          </Link>
+          {isStudent && (
+            <Link to="/progress" className="teacher-dashboard__secondaryAction">
+              My Progress
+            </Link>
+          )}
         </div>
       </header>
 

@@ -1,14 +1,14 @@
 const Concept = require("../models/Concept");
 
+// const WINDOW_SIZE = 5;
+// const MASTERY_MIN_ATTEMPTS = 1;
+// const MASTERY_SCORE_THRESHOLD = 1;
+// const MASTERY_SUCCESS_RATE = 0.8; // 80% — student must get 4/5, 8/10, etc.
+
 const WINDOW_SIZE = 5;
 const MASTERY_MIN_ATTEMPTS = 5;
 const MASTERY_SCORE_THRESHOLD = 5;
 const MASTERY_SUCCESS_RATE = 0.8; // 80% — student must get 4/5, 8/10, etc.
-
-// const WINDOW_SIZE = 3;
-// const MASTERY_MIN_ATTEMPTS = 2;
-// const MASTERY_SCORE_THRESHOLD = 2;
-// const MASTERY_SUCCESS_RATE = 0.8; // 80% — student must get 4/5, 8/10, etc.
 
 const CHANGE_POINT_FALSE_POSITIVE_RATE = Math.exp(-MASTERY_SCORE_THRESHOLD);
 const BANDIT_PRIORS = Object.freeze({
@@ -757,7 +757,8 @@ async function getNextConcept(user) {
 // Critical Bug Fix (Stop ZPD from jumping from module 3 without completing)
 // Bundle-aware scoring: Module 4 steps are grouped into bundles of 3.
 // attemptCount/successCount only update when a bundle completes.
-// If a step fails mid-bundle, remaining steps are skipped (padded).
+// A wrong first attempt marks the bundle as failed, but the student still
+// continues through the remaining steps in the same question bundle.
 async function updateMastery(user, conceptId, isCorrect) {
   const graph = await loadConceptGraph();
   const masteryEntry = ensureMasteryEntry(user, conceptId, {
@@ -780,34 +781,8 @@ async function updateMastery(user, conceptId, isCorrect) {
     // ==========================================
     const tp = masteryEntry.adaptiveState.timesPlayed; // already incremented
 
-    if (!isCorrect) {
-      // Step failed mid-bundle: pad timesPlayed to next multiple of 3
-      // so the student moves on to a fresh question bundle
-      const remainder = tp % 3;
-      if (remainder !== 0) {
-        const padding = 3 - remainder;
-        masteryEntry.adaptiveState.timesPlayed += padding;
-        for (let i = 0; i < padding; i++) {
-          masteryEntry.adaptiveState.correctnessRecord.push(false);
-        }
-        masteryEntry.adaptiveState.correctnessRecord = normalizeBooleanList(
-          masteryEntry.adaptiveState.correctnessRecord,
-          BANDIT_HISTORY_LIMIT,
-        );
-        masteryEntry.adaptiveState.estimate =
-          masteryEntry.adaptiveState.correctnessSum /
-          masteryEntry.adaptiveState.timesPlayed;
-      }
-      // Bundle complete via failure: 1 attempt, 0 success
-      bundleJustCompleted = true;
-      bundleCorrect = false;
-      masteryEntry.attemptCount += 1;
-      masteryEntry.lastAttempts = normalizeBooleanList(
-        [...masteryEntry.lastAttempts, false],
-        WINDOW_SIZE,
-      );
-    } else if (tp % 3 === 0) {
-      // Correct AND bundle just completed naturally (3rd step done)
+    if (tp % 3 === 0) {
+      // Bundle completed naturally after the 3rd step.
       bundleJustCompleted = true;
       const record = masteryEntry.adaptiveState.correctnessRecord;
       const last3 = record.slice(-3);
@@ -822,7 +797,7 @@ async function updateMastery(user, conceptId, isCorrect) {
         WINDOW_SIZE,
       );
     }
-    // else: correct but mid-bundle -> don't update mastery counts yet
+    // else: mid-bundle -> don't update mastery counts yet
   } else {
     // ==========================================
     // STANDARD per-step scoring (Modules 1-3, 5-6)

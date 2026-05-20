@@ -567,16 +567,16 @@ const createVariableIdentificationQuestion = ({
     promptTitle: "identify variables",
     inputMode: "text_answer",
     helperText:
-      "Choose the sentence and value for each variable. Use ? for the unknown.",
+      "For each variable, decide: is it given in the problem, or is it what we need to find? For given variables, enter the value.",
     visualData: {
       sentences,
       variables: variables.map(({ key, label }) => ({ key, label })),
     },
     validation: {
       variables: Object.fromEntries(
-        variables.map(({ key, sentence, value }) => [
+        variables.map(({ key, role, value }) => [
           key,
-          { sentence: String(sentence), value: String(value) },
+          { role, value: String(value) },
         ]),
       ),
     },
@@ -751,7 +751,7 @@ const createSchemaVariableQuestionFromItem = ({
     variables: slotKeys.map((key) => ({
       key,
       label: item.labels[key],
-      sentence: item.variableSentences[key],
+      role: key === item.unknownSlot ? "find" : "given",
       value: key === item.unknownSlot ? "?" : item.values[key],
     })),
   });
@@ -1028,7 +1028,6 @@ const combineVariableItems = [
     ],
     values: { partA: 18, partB: 7, total: 25 },
     labels: { partA: "cows", partB: "sheep", total: "animals" },
-    variableSentences: { partA: 1, partB: 1, total: 2 },
     unknownSlot: "total",
     difficulty: 2,
   },
@@ -1041,7 +1040,6 @@ const combineVariableItems = [
     ],
     values: { partA: 9, partB: 15, total: 24 },
     labels: { partA: "apples", partB: "oranges", total: "fruits" },
-    variableSentences: { partA: 2, partB: 3, total: 1 },
     unknownSlot: "partB",
     difficulty: 2,
   },
@@ -1054,7 +1052,6 @@ const combineVariableItems = [
     ],
     values: { partA: 16, partB: 15, total: 31 },
     labels: { partA: "boys", partB: "girls", total: "students" },
-    variableSentences: { partA: 2, partB: 3, total: 1 },
     unknownSlot: "partB",
     difficulty: 2,
   },
@@ -1066,7 +1063,6 @@ const combineVariableItems = [
     ],
     values: { partA: 14, partB: 11, total: 25 },
     labels: { partA: "red beads", partB: "blue beads", total: "beads" },
-    variableSentences: { partA: 1, partB: 1, total: 2 },
     unknownSlot: "total",
     difficulty: 2,
   },
@@ -1079,7 +1075,6 @@ const combineVariableItems = [
     ],
     values: { partA: 23, partB: 17, total: 40 },
     labels: { partA: "storybooks", partB: "comics", total: "books" },
-    variableSentences: { partA: 2, partB: 3, total: 1 },
     unknownSlot: "partB",
     difficulty: 3,
   },
@@ -1092,7 +1087,6 @@ const combineVariableItems = [
     ],
     values: { partA: 10, partB: 18, total: 28 },
     labels: { partA: "glass marbles", partB: "clay marbles", total: "marbles" },
-    variableSentences: { partA: 2, partB: 3, total: 1 },
     unknownSlot: "partB",
     difficulty: 2,
   },
@@ -1104,7 +1098,6 @@ const combineVariableItems = [
     ],
     values: { partA: 19, partB: 22, total: 41 },
     labels: { partA: "first half", partB: "second half", total: "points" },
-    variableSentences: { partA: 1, partB: 1, total: 2 },
     unknownSlot: "total",
     difficulty: 3,
   },
@@ -1117,7 +1110,6 @@ const combineVariableItems = [
     ],
     values: { partA: 14, partB: 22, total: 36 },
     labels: { partA: "crackers", partB: "cookies", total: "snacks" },
-    variableSentences: { partA: 2, partB: 3, total: 1 },
     unknownSlot: "partB",
     difficulty: 3,
   },
@@ -1129,7 +1121,6 @@ const combineVariableItems = [
     ],
     values: { partA: 12, partB: 8, total: 20 },
     labels: { partA: "pencils", partB: "erasers", total: "supplies" },
-    variableSentences: { partA: 1, partB: 1, total: 2 },
     unknownSlot: "total",
     difficulty: 2,
   },
@@ -1142,7 +1133,6 @@ const combineVariableItems = [
     ],
     values: { partA: 15, partB: 12, total: 27 },
     labels: { partA: "tulips", partB: "roses", total: "flowers" },
-    variableSentences: { partA: 2, partB: 3, total: 1 },
     unknownSlot: "partB",
     difficulty: 2,
   },
@@ -1155,7 +1145,6 @@ const combineVariableItems = [
     ],
     values: { partA: 18, partB: 27, total: 45 },
     labels: { partA: "juice boxes", partB: "water bottles", total: "drinks" },
-    variableSentences: { partA: 2, partB: 3, total: 1 },
     unknownSlot: "partB",
     difficulty: 3,
   },
@@ -1167,7 +1156,6 @@ const combineVariableItems = [
     ],
     values: { partA: 13, partB: 9, total: 22 },
     labels: { partA: "markers", partB: "crayons", total: "art tools" },
-    variableSentences: { partA: 1, partB: 1, total: 2 },
     unknownSlot: "total",
     difficulty: 2,
   },
@@ -1184,7 +1172,6 @@ const combineVariableItems = [
       partB: "child tickets",
       total: "tickets",
     },
-    variableSentences: { partA: 2, partB: 3, total: 1 },
     unknownSlot: "partB",
     difficulty: 3,
   },
@@ -1200,7 +1187,6 @@ const combineVariableItems = [
       partB: "April savings",
       total: "money saved",
     },
-    variableSentences: { partA: 1, partB: 1, total: 2 },
     unknownSlot: "total",
     difficulty: 3,
   },
@@ -1217,7 +1203,6 @@ const combineVariableItems = [
       partB: "triangle blocks",
       total: "blocks",
     },
-    variableSentences: { partA: 2, partB: 3, total: 1 },
     unknownSlot: "partB",
     difficulty: 2,
   },
@@ -1233,7 +1218,6 @@ const changeVariableItems = [
     ],
     values: { start: 20, change: 6, end: 14 },
     labels: { start: "start", change: "ate", end: "left" },
-    variableSentences: { start: 1, change: 2, end: 3 },
     unknownSlot: "end",
     difficulty: 2,
   },
@@ -1247,7 +1231,6 @@ const changeVariableItems = [
     ],
     values: { start: 24, change: 9, end: 15 },
     labels: { start: "start", change: "blew away", end: "left" },
-    variableSentences: { start: 1, change: 4, end: 3 },
     unknownSlot: "change",
     difficulty: 2,
   },
@@ -1261,7 +1244,6 @@ const changeVariableItems = [
     ],
     values: { start: 50, change: 18, end: 32 },
     labels: { start: "start", change: "spent", end: "left" },
-    variableSentences: { start: 4, change: 2, end: 3 },
     unknownSlot: "start",
     difficulty: 3,
   },
@@ -1274,7 +1256,6 @@ const changeVariableItems = [
     ],
     values: { start: 12, change: 5, end: 7 },
     labels: { start: "start", change: "flew away", end: "still on fence" },
-    variableSentences: { start: 1, change: 2, end: 3 },
     unknownSlot: "end",
     difficulty: 1,
   },
@@ -1288,7 +1269,6 @@ const changeVariableItems = [
     ],
     values: { start: 35, change: 15, end: 20 },
     labels: { start: "start", change: "gave", end: "left" },
-    variableSentences: { start: 4, change: 2, end: 3 },
     unknownSlot: "start",
     difficulty: 3,
   },
@@ -1302,7 +1282,6 @@ const changeVariableItems = [
     ],
     values: { start: 6, change: 4, end: 10 },
     labels: { start: "start", change: "got", end: "now" },
-    variableSentences: { start: 4, change: 2, end: 3 },
     unknownSlot: "start",
     difficulty: 2,
   },
@@ -1315,7 +1294,6 @@ const changeVariableItems = [
     ],
     values: { start: 52, change: 16, end: 68 },
     labels: { start: "start", change: "earned", end: "now" },
-    variableSentences: { start: 1, change: 2, end: 3 },
     unknownSlot: "end",
     difficulty: 2,
   },
@@ -1328,7 +1306,6 @@ const changeVariableItems = [
     ],
     values: { start: 20, change: 15, end: 35 },
     labels: { start: "start", change: "bought", end: "now" },
-    variableSentences: { start: 1, change: 2, end: 3 },
     unknownSlot: "end",
     difficulty: 2,
   },
@@ -1342,7 +1319,6 @@ const changeVariableItems = [
     ],
     values: { start: 12, change: 8, end: 20 },
     labels: { start: "before", change: "read more", end: "finished" },
-    variableSentences: { start: 4, change: 2, end: 3 },
     unknownSlot: "start",
     difficulty: 1,
   },
@@ -1355,7 +1331,6 @@ const changeVariableItems = [
     ],
     values: { start: 45, change: 10, end: 55 },
     labels: { start: "start", change: "scored", end: "then" },
-    variableSentences: { start: 1, change: 2, end: 3 },
     unknownSlot: "end",
     difficulty: 3,
   },
@@ -1368,7 +1343,6 @@ const changeVariableItems = [
     ],
     values: { start: 38, change: 14, end: 24 },
     labels: { start: "start", change: "got off", end: "stayed" },
-    variableSentences: { start: 1, change: 2, end: 3 },
     unknownSlot: "end",
     difficulty: 3,
   },
@@ -1382,7 +1356,6 @@ const changeVariableItems = [
     ],
     values: { start: 25, change: 17, end: 42 },
     labels: { start: "at first", change: "added", end: "now" },
-    variableSentences: { start: 4, change: 2, end: 3 },
     unknownSlot: "start",
     difficulty: 3,
   },
@@ -1396,7 +1369,6 @@ const changeVariableItems = [
     ],
     values: { start: 63, change: 15, end: 48 },
     labels: { start: "at noon", change: "left", end: "after lunch" },
-    variableSentences: { start: 1, change: 4, end: 3 },
     unknownSlot: "change",
     difficulty: 3,
   },
@@ -1409,7 +1381,6 @@ const changeVariableItems = [
     ],
     values: { start: 29, change: 18, end: 47 },
     labels: { start: "start", change: "baked", end: "now" },
-    variableSentences: { start: 1, change: 2, end: 3 },
     unknownSlot: "end",
     difficulty: 3,
   },
@@ -1423,7 +1394,6 @@ const changeVariableItems = [
     ],
     values: { start: 55, change: 21, end: 34 },
     labels: { start: "at first", change: "borrowed", end: "left" },
-    variableSentences: { start: 4, change: 2, end: 3 },
     unknownSlot: "start",
     difficulty: 3,
   },
@@ -3368,8 +3338,10 @@ const conceptsData = [
 
 const seedData = async () => {
   try {
-    const isDevOrMemory = process.env.NODE_ENV === "development" || process.env.USE_MEMORY_DB === "true";
-    
+    const isDevOrMemory =
+      process.env.NODE_ENV === "development" ||
+      process.env.USE_MEMORY_DB === "true";
+
     // 1. Clean the database (ONLY IF EXPLICITLY ALLOWED OR IN LOCAL DEV)
     if (process.env.RESET_DEMO_DATA === "true" || isDevOrMemory) {
       await Concept.deleteMany({});
@@ -3411,8 +3383,9 @@ const seedData = async () => {
     // "change_mod4"            -> Change: Full 3-Tab Solve
     // "change_mod5"            -> Change: Direct Problem Solving
 
+    // ------------------- uncomment code at line 2050
+    // const testStage = "combine_mod2"; // CHANGE THIS TO JUMP
     const testStage = "combine_mod1"; // CHANGE THIS TO JUMP
-    // const testStage = "change_mod1"; // CHANGE THIS TO JUMP
 
     // 3. Create the test user with ONLY that stage active
     const testUser = new User({

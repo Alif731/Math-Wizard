@@ -27,13 +27,28 @@ $light-blue: #8eb1c7;
 .student-hub__header {
   text-align: center;
   margin-bottom: 4rem;
-
+  @include ut.breakpoint(large) {
+    margin-bottom: 2rem;
+  }
   h1 {
     font-size: 2.8rem;
     font-weight: 900;
     color: $slate-blue;
     margin: 0 0 10px;
     letter-spacing: 1px;
+    @include ut.breakpoint(larger) {
+    }
+    @include ut.breakpoint(large) {
+    }
+    @include ut.breakpoint(medium) {
+      font-size: 2rem;
+    }
+    @include ut.breakpoint(small) {
+      font-size: 1.8rem;
+    }
+    @include ut.breakpoint(xSmall) {
+      font-size: 1.5rem;
+    }
   }
 
   .highlight-name {
@@ -54,6 +69,20 @@ $light-blue: #8eb1c7;
     // color: #6b7280;
     font-size: 1.2rem;
     font-weight: 700;
+    @include ut.breakpoint(larger) {
+    }
+    @include ut.breakpoint(large) {
+      // width: 200px;
+    }
+    @include ut.breakpoint(medium) {
+      font-size: 1rem;
+    }
+    @include ut.breakpoint(small) {
+      font-size: 0.6rem;
+    }
+    @include ut.breakpoint(xSmall) {
+      // font-size: 0.7rem;
+    }
   }
 }
 
@@ -63,6 +92,21 @@ $light-blue: #8eb1c7;
   gap: 3.5rem;
   justify-items: center;
   margin-bottom: 4rem;
+  @include ut.breakpoint(larger) {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  }
+  @include ut.breakpoint(large) {
+    // width: 200px;
+  }
+  @include ut.breakpoint(medium) {
+    // width: 150px;
+  }
+  @include ut.breakpoint(small) {
+    // font-size: 0.9rem;
+  }
+  @include ut.breakpoint(xSmall) {
+    // font-size: 0.7rem;
+  }
 }
 
 .brutal-card {
@@ -311,6 +355,9 @@ $light-blue: #8eb1c7;
   max-width: 700px;
   margin: 0 auto;
   font-weight: bold;
+  @include ut.breakpoint(medium) {
+    font-size: 0.9rem;
+  }
 }
 
 /* --- Animations --- */
@@ -343,9 +390,9 @@ $light-blue: #8eb1c7;
 
 /* --- Mobile Responsiveness --- */
 @media (max-width: 768px) {
-  .student-hub__header h1 {
-    font-size: 2.2rem;
-  }
+  // .student-hub__header h1 {
+  //   font-size: 2rem;
+  // }
   .student-hub__pathways {
     gap: 2rem;
   }
