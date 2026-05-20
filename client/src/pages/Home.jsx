@@ -492,7 +492,10 @@ const Home = () => {
         moduleId={masteredModalInfo?.id}
         score={masteredModalInfo?.accuracy ?? 100}
         attempts={masteredModalInfo?.attempts || 1}
-        onClose={() => setMasteredModalInfo(null)}
+        onClose={() => {
+          setMasteredModalInfo(null);
+          refetchProblem(); // Load next module after dismissing the modal
+        }}
       />
     </div>
   );

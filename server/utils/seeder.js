@@ -3338,12 +3338,22 @@ const conceptsData = [
 
 const seedData = async () => {
   try {
-    const isDevOrMemory =
-      process.env.NODE_ENV === "development" ||
-      process.env.USE_MEMORY_DB === "true";
+    const isLocalOrMemory =
+      process.env.USE_MEMORY_DB === "true" ||
+      !process.env.MONGO_URI ||
+      process.env.MONGO_URI.includes("localhost") ||
+      process.env.MONGO_URI.includes("127.0.0.1");
+
+    const isDevOrTest =
+      process.env.NODE_ENV !== "production";
+
+    // Only wipe if explicitly requested OR if we are running in local/memory database under dev/test environments.
+    // This protects production Atlas DBs from accidental wipes even if run from a local machine in development mode.
+    const shouldWipe =
+      process.env.RESET_DEMO_DATA === "true" || (isLocalOrMemory && isDevOrTest);
 
     // 1. Clean the database (ONLY IF EXPLICITLY ALLOWED OR IN LOCAL DEV)
-    if (process.env.RESET_DEMO_DATA === "true" || isDevOrMemory) {
+    if (shouldWipe) {
       await Concept.deleteMany({});
       await User.deleteMany({});
       await Attempt.deleteMany({});
@@ -3356,75 +3366,66 @@ const seedData = async () => {
     }
 
     await ensureTeacherSignupCode();
-    await Concept.insertMany(conceptsData);
 
-    // 2. THE TESTING SWITCH
-    // Change this variable to the ID you want to test right now.
-    // Here are some common jump points:
+    if (shouldWipe) {
+      await Concept.insertMany(conceptsData);
+      console.log("✅ All concepts inserted from scratch.");
 
-    // ---------- Practice -------------
-    // "single_add"             -> Phase 1: Basic Math
-    // "single_sub"             -> Phase 1: Basic Math
-    // "multi_add"             -> Phase 1: Basic Math
-    // "multi_sub"             -> Phase 1: Basic Math
+      // 2. THE TESTING SWITCH
+      // Change this variable to the ID you want to test right now.
+      // Here are some common jump points:
+      const testStage = "combine_mod1"; // CHANGE THIS TO JUMP
 
-    // "missing_part_equations" -> Phase 1: Algebraic Bridge
+      // 3. Create the test user with ONLY that stage active
+      const testUser = new User({
+        username: "student1",
+        password: "password123",
+        role: "student",
+        streak: 0,
+        avatar: "beam",
 
-    // ---------- Main Modules -------------
-    // "combine_mod1"           -> Combine: Read and Identify Variables
-    // "combine_mod2"           -> Combine: Word to Bar
-    // "combine_mod3"           -> Combine: Bar to Equation
-    // "combine_mod4"           -> Combine: Full 3-Tab Solve
-    // "combine_mod5"           -> Combine: Direct Problem Solving
+        // Forces this specific node to be the ONLY one the student sees
+        zpdNodes: [testStage],
 
-    // "change_mod1"            -> Change: Read and Identify Variables
-    // "change_mod2"            -> Change: Word to Bar
-    // "change_mod3"            -> Change: Bar to Equation
-    // "change_mod4"            -> Change: Full 3-Tab Solve
-    // "change_mod5"            -> Change: Direct Problem Solving
-
-    // ------------------- uncomment code at line 2050
-    // const testStage = "combine_mod2"; // CHANGE THIS TO JUMP
-    const testStage = "combine_mod1"; // CHANGE THIS TO JUMP
-
-    // 3. Create the test user with ONLY that stage active
-    const testUser = new User({
-      username: "student1",
-      password: "password123",
-      role: "student",
-      streak: 0,
-      avatar: "beam",
-
-      // Forces this specific node to be the ONLY one the student sees
-      zpdNodes: [testStage],
-
-      mastery: {
-        [testStage]: {
-          status: "unlocked",
-          successCount: 0,
-          attemptCount: 0,
-          lastAttempts: [],
+        mastery: {
+          [testStage]: {
+            status: "unlocked",
+            successCount: 0,
+            attemptCount: 0,
+            lastAttempts: [],
+          },
         },
-      },
-    });
+      });
 
-    await testUser.save();
-    console.log(
-      `🚀 TEST READY: 'student1' is jumped directly to [${testStage}]`,
-    );
+      await testUser.save();
+      console.log(
+        `🚀 TEST READY: 'student1' is jumped directly to [${testStage}]`,
+      );
 
-    // 4. Create Teacher
-    const teacherUser = new User({
-      username: "teacher1",
-      password: "password123",
-      role: "teacher",
-      mastery: {},
-      zpdNodes: [],
-      avatar: "pixel",
-      streak: 0,
-    });
-    await teacherUser.save();
-    console.log("👨‍🏫 Teacher account created.");
+      // 4. Create Teacher
+      const teacherUser = new User({
+        username: "teacher1",
+        password: "password123",
+        role: "teacher",
+        mastery: {},
+        zpdNodes: [],
+        avatar: "pixel",
+        streak: 0,
+      });
+      await teacherUser.save();
+      console.log("👨‍🏫 Teacher account created.");
+    } else {
+      console.log("🔄 Upserting concepts to preserve and update production data...");
+      for (const concept of conceptsData) {
+        await Concept.findOneAndUpdate(
+          { id: concept.id },
+          concept,
+          { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+      }
+      console.log("✅ All concepts successfully upserted/updated.");
+      console.log("⚠️ Skipped demo user/teacher seeding in non-wipe mode.");
+    }
     console.log("-----------------------------------------");
   } catch (error) {
     console.error("Seeding Error:", error);
@@ -3432,3 +3433,24 @@ const seedData = async () => {
 };
 
 module.exports = seedData;
+
+if (require.main === module) {
+  const dotenv = require("dotenv");
+  const path = require("path");
+  dotenv.config({ path: path.resolve(__dirname, "../.env") });
+  const connectDB = require("../config/db");
+  const mongoose = require("mongoose");
+
+  connectDB()
+    .then(async () => {
+      console.log("Starting seeder directly...");
+      await seedData();
+      console.log("Seeding finished!");
+      await mongoose.connection.close();
+      process.exit(0);
+    })
+    .catch((err) => {
+      console.error("Direct seeding error:", err);
+      process.exit(1);
+    });
+}
