@@ -9,7 +9,8 @@
     "server": "node index.js",
     "test": "vitest run",
     "verify:curriculum": "node verify.js",
-    "verify:schema": "node verifySchemaQuestions.js"
+    "verify:schema": "node verifySchemaQuestions.js",
+    "db:seed": "node utils/seeder.js"
   },
   "keywords": [],
   "author": "",
