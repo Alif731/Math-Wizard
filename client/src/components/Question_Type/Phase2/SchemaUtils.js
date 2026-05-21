@@ -250,3 +250,17 @@ export const getActiveInputLabel = (question, activeField) => {
 
   return "";
 };
+
+// Returns the true expected value for a slot key (from validation or equation template)
+export const getExpectedSlotValue = (question, slotKey) => {
+  // 1. Check validation slots (story numbers)
+  if (question?.validation?.slots?.[slotKey] !== undefined) {
+    return String(question.validation.slots[slotKey]).trim();
+  }
+  // 2. Fallback to equation template
+  const templateItem = question?.equationSpec?.template?.find(
+    (t) => t.key === slotKey,
+  );
+  if (templateItem?.value) return String(templateItem.value).trim();
+  return "";
+};

@@ -187,7 +187,7 @@ export const EquationBoard = ({
 
         const isEditable = item.editable !== false;
         const slotValue = getSlotDisplayValue(response, item.key);
-        
+
         const displayValue =
           isEditable && String(slotValue || "").trim() !== "" ? (
             slotValue
@@ -227,117 +227,6 @@ export const EquationBoard = ({
     </div>
   );
 };
-
-// export const EquationBoard = ({
-//   question,
-//   response,
-//   setResponse,
-//   locked,
-//   feedback,
-// }) => {
-//   const setActiveField = (field) =>
-//     !locked &&
-//     setResponse((current) => ({ ...(current || {}), activeField: field }));
-
-//   const globalValidationClass = feedback
-//     ? feedback.isCorrect
-//       ? "is-correct"
-//       : "is-wrong"
-//     : "";
-
-//   const isBarStage = ["bar_to_equation", "schema_equation"].includes(
-//     question?.moduleStage,
-//   );
-
-//   const isCombine = question?.schemaKind === "combine";
-
-//   return (
-//     <div
-//       className={`equation-board ${isBarStage ? "equation-board--bar-stage" : ""}`}
-//     >
-//       {(question?.equationSpec?.template || []).map((item, index) => {
-//         if (item.type === "symbol") {
-//           return (
-//             <span key={`symbol-${index}`} className="equation-board__symbol">
-//               {item.value}
-//             </span>
-//           );
-//         }
-
-//         if (item.type === "operator") {
-//           const operatorValue = isCombine
-//             ? "+"
-//             : response?.operator || (item.editable ? "" : item.value) || "?";
-
-//           const displayOperator =
-//             item.editable && String(operatorValue || "").trim() === "?"
-//               ? ""
-//               : operatorValue;
-
-//           // Check individual operator feedback
-//           let opClass = globalValidationClass;
-//           if (feedback?.operator) {
-//             opClass = feedback.operator.isCorrect ? "is-correct" : "is-wrong";
-//           }
-
-//           return (
-//             <button
-//               type="button"
-//               key="operator"
-//               // 🔥 UPDATED: Removed the 'item.editable' check so the operator gets styled green/red too!
-//               className={`equation-box equation-box--operator ${!item.editable || isCombine ? "is-fixed" : ""} ${response?.activeField === "__operator__" ? "is-active" : ""} ${locked ? "is-locked" : ""} ${opClass}`}
-//               onClick={() =>
-//                 !isCombine && item.editable && setActiveField("__operator__")
-//               }
-//               disabled={locked || !item.editable || isCombine}
-//               style={isCombine ? { cursor: "default" } : {}}
-//             >
-//               <strong>
-//                 {displayOperator || <span className="hide-on-focus">?</span>}
-//               </strong>
-//               <span>{item.label || "operator"}</span>
-//             </button>
-//           );
-//         }
-
-//         const isEditable = item.editable !== false;
-//         const slotValue = getSlotDisplayValue(response, item.key);
-//         const displayValue =
-//           isEditable && String(slotValue || "").trim() !== "?" ? (
-//             slotValue || <span className="hide-on-focus">?</span>
-//           ) : isEditable ? (
-//             <span className="hide-on-focus">?</span>
-//           ) : (
-//             getEquationFixedValue(item)
-//           );
-//         const displayLabel = getLearnerFacingLabel(question, item);
-
-//         // Check individual slot feedback
-//         let slotClass = globalValidationClass;
-//         if (feedback?.slots && feedback.slots[item.key]) {
-//           slotClass = feedback.slots[item.key].isCorrect
-//             ? "is-correct"
-//             : "is-wrong";
-//         }
-
-//         return (
-//           <button
-//             type="button"
-//             key={item.key}
-//             // 🔥 UPDATED: Removed the 'isEditable ?' check at the end.
-//             // Now, even "Fixed" boxes will turn Green if they are correct!
-//             className={`equation-box ${isEditable ? "is-editable" : "is-fixed"} ${response?.activeField === item.key ? "is-active" : ""} ${locked ? "is-locked" : ""} ${slotClass}`}
-//             onClick={() => isEditable && setActiveField(item.key)}
-//             disabled={locked || !isEditable}
-//           >
-//             <strong>{displayValue}</strong>
-//             <span>{displayLabel}</span>
-//           </button>
-//         );
-//       })}
-//     </div>
-//   );
-// };
 
 export const Keypad = ({
   title,

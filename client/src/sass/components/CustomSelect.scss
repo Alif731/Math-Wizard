@@ -164,3 +164,379 @@
     transform: translateY(0);
   }
 }
+
+// /* ==========================================================================
+//    GHOST / HINT SCAFFOLDING — Neutral
+//    ========================================================================== */
+
+// // ── Tokens ────────────────────────────────────────────────────────────────
+// $ghost-border: #cbd5e1; // slate-300 — unobtrusive
+// $ghost-bg: #f8fafc; // slate-50  — barely-there tint
+// $ghost-text: #94a3b8; // slate-400 — readable but clearly secondary
+// $ghost-label: #94a3b8;
+
+// // ── 1. No animation — neutral means calm ─────────────────────────────────
+
+// @keyframes ghost-breathe {
+//   0%,
+//   100% {
+//     opacity: 1;
+//   }
+//   50% {
+//     opacity: 0.6;
+//   }
+// }
+
+// @keyframes ghost-border-fade {
+//   0%,
+//   100% {
+//     border-color: #cbd5e1;
+//   } // slate-300
+//   50% {
+//     border-color: #e2e8f0;
+//   } // slate-200 — barely shifts
+// }
+
+// // ── 2. Ghost inputs / selects (generic) ──────────────────────────────────
+// .ghost-select,
+// .ghost-input {
+//   border: 1.5px dashed $ghost-border !important;
+//   background-color: $ghost-bg !important;
+//   transition: border-color 0.2s ease;
+
+//   // Breathing animation on the container itself
+//   animation:
+//     ghost-breathe 3s ease-in-out infinite,
+//     ghost-border-fade 3s ease-in-out infinite;
+
+//   &::placeholder,
+//   &[placeholder] {
+//     color: $ghost-text !important;
+//     font-style: normal;
+//     font-weight: 400;
+//     opacity: 1 !important;
+//     letter-spacing: 0.2px;
+
+//     // Placeholder text breathes independently — slightly offset
+//     // so text and border don't fade in perfect sync (feels more organic)
+//     animation: ghost-breathe 3s ease-in-out 0.4s infinite;
+//   }
+// }
+
+// // ── 3. Card wrapper ───────────────────────────────────────────────────────
+// .is-hinted {
+//   border-radius: 12px;
+//   border: 1px dashed $ghost-border;
+//   // no animation
+// }
+
+// .ghost-select,
+// .ghost-input,
+// .bar-model .bar-box.ghost-input {
+//   animation:
+//     ghost-breathe 3s ease-in-out infinite,
+//     ghost-border-fade 3s ease-in-out infinite;
+// }
+
+// // ── 4. Bar-model ghost boxes ──────────────────────────────────────────────
+// .bar-model {
+//   .bar-box.ghost-input {
+//     border: 1.5px dashed $ghost-border !important;
+//     background-color: $ghost-bg !important;
+//     transition: opacity 0.2s ease;
+
+//     strong {
+//       font-size: 1.3rem;
+//       color: $ghost-text !important;
+//       font-weight: 400 !important;
+//       font-style: normal !important; // no italic
+//       opacity: 1 !important;
+//       letter-spacing: 0.02em;
+//       // no underline
+//     }
+
+//     span {
+//       color: $ghost-label !important;
+//       font-style: normal !important;
+//       font-size: 0.68rem;
+//       font-weight: 400;
+//       opacity: 1 !important;
+//       letter-spacing: 0.04em;
+//       text-transform: lowercase;
+//     }
+//   }
+// }
+
+/* ==========================================================================
+   GHOST / HINT SCAFFOLDING — Soft Glow & Gentle Bounce
+   ========================================================================== */
+
+// // ── Tokens ────────────────────────────────────────────────────────────────
+// $ghost-border: #cbd5e1; // slate-300 – subtle dashed line
+// $ghost-bg: #f8fafc; // slate-50 – very light background
+// $ghost-text: #94a3b8; // slate-400 – faded text
+// $ghost-glow-start: rgba(148, 163, 184, 0.1);
+// $ghost-glow-mid: rgba(148, 163, 184, 0.35);
+// $ghost-hint-amber: #f59e0b; // warm amber hint glow on border
+
+// // ── Keyframes: Combined glow, border pulse & slight scale ─────────────────
+// @keyframes ghost-glow-bounce {
+//   0%,
+//   100% {
+//     box-shadow: 0 0 0 0 $ghost-glow-start;
+//     border-color: $ghost-border;
+//     transform: scale(1);
+//   }
+//   50% {
+//     box-shadow: 0 0 0 4px $ghost-glow-mid;
+//     border-color: $ghost-hint-amber;
+//     transform: scale(1.01);
+//   }
+// }
+
+// // ── Generic ghost inputs (select, input, custom components) ───────────────
+// .ghost-select,
+// .ghost-input {
+//   border: 1.5px dashed $ghost-border !important;
+//   background-color: $ghost-bg !important;
+//   transition: all 0.2s ease;
+//   animation: ghost-glow-bounce 2.5s ease-in-out infinite !important;
+
+//   &::placeholder,
+//   &[placeholder] {
+//     color: $ghost-text !important;
+//     font-style: normal;
+//     font-weight: 400;
+//     opacity: 1 !important;
+//   }
+// }
+
+// // ── Wrapper for the whole card (optional) ─────────────────────────────────
+// .is-hinted {
+//   border-radius: 12px;
+//   border: 1px dashed $ghost-border;
+//   background-color: #ffffff;
+// }
+
+// // ── Bar‑model specific overrides (ensure they win specificity) ────────────
+// .bar-model {
+//   .bar-box.ghost-input {
+//     animation: ghost-glow-bounce 2.5s ease-in-out infinite !important;
+//     border: 1.5px dashed $ghost-border !important;
+//     background-color: $ghost-bg !important;
+
+//     strong {
+//       color: $ghost-text !important;
+//       font-weight: 400 !important;
+//       font-style: normal !important;
+//       font-size: 1.3rem;
+//       letter-spacing: 0.02em;
+//     }
+
+//     span {
+//       color: $ghost-text !important;
+//       font-style: normal !important;
+//       font-size: 0.68rem;
+//       font-weight: 400;
+//       letter-spacing: 0.04em;
+//       text-transform: lowercase;
+//     }
+//   }
+// }
+
+/* ==========================================================================
+   GHOST / HINT SCAFFOLDING — SHIMMER (Skeleton Load Effect)
+   ========================================================================== */
+
+// ── Tokens ────────────────────────────────────────────────────────────────
+$ghost-border: #cbd5e1; // slate-300 – subtle dashed line
+$ghost-bg-start: #f8fafc; // slate-50
+$ghost-bg-mid: #e2e8f0; // slate-200 – shimmer highlight
+$ghost-text: #94a3b8; // slate-400 – faded text
+
+// ── Keyframes: moving gradient ───────────────────────────────────────────
+@keyframes ghost-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+// ── Generic ghost inputs (select, input, any custom component) ────────────
+.ghost-select,
+.ghost-input {
+  // font-style: italic !important;
+  opacity: 0.8;
+  background-color: transparent !important;
+  background-image: linear-gradient(
+    90deg,
+    $ghost-bg-start 0%,
+    $ghost-bg-mid 50%,
+    $ghost-bg-start 100%
+  ) !important;
+  background-size: 200% 100% !important;
+  background-repeat: no-repeat !important;
+  border: 1.5px dashed $ghost-border !important;
+  animation: ghost-shimmer 2s ease-in-out infinite !important;
+
+  // Ensure the text content (strong, span) is not affected
+  strong,
+  span,
+  &::placeholder,
+  &[placeholder] {
+    background: none !important;
+    color: $ghost-text !important;
+  }
+
+  strong {
+    font-weight: 400 !important;
+    font-style: normal !important;
+  }
+
+  &::placeholder,
+  &[placeholder] {
+    font-style: normal !important;
+    font-weight: 400 !important;
+    opacity: 1 !important;
+  }
+}
+
+// ── Bar‑model specific overrides (highest specificity) ───────────────────
+.bar-model {
+  .bar-box.ghost-input {
+    background-color: transparent !important;
+    background-image: linear-gradient(
+      90deg,
+      $ghost-bg-start 0%,
+      $ghost-bg-mid 50%,
+      $ghost-bg-start 100%
+    ) !important;
+    background-size: 200% 100% !important;
+    background-repeat: no-repeat !important;
+    border: 1.5px dashed $ghost-border !important;
+    animation: ghost-shimmer 2s ease-in-out infinite !important;
+
+    // Style the inner number and label
+    strong {
+      color: $ghost-text !important;
+      font-weight: 400 !important;
+      font-style: normal !important;
+      font-size: 1.4rem;
+      letter-spacing: 0.02em;
+      background: none !important;
+      opacity: 0.8;
+      @include ut.breakpoint(medium) {
+        font-size: 1rem;
+      }
+      @include ut.breakpoint(small) {
+        font-size: 0.9rem;
+      }
+      @include ut.breakpoint(xSmall) {
+        font-size: 0.8rem;
+      }
+    }
+
+    span {
+      color: $ghost-text !important;
+      font-style: normal !important;
+      font-size: 0.68rem;
+      font-weight: 400;
+      letter-spacing: 0.04em;
+      text-transform: lowercase;
+      background: none !important;
+    }
+  }
+}
+
+// ── Optional: container wrapper for the whole card ───────────────────────
+// .is-hinted {
+//   border-radius: 12px;
+//   border: 1px dashed $ghost-border;
+//   background-color: #ffffff;
+// }
+
+// Shimmer wrapper for value input (reliable animation)
+.shimmer-wrapper {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px; // match input radius
+  width: 100%;
+  height: 42px; // adjust to your input height
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 200%;
+    height: 100%;
+    background: linear-gradient(90deg, #f8fafc 0%, #e2e8f0 50%, #f8fafc 100%);
+    animation: ghost-shimmer 2s ease-in-out infinite;
+    z-index: 0;
+    pointer-events: none; // allows clicking through to input
+  }
+
+  .worksheet-input.ghost-input {
+    background: transparent !important; // let gradient show through
+    border: 1.5px dashed #cbd5e1 !important;
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+
+    &::placeholder {
+      color: #94a3b8 !important;
+      font-style: normal !important;
+    }
+  }
+}
+
+// ── CONTENTEDITABLE DIV (Ghost Value) – restores text style ──────────────
+.worksheet-input.ghost-input.shimmer-div {
+  font-style: italic !important;
+  opacity: 0.8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 3.2rem;
+  border: 2px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 0 1rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  // background: none !important;
+  color: #94a3b8 !important;
+  @include ut.breakpoint(large) {
+    height: 2.5rem;
+    font-size: 1rem;
+  }
+  @include ut.breakpoint(medium) {
+    font-size: 0.9rem;
+  }
+  @include ut.breakpoint(xSmall) {
+    font-size: 0.8rem;
+  }
+}
+// In your main SCSS file, after the generic .ghost-input rules
+.equation-box.ghost-input {
+  strong {
+    color: $ghost-text !important;
+    font-weight: 400 !important;
+    font-style: italic !important;
+  }
+  // Optional: keep label normal
+  span {
+    color: $ghost-text !important;
+    font-style: normal !important;
+  }
+}
+.equation-box--operator.ghost-input {
+  strong {
+    color: $ghost-text !important;
+  }
+}

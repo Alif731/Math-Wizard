@@ -153,7 +153,11 @@ const QuestionCard = ({
 
     const isBarModelStage = Boolean(problem.question.barModelSpec);
 
-    if (!isEquationStage && !isBarModelStage && !isQuestionResponseReady(problem.question, answer))
+    if (
+      !isEquationStage &&
+      !isBarModelStage &&
+      !isQuestionResponseReady(problem.question, answer)
+    )
       return;
 
     // ====================================================
@@ -164,14 +168,14 @@ const QuestionCard = ({
       const detailedFeedback = { isCorrect: true, slots: {} };
 
       if (isSolveStage) {
-        const expectedAnswers = problem.question.validation?.acceptableAnswers || [
-          problem.question.correctAnswer,
-        ];
+        const expectedAnswers = problem.question.validation
+          ?.acceptableAnswers || [problem.question.correctAnswer];
         const submittedAnswer = String(answer?.textAnswer || "").trim();
         isDummyCorrect = expectedAnswers.some(
           (expected) =>
-            String(expected ?? "").trim().toLowerCase() ===
-            submittedAnswer.toLowerCase(),
+            String(expected ?? "")
+              .trim()
+              .toLowerCase() === submittedAnswer.toLowerCase(),
         );
         setFeedback({ isCorrect: isDummyCorrect });
       } else if (problem.question.moduleStage === "schema_variables") {
@@ -183,8 +187,7 @@ const QuestionCard = ({
           const exp = expected[key];
           const isRoleCorrect = student.role === exp.role;
           const isValueCorrect =
-            exp.role === "find" ||
-            String(student.value) === String(exp.value);
+            exp.role === "find" || String(student.value) === String(exp.value);
 
           if (!isRoleCorrect || !isValueCorrect) {
             isDummyCorrect = false;
@@ -277,12 +280,14 @@ const QuestionCard = ({
         setFeedback({ isCorrect: false, slots: result.feedback });
         try {
           if (responseToSubmit.slots) {
-            const givenBoxKey = Object.keys(problem.question.validation?.slots || {}).find(
-              (key) => {
-                const value = String(problem.question.validation.slots[key]).trim();
-                return value !== "?" && value !== "";
-              },
-            );
+            const givenBoxKey = Object.keys(
+              problem.question.validation?.slots || {},
+            ).find((key) => {
+              const value = String(
+                problem.question.validation.slots[key],
+              ).trim();
+              return value !== "?" && value !== "";
+            });
             if (givenBoxKey)
               responseToSubmit.slots[givenBoxKey] = "FORCED_FAIL_BY_FRONTEND";
           }
@@ -860,4 +865,3 @@ const QuestionCard = ({
 };
 
 export default QuestionCard;
-

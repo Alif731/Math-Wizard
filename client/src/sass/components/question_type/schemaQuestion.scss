@@ -3337,10 +3337,10 @@ button.equation-box:active {
     width: 37%;
     width: fit-content;
     @include ut.breakpoint(xLarge) {
-      font-size: 1rem;
+      font-size: 0.9rem;
     }
     @include ut.breakpoint(large) {
-      font-size: 0.8rem;
+      font-size: 0.73rem;
     }
     @include ut.breakpoint(medium) {
       font-size: 0.74rem;
@@ -4188,4 +4188,10 @@ button.bar-box:active,
     opacity: 1;
     transform: translateY(0);
   }
+}
+.bar-box__placeholder {
+  color: #94a3b8;
+  font-weight: normal;
+  font-style: italic;
+  opacity: 0.7;
 }

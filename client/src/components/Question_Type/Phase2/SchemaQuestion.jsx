@@ -1,847 +1,3 @@
-// // SchemaQuestion.jsx
-// import React, { useEffect, useMemo, useState } from "react";
-// import {
-//   getDisplayedTextAnswer,
-//   isCompareAnswerInputQuestion,
-//   isQuestionResponseReady,
-//   isVariableIdentificationQuestion,
-// } from "../../../utils/questionValidation";
-// import {
-//   joinSlotValue,
-//   buildCompareAnswerPrompt,
-//   getActiveInputLabel,
-//   getDefaultActiveField,
-//   getBarLabel,
-// } from "./SchemaUtils";
-// import {
-//   PracticeTabs,
-//   StageTabs,
-//   Keypad,
-//   VerificationPanel,
-//   EquationBoard,
-// } from "./WorksheetParts";
-// import BarModel, { CompareGuidedAnswerModel } from "./BarModelRenderer";
-// import CustomSelect from "../../CustomSelect";
-
-// // Deterministic shuffle
-// const seededShuffle = (array, seed) => {
-//   const result = [...array];
-//   let s = seed;
-//   for (let i = result.length - 1; i > 0; i--) {
-//     s = (s * 16807 + 11) % 2147483647;
-//     const j = s % (i + 1);
-//     [result[i], result[j]] = [result[j], result[i]];
-//   }
-//   return result;
-// };
-
-// const hashString = (str) =>
-//   (str || "").split("").reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
-
-// const VariableIdentificationPanel = ({
-//   question,
-//   response,
-//   setResponse,
-//   disabled,
-//   hasFeedback,
-// }) => {
-//   const sentences = question?.visualData?.sentences || [];
-//   const variables = question?.visualData?.variables || [];
-//   const expectedVars = question?.validation?.variables || {};
-
-//   const shuffledVariables = useMemo(
-//     () => seededShuffle(variables, hashString(question?.text)),
-//     [variables, question?.text],
-//   );
-
-//   const updateVariable = (key, field, value) => {
-//     if (disabled) return;
-//     setResponse((current) => ({
-//       ...(current || {}),
-//       variables: {
-//         ...(current?.variables || {}),
-//         [key]: {
-//           ...(current?.variables?.[key] || {}),
-//           [field]: value,
-//         },
-//       },
-//     }));
-//   };
-
-//   const sentenceOptions = useMemo(() => {
-//     return sentences.map((sentence, index) => ({
-//       value: String(index + 1),
-//       label: String(index + 1),
-//     }));
-//   }, [sentences]);
-
-//   return (
-//     <div className="variable-identification">
-//       <div className="variable-identification__sentences">
-//         {sentences.map((sentence, index) => (
-//           <div className="variable-sentence" key={`${index}-${sentence}`}>
-//             <span>{index + 1}</span>
-//             <p>{sentence}</p>
-//           </div>
-//         ))}
-//       </div>
-
-//       <div className="variable-table">
-//         {shuffledVariables.map((variable) => {
-//           const answer = response?.variables?.[variable.key] || {};
-//           const isUnknown = expectedVars[variable.key]?.value === "?";
-
-//           let rowStateClass = "";
-
-//           if (hasFeedback) {
-//             const isRowComplete =
-//               answer.sentence && (answer.value || isUnknown);
-//             if (isRowComplete) {
-//               const expected = expectedVars[variable.key];
-//               const isSentenceCorrect =
-//                 String(answer.sentence) === String(expected.sentence);
-//               const isValueCorrect =
-//                 isUnknown || String(answer.value) === String(expected.value);
-
-//               if (isSentenceCorrect && isValueCorrect) {
-//                 rowStateClass = "is-correct";
-//               } else {
-//                 rowStateClass = "is-wrong";
-//               }
-//             }
-//           }
-
-//           return (
-//             <div className={`variable-row ${rowStateClass}`} key={variable.key}>
-//               <div className="variable-row__label">{variable.label}</div>
-
-//               <label>
-//                 <span>Sentence</span>
-//                 <CustomSelect
-//                   options={sentenceOptions}
-//                   value={answer.sentence || ""}
-//                   disabled={disabled || rowStateClass === "is-correct"}
-//                   onChange={(selectedValue) =>
-//                     updateVariable(variable.key, "sentence", selectedValue)
-//                   }
-//                   placeholder="Select"
-//                 />
-//               </label>
-
-//               <label>
-//                 <span>Value</span>
-//                 <input
-//                   type="text"
-//                   inputMode="numeric"
-//                   value={isUnknown ? "?" : answer.value || ""}
-//                   disabled={
-//                     disabled || isUnknown || rowStateClass === "is-correct"
-//                   }
-//                   placeholder="?"
-//                   className={isUnknown ? "variable-value--locked" : ""}
-//                   onChange={(event) =>
-//                     !isUnknown &&
-//                     updateVariable(variable.key, "value", event.target.value)
-//                   }
-//                 />
-//               </label>
-//             </div>
-//           );
-//         })}
-//       </div>
-//     </div>
-//   );
-// };
-
-// const SchemaQuestion = ({
-//   question,
-//   response,
-//   setResponse,
-//   feedback,
-//   onCheck,
-//   onNext,
-//   isSubmitting,
-//   isDummyMode,
-//   setIsDummyMode,
-//   isRevealed,
-//   setIsRevealed,
-// }) => {
-//   const hasFeedback = Boolean(feedback);
-//   const isBarModelStage = Boolean(question?.barModelSpec);
-//   const isEquationStage = ["bar_to_equation", "schema_equation"].includes(
-//     question?.moduleStage,
-//   );
-
-//   // 🔥 THE ULTIMATE UNLOCK HACK: Scrub the question data to force EquationBoard to unlock all 3 boxes!
-//   const displayQuestion = useMemo(() => {
-//     if (!isEquationStage) return question;
-//     const qClone = JSON.parse(JSON.stringify(question));
-
-//     // SCENARIO 1: Dummy Mode (Retry with Hint)
-//     // We WANT the '?' to stay so EquationBoard locks it as a hint for the student.
-//     if (isDummyMode) return qClone;
-
-//     // SCENARIO 2: Correct Answer Submitted
-//     // Force the UI to expect exactly what the student typed, instantly turning it GREEN!
-//     if (hasFeedback && feedback?.isCorrect) {
-//       if (qClone.validation?.slots) {
-//         Object.keys(qClone.validation.slots).forEach((key) => {
-//           qClone.validation.slots[key] = response?.slots?.[key] || "";
-//         });
-//       }
-//       return qClone;
-//     }
-
-//     // SCENARIO 3: Main Screen (Before Submit)
-//     // We want ALL 3 boxes to be empty and clickable. Aggressively wipe the locks.
-//     if (!hasFeedback && !isDummyMode) {
-//       // 1. Wipe the expected ? from validation
-//       if (qClone.validation?.slots) {
-//         Object.keys(qClone.validation.slots).forEach((key) => {
-//           if (String(qClone.validation.slots[key]).trim() === "?") {
-//             qClone.validation.slots[key] = "";
-//           }
-//         });
-//       }
-//       // 2. Aggressively unlock the internal equationSpec parameters
-//       if (qClone.equationSpec) {
-//         Object.keys(qClone.equationSpec).forEach((key) => {
-//           if (
-//             qClone.equationSpec[key] !== null &&
-//             typeof qClone.equationSpec[key] === "object"
-//           ) {
-//             qClone.equationSpec[key].editable = true; // Force unlock
-//             if (String(qClone.equationSpec[key].value).trim() === "?") {
-//               qClone.equationSpec[key].value = ""; // Remove the visual '?'
-//             }
-//           }
-//         });
-//       }
-//     }
-
-//     return qClone;
-//   }, [question, isEquationStage, isDummyMode, hasFeedback, feedback, response]);
-
-//   // --- THE STRICT LOCK: Enforce boxes to be filled ONLY during Bar Model stages ---
-//   let isBarModelFullyFilled = true;
-//   if (isBarModelStage && !isEquationStage) {
-//     const spec = question?.barModelSpec;
-//     const requiredKeys = [];
-
-//     if (spec) {
-//       if (question?.schemaKind === "change" || spec.layout === "change") {
-//         requiredKeys.push((spec.start || spec.left)?.key);
-//         requiredKeys.push((spec.change || spec.right)?.key);
-//         requiredKeys.push((spec.end || spec.total || spec.result)?.key);
-//       } else {
-//         requiredKeys.push(spec.total?.key);
-//         requiredKeys.push(spec.left?.key);
-//         requiredKeys.push(spec.right?.key);
-//       }
-//     }
-
-//     isBarModelFullyFilled = requiredKeys.every((key) => {
-//       if (!key) return true;
-//       const correctVal = String(
-//         question?.validation?.slots?.[key] ?? spec?.[key]?.value ?? "",
-//       ).trim();
-//       if (isDummyMode && (correctVal === "?" || correctVal === "")) return true;
-//       const val = response?.slots?.[key];
-//       return val !== undefined && String(val).trim() !== "";
-//     });
-//   }
-
-//   const canCheck =
-//     isQuestionResponseReady(question, response) &&
-//     isBarModelFullyFilled &&
-//     !isSubmitting &&
-//     !hasFeedback;
-
-//   const isSchemaStage = question?.stageTotal === 3;
-//   const isCompareAnswerInput = isCompareAnswerInputQuestion(question);
-//   const isVariableIdentification = isVariableIdentificationQuestion(question);
-//   const isDirectSchemaSolve = question?.moduleStage === "schema_direct_solve";
-//   const showPromptStrip = !["practice", "equations"].includes(
-//     question?.moduleStage,
-//   );
-
-//   const locksUnknownSlots = ["word_to_bar", "schema_bar_model"].includes(
-//     question?.moduleStage,
-//   );
-//   const compareAnswerLabel = isCompareAnswerInput
-//     ? getBarLabel(question?.barModelSpec?.smaller, question?.barModelSpec)
-//     : "";
-//   const compareAnswerCopy = buildCompareAnswerPrompt(compareAnswerLabel);
-
-//   // 🔥 KEYPAD FIX: Ensure the '?' button is always visible during equation building!
-//   const showUnknownButton =
-//     isEquationStage ||
-//     (!locksUnknownSlots &&
-//       Object.values(question?.validation?.slots || {}).some(
-//         (value) => String(value).trim() === "?",
-//       ));
-
-//   const showOperatorPad =
-//     question?.inputMode === "keypad_equation" &&
-//     question?.equationSpec?.operatorEditable &&
-//     response?.activeField === "__operator__" &&
-//     question?.schemaKind !== "combine";
-
-//   const activeInputLabel = isCompareAnswerInput
-//     ? ""
-//     : getActiveInputLabel(question, response?.activeField);
-
-//   const triggerCheck = () => {
-//     if (canCheck) onCheck();
-//   };
-
-//   // Helper to prevent typing over the auto-filled '?' in Dummy Mode
-//   const isSlotLockedInDummy = (field) => {
-//     if (!isDummyMode || !isEquationStage || !field) return false;
-//     const expected = String(question?.validation?.slots?.[field] ?? "").trim();
-//     return expected === "?";
-//   };
-
-//   const updateActiveSlotValue = (nextValue) => {
-//     if (hasFeedback) return;
-//     if (response?.activeField === "__operator__") {
-//       setResponse((current) => ({ ...(current || {}), operator: nextValue }));
-//       return;
-//     }
-//     const targetField = response?.activeField;
-//     if (!targetField || isSlotLockedInDummy(targetField)) return;
-//     setResponse((current) => ({
-//       ...(current || {}),
-//       slots: {
-//         ...(current?.slots || {}),
-//         [targetField]: joinSlotValue(current?.slots?.[targetField], nextValue),
-//       },
-//     }));
-//   };
-
-//   const handleBackspace = () => {
-//     if (hasFeedback) return;
-//     if (
-//       response?.activeField === "__operator__" &&
-//       question?.schemaKind === "combine"
-//     )
-//       return;
-//     if (hasFeedback || response?.activeField === "__operator__") return;
-//     const targetField = response?.activeField;
-//     if (!targetField || isSlotLockedInDummy(targetField)) return;
-//     setResponse((current) => ({
-//       ...(current || {}),
-//       slots: {
-//         ...(current?.slots || {}),
-//         [targetField]: String(current?.slots?.[targetField] || "").slice(0, -1),
-//       },
-//     }));
-//   };
-
-//   const handleClear = () => {
-//     if (hasFeedback) return;
-//     const targetField = response?.activeField;
-//     if (!targetField || isSlotLockedInDummy(targetField)) return;
-//     if (targetField === "__operator__" && question?.schemaKind === "combine")
-//       return;
-//     setResponse((current) => {
-//       if (targetField === "__operator__") return { ...current, operator: "" };
-//       return { ...current, slots: { ...current?.slots, [targetField]: "" } };
-//     });
-//   };
-
-//   useEffect(() => {
-//     if (!question || hasFeedback || isSubmitting) return;
-
-//     const isCombine = question?.schemaKind?.toLowerCase() === "combine";
-
-//     // 🔥 MAIN SCREEN INITIALIZATION FIX: Ensure all 3 equation boxes start totally empty in memory!
-//     if (isEquationStage && !isDummyMode) {
-//       setResponse((current) => {
-//         let changed = false;
-//         const newSlots = { ...current?.slots };
-
-//         // Wipe any pre-filled "?" out of the memory
-//         Object.keys(newSlots).forEach((key) => {
-//           if (newSlots[key] === "?") {
-//             newSlots[key] = "";
-//             changed = true;
-//           }
-//         });
-
-//         if (isCombine && current?.operator !== "+") changed = true;
-
-//         if (changed) {
-//           return {
-//             ...current,
-//             slots: newSlots,
-//             operator: isCombine ? "+" : current?.operator,
-//             activeField: current?.activeField || "leftTerm",
-//           };
-//         }
-
-//         if (isCombine && !current?.activeField)
-//           return { ...current, activeField: "leftTerm" };
-//         return current;
-//       });
-//     } else if (isCombine) {
-//       if (response?.operator !== "+")
-//         setResponse((current) => ({ ...(current || {}), operator: "+" }));
-//       if (!response?.activeField)
-//         setResponse((current) => ({
-//           ...(current || {}),
-//           activeField: "leftTerm",
-//         }));
-//     }
-//   }, [
-//     question?.id,
-//     isEquationStage,
-//     isDummyMode,
-//     hasFeedback,
-//     isSubmitting,
-//     setResponse,
-//   ]);
-
-//   useEffect(() => {
-//     const handleKeyDown = (event) => {
-//       const targetTag = event.target?.tagName;
-//       const isTypingField =
-//         targetTag === "INPUT" ||
-//         targetTag === "TEXTAREA" ||
-//         event.target?.isContentEditable;
-
-//       if (question?.inputMode === "text_answer" || isCompareAnswerInput) {
-//         if (isTypingField && event.key === "Enter" && canCheck) {
-//           event.preventDefault();
-//           triggerCheck();
-//         }
-//         return;
-//       }
-
-//       if (isTypingField || hasFeedback || isSubmitting) return;
-//       if (/^\d$/.test(event.key)) {
-//         event.preventDefault();
-//         updateActiveSlotValue(event.key);
-//         return;
-//       }
-//       if (event.key === "Backspace") {
-//         event.preventDefault();
-//         handleBackspace();
-//         return;
-//       }
-//       if (event.key === "Delete") {
-//         event.preventDefault();
-//         handleClear();
-//         return;
-//       }
-//       if (event.key === "?" && showUnknownButton) {
-//         event.preventDefault();
-//         updateActiveSlotValue("?");
-//         return;
-//       }
-//       if (
-//         response?.activeField === "__operator__" &&
-//         (event.key === "+" || event.key === "-")
-//       ) {
-//         event.preventDefault();
-//         setResponse((current) => ({ ...(current || {}), operator: event.key }));
-//         return;
-//       }
-//       if (event.key === "Enter" && canCheck) {
-//         event.preventDefault();
-//         triggerCheck();
-//       }
-//     };
-//     window.addEventListener("keydown", handleKeyDown);
-//     return () => window.removeEventListener("keydown", handleKeyDown);
-//   }, [
-//     canCheck,
-//     hasFeedback,
-//     isSubmitting,
-//     question?.inputMode,
-//     isCompareAnswerInput,
-//     response,
-//     setResponse,
-//     showUnknownButton,
-//   ]);
-
-//   const [showHint, setShowHint] = useState(false);
-//   useEffect(() => {
-//     setShowHint(false);
-//   }, [question]);
-
-//   return (
-//     <div className={`worksheet ${hasFeedback ? "is-completed" : ""}`}>
-//       <div className="worksheet__helper">
-//         <div className="worksheet__helper__div">
-//           <div className="worksheet-title">
-//             {question?.promptTitle || "practice"}
-//           </div>
-
-//           <div className="worksheet__topline-main">
-//             {question?.schemaKind && (
-//               <div
-//                 className={`schema-badge schema-badge--${question.schemaKind}`}
-//               >
-//                 {question.schemaKind} Schema
-//               </div>
-//             )}
-//           </div>
-//         </div>
-
-//         {(() => {
-//           const helpText = isCompareAnswerInput
-//             ? "Use the bars to work out the missing amount, then type your answer."
-//             : question?.helperText;
-//           if (!helpText) return null;
-//           return (
-//             <button
-//               type="button"
-//               className={`worksheet-help ${showHint ? "is-open" : ""}`}
-//               onClick={() => setShowHint(!showHint)}
-//             >
-//               {showHint ? (
-//                 <span className="hint-text-reveal">{helpText}</span>
-//               ) : (
-//                 <span>
-//                   <span className="sparkle">✨</span> Reveal Clue
-//                 </span>
-//               )}
-//             </button>
-//           );
-//         })()}
-//       </div>
-//       <div className="worksheet__topline">
-//         <div className="worksheet__topline-main">
-//           {question?.moduleStage === "practice" && (
-//             <PracticeTabs activeKey={question?.practiceMode} />
-//           )}
-//           {isSchemaStage && (
-//             <StageTabs currentStage={question?.stageIndex || 1} />
-//           )}
-//         </div>
-//       </div>
-
-//       {showPromptStrip && (
-//         <div className="worksheet-prompt">
-//           {"Q,"} {question?.text}
-//         </div>
-//       )}
-
-//       {/* MODULE 3: EQUATION BUILDING */}
-//       {(question?.moduleStage === "practice" ||
-//         question?.moduleStage === "equations" ||
-//         question?.moduleStage === "bar_to_equation" ||
-//         question?.moduleStage === "schema_equation") && (
-//         <>
-//           {(question?.moduleStage === "bar_to_equation" ||
-//             question?.moduleStage === "schema_equation") &&
-//             question?.barModelSpec && (
-//               <BarModel
-//                 question={question}
-//                 response={response}
-//                 setResponse={setResponse}
-//                 isAttempted={Boolean(feedback)}
-//                 isCorrect={feedback?.isCorrect}
-//                 targetField={response?.activeField}
-//                 isDummyMode={isDummyMode}
-//                 isRevealed={isRevealed}
-//                 isReadOnly={isEquationStage}
-//               />
-//             )}
-//           {/* 🔥 WE PASS THE "HACKED" DISPLAY QUESTION SO THE EQUATION BOARD BEHAVES PERFECTLY */}
-//           <EquationBoard
-//             question={displayQuestion}
-//             response={response}
-//             setResponse={setResponse}
-//             locked={hasFeedback}
-//             feedback={feedback}
-//           />
-//         </>
-//       )}
-
-//       {/* MODULE 2: BAR MODEL BUILDING */}
-//       {(question?.moduleStage === "schema_bar_model" ||
-//         question?.moduleStage === "word_to_bar") &&
-//         (isCompareAnswerInput ? (
-//           <>
-//             <CompareGuidedAnswerModel question={question} />
-//             <label className="worksheet-answer-field worksheet-answer-field--guided">
-//               <span>{compareAnswerCopy.prompt}</span>
-//               <input
-//                 type="text"
-//                 inputMode="numeric"
-//                 value={getDisplayedTextAnswer(response)}
-//                 onChange={(event) =>
-//                   !hasFeedback &&
-//                   setResponse((current) => ({
-//                     ...(current || {}),
-//                     textAnswer: event.target.value,
-//                   }))
-//                 }
-//                 disabled={hasFeedback || isSubmitting}
-//                 placeholder={compareAnswerCopy.placeholder}
-//               />
-//             </label>
-//           </>
-//         ) : (
-//           <BarModel
-//             question={question}
-//             response={response}
-//             setResponse={setResponse}
-//             isAttempted={Boolean(feedback)}
-//             isCorrect={feedback?.isCorrect}
-//             targetField={response?.activeField}
-//             isDummyMode={isDummyMode}
-//             isRevealed={isRevealed}
-//             isReadOnly={false}
-//           />
-//         ))}
-
-//       {isVariableIdentification && (
-//         <VariableIdentificationPanel
-//           question={question}
-//           response={response}
-//           setResponse={setResponse}
-//           disabled={hasFeedback || isSubmitting}
-//           hasFeedback={hasFeedback}
-//         />
-//       )}
-
-//       {(question?.moduleStage === "schema_solve" || isDirectSchemaSolve) && (
-//         <div className="worksheet-solve">
-//           {(question?.validation?.displayEquation ||
-//             question?.equationSpec?.displayEquation) && (
-//             <div
-//               className={`worksheet-solve__equation ${hasFeedback ? (feedback?.isCorrect ? "is-correct" : "is-wrong") : ""}`}
-//             >
-//               {question?.validation?.displayEquation ||
-//                 question?.equationSpec?.displayEquation}
-//             </div>
-//           )}
-
-//           <label
-//             className={`worksheet-answer-field ${hasFeedback ? (feedback?.isCorrect ? "is-correct" : "is-wrong") : ""}`}
-//           >
-//             <input
-//               type="number"
-//               inputMode="numeric"
-//               value={getDisplayedTextAnswer(response) || ""}
-//               onChange={(event) =>
-//                 !hasFeedback &&
-//                 !isSubmitting &&
-//                 setResponse((current) => ({
-//                   ...(current || {}),
-//                   textAnswer: event.target.value,
-//                 }))
-//               }
-//               disabled={hasFeedback || isSubmitting}
-//               placeholder="Type Here"
-//             />
-//           </label>
-//           <div className={`keypad-animator ${hasFeedback ? "is-hidden" : ""}`}>
-//             <Keypad
-//               title="Enter your answer."
-//               showUnknown={false}
-//               showOperatorPad={false}
-//               disabled={hasFeedback || isSubmitting}
-//               onDigit={(digit) => {
-//                 if (!hasFeedback) {
-//                   setResponse((current) => ({
-//                     ...(current || {}),
-//                     textAnswer: (current?.textAnswer || "") + digit,
-//                   }));
-//                 }
-//               }}
-//               onBackspace={() => {
-//                 if (!hasFeedback) {
-//                   setResponse((current) => ({
-//                     ...(current || {}),
-//                     textAnswer: (current?.textAnswer || "").slice(0, -1),
-//                   }));
-//                 }
-//               }}
-//               onClear={() => {
-//                 if (!hasFeedback) {
-//                   setResponse((current) => ({
-//                     ...(current || {}),
-//                     textAnswer: "",
-//                   }));
-//                 }
-//               }}
-//             />
-//           </div>
-//         </div>
-//       )}
-
-//       {question?.inputMode !== "text_answer" && !isCompareAnswerInput && (
-//         <div className={`keypad-animator ${hasFeedback ? "is-hidden" : ""}`}>
-//           <Keypad
-//             title={showOperatorPad ? "Choose the operator" : "Enter the number"}
-//             showUnknown={showUnknownButton}
-//             showOperatorPad={showOperatorPad}
-//             onDigit={updateActiveSlotValue}
-//             onUnknown={() => updateActiveSlotValue("?")}
-//             onBackspace={handleBackspace}
-//             onClear={handleClear}
-//             onOperator={(operator) =>
-//               setResponse((current) => ({ ...(current || {}), operator }))
-//             }
-//             disabled={hasFeedback || isSubmitting}
-//           />
-//         </div>
-//       )}
-
-//       <div className="worksheet-actions">
-//         {/* 1. INITIAL SUBMIT (Main Screen) */}
-//         {!hasFeedback && !isDummyMode && (
-//           <button
-//             type="button"
-//             className="worksheet-button worksheet-button--primary"
-//             onClick={triggerCheck}
-//             disabled={!canCheck || isSubmitting}
-//           >
-//             SUBMIT ✓
-//           </button>
-//         )}
-
-//         {/* 2. TRY WITH HINTS (After Main Screen Fail) */}
-//         {hasFeedback &&
-//           !feedback?.isCorrect &&
-//           (isBarModelStage || isEquationStage) &&
-//           !isDummyMode && (
-//             <button
-//               type="button"
-//               className="worksheet-button worksheet-button--primary"
-//               onClick={() => {
-//                 setIsDummyMode(true);
-
-//                 if (isEquationStage) {
-//                   const expectedSlots = question?.validation?.slots || {};
-//                   const newSlots = {};
-//                   let autoFocusKey = null;
-
-//                   Object.keys(expectedSlots).forEach((key) => {
-//                     if (String(expectedSlots[key]).trim() === "?") {
-//                       newSlots[key] = "?";
-//                     } else if (!autoFocusKey && key !== "operator") {
-//                       autoFocusKey = key;
-//                     }
-//                   });
-
-//                   setResponse((prev) => ({
-//                     ...prev,
-//                     slots: newSlots,
-//                     operator: question?.schemaKind === "combine" ? "+" : "",
-//                     activeField: autoFocusKey || "leftTerm",
-//                   }));
-//                   return;
-//                 }
-
-//                 const spec = question?.barModelSpec;
-//                 let autoFocusKey = null;
-//                 if (spec) {
-//                   const keys =
-//                     question?.schemaKind === "change" ||
-//                     spec.layout === "change"
-//                       ? [
-//                           (spec.start || spec.left)?.key,
-//                           (spec.change || spec.right)?.key,
-//                           (spec.end || spec.total || spec.result)?.key,
-//                         ]
-//                       : [spec.total?.key, spec.left?.key, spec.right?.key];
-
-//                   autoFocusKey = keys.find((key) => {
-//                     const expected = String(
-//                       question?.validation?.slots?.[key] ??
-//                         spec?.[key]?.value ??
-//                         "",
-//                     ).trim();
-//                     return expected !== "?" && expected !== "";
-//                   });
-//                 }
-
-//                 setResponse((prev) => ({
-//                   ...prev,
-//                   slots: {},
-//                   activeField: autoFocusKey,
-//                 }));
-//               }}
-//             >
-//               Retry with Hint
-//             </button>
-//           )}
-
-//         {/* 3. DUMMY CHECK (While typing retry) */}
-//         {isDummyMode && !hasFeedback && (
-//           <button
-//             type="button"
-//             className="worksheet-button worksheet-button--primary"
-//             onClick={() => {
-//               if (isEquationStage) {
-//                 let isDummyCorrect = true;
-//                 const studentSlots = response?.slots || {};
-//                 const expectedSlots = question?.validation?.slots || {};
-
-//                 Object.keys(expectedSlots).forEach((key) => {
-//                   const expected = String(expectedSlots[key]).trim();
-//                   if (expected !== "" && expected !== "?") {
-//                     if (String(studentSlots[key] || "").trim() !== expected) {
-//                       isDummyCorrect = false;
-//                     }
-//                   }
-//                 });
-
-//                 if (
-//                   question?.schemaKind === "change" &&
-//                   question?.equationSpec?.operatorEditable
-//                 ) {
-//                   const expectedOp =
-//                     question?.equationSpec?.operator || question?.operator;
-//                   if (response?.operator !== expectedOp) isDummyCorrect = false;
-//                 }
-
-//                 onCheck(isDummyCorrect);
-//               } else {
-//                 triggerCheck();
-//               }
-//             }}
-//             disabled={!canCheck || isSubmitting}
-//           >
-//             {isEquationStage ? "CHECK EQUATION ✓" : "CHECK MODEL ✓"}
-//           </button>
-//         )}
-
-//         {/* 4. REVEAL BUTTON (Visible ONLY after Dummy Fail) */}
-//         {isDummyMode && hasFeedback && !feedback?.isCorrect && !isRevealed && (
-//           <button
-//             type="button"
-//             className="worksheet-button worksheet-button--primary"
-//             onClick={() => setIsRevealed(true)}
-//           >
-//             Reveal Answers
-//           </button>
-//         )}
-
-//         {/* 5. NEXT PROBLEM */}
-//         {(feedback?.isCorrect ||
-//           isRevealed ||
-//           (!isBarModelStage && hasFeedback && !feedback?.isCorrect)) && (
-//           <button
-//             type="button"
-//             className="worksheet-button worksheet-button--continue"
-//             onClick={onNext}
-//           >
-//             Next Problem →
-//           </button>
-//         )}
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default SchemaQuestion;
-
 // SchemaQuestion.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import {
@@ -866,8 +22,8 @@ import {
 } from "./WorksheetParts";
 import BarModel, { CompareGuidedAnswerModel } from "./BarModelRenderer";
 import CustomSelect from "../../CustomSelect";
-
-// CustomSelect removed - no longer used in VariableIdentificationPanel
+import { useSchemaProgress } from "../../useSchemaProgress";
+import { useSelector } from "react-redux";
 
 // Deterministic shuffle
 const seededShuffle = (array, seed) => {
@@ -898,6 +54,176 @@ const highlightNumbers = (text) => {
   );
 };
 
+// Without Ghost
+// const VariableIdentificationPanel = ({
+//   question,
+//   response,
+//   setResponse,
+//   disabled,
+//   hasFeedback,
+//   isDummyMode,
+//   isRevealed,
+// }) => {
+//   const sentences = question?.visualData?.sentences || [];
+//   const variables = question?.visualData?.variables || [];
+//   const expectedVars = question?.validation?.variables || {};
+
+//   const shuffledVariables = useMemo(
+//     () => seededShuffle(variables, hashString(question?.text)),
+//     [variables, question?.text],
+//   );
+
+//   const updateVariable = (key, field, value) => {
+//     if (disabled && !isDummyMode) return;
+//     setResponse((current) => ({
+//       ...(current || {}),
+//       variables: {
+//         ...(current?.variables || {}),
+//         [key]: {
+//           ...(current?.variables?.[key] || {}),
+//           [field]: value,
+//           // When switching to "find", clear the value
+//           ...(field === "role" && value === "find" ? { value: "" } : {}),
+//         },
+//       },
+//     }));
+//   };
+
+//   // Determine per-card feedback state
+//   const getCardState = (variable) => {
+//     const answer = response?.variables?.[variable.key] || {};
+//     const expected = expectedVars[variable.key];
+//     if (!expected) return "";
+
+//     if (isRevealed) return "is-revealed";
+
+//     if (!hasFeedback) return "";
+
+//     // Check role correctness
+//     const isRoleCorrect = answer.role === expected.role;
+//     // For "given" variables, also check value
+//     const isValueCorrect =
+//       expected.role === "find" ||
+//       String(answer.value) === String(expected.value);
+
+//     if (isRoleCorrect && isValueCorrect) return "is-correct";
+//     return "is-wrong";
+//   };
+
+//   // Options for the Custom Select Dropdown
+//   const roleOptions = [
+//     { value: "given", label: "✓ Given Value" },
+//     { value: "find", label: "? Unknown Value " },
+//   ];
+
+//   return (
+//     <div className="variable-identification">
+//       {/* Sentences at top */}
+//       <div className="variable-identification__sentences">
+//         {sentences.map((sentence, index) => (
+//           <div className="variable-sentence" key={`${index}-${sentence}`}>
+//             <span>{index + 1}</span>
+//             <p>{sentence}</p>
+//           </div>
+//         ))}
+//       </div>
+
+//       {/* Variable cards */}
+//       <div className="variable-cards">
+//         {shuffledVariables.map((variable) => {
+//           const answer = response?.variables?.[variable.key] || {};
+//           const expected = expectedVars[variable.key];
+//           const cardState = getCardState(variable);
+//           const isCardLocked =
+//             cardState === "is-correct" || cardState === "is-revealed";
+//           // const isCardLocked =
+//           //   cardState === "is-correct" ||
+//           //   cardState === "is-revealed" ||
+//           //   (isDummyMode && expected?.role === "find");
+
+//           const displayRole = isRevealed ? expected?.role : answer.role;
+//           // const displayRole = isRevealed
+//           //   ? expected?.role
+//           //   : isDummyMode && expected?.role === "find"
+//           //     ? "find"
+//           //     : answer.role;
+
+//           const displayValue = isRevealed ? expected?.value : answer.value;
+
+//           return (
+//             <div
+//               className={`variable-row-horizontal ${cardState}`}
+//               key={variable.key}
+//             >
+//               {/* Left Side: Variable Name with Yellow Accent */}
+//               <div className="variable-row-horizontal__name">
+//                 {variable.label}
+//               </div>
+
+//               {/* Right Side: Split Controls */}
+//               <div className="variable-row-horizontal__controls">
+//                 {/* Control 1: Role Selection */}
+//                 <div className="control-group">
+//                   <span className="control-label">ROLE</span>
+//                   <CustomSelect
+//                     options={roleOptions}
+//                     value={displayRole || ""}
+//                     onChange={(val) =>
+//                       updateVariable(variable.key, "role", val)
+//                     }
+//                     placeholder="Select"
+//                     disabled={isCardLocked}
+//                   />
+//                 </div>
+
+//                 {/* Control 2: Value Input or Placeholder */}
+//                 <div className="control-group">
+//                   <span className="control-label">VALUE</span>
+//                   {displayRole === "find" ? (
+//                     <div className="find-placeholder">?</div>
+//                   ) : (
+//                     <input
+//                       type="text"
+//                       inputMode="numeric"
+//                       value={displayValue || ""}
+//                       disabled={isCardLocked || displayRole !== "given"}
+//                       placeholder="?"
+//                       onChange={(e) =>
+//                         updateVariable(variable.key, "value", e.target.value)
+//                       }
+//                     />
+//                   )}
+//                 </div>
+//               </div>
+//             </div>
+//           );
+//         })}
+//       </div>
+
+//       {/* Feedback bar */}
+//       {/* {hasFeedback && !isDummyMode && (
+//         <div
+//           className={`variable-feedback-bar ${
+//             shuffledVariables.every((v) => getCardState(v) === "is-correct")
+//               ? "variable-feedback-bar--success"
+//               : "variable-feedback-bar--error"
+//           }`}
+//         >
+//           {shuffledVariables.every((v) => getCardState(v) === "is-correct")
+//             ? "Correct! You have identified all given and unknown variables."
+//             : "Some classifications or values are wrong — check the highlighted cards."}
+//         </div>
+//       )} */}
+//       {/*
+//       {isRevealed && (
+//         <div className="variable-feedback-bar variable-feedback-bar--success">
+//           Correct answers have been revealed above.
+//         </div>
+//       )} */}
+//     </div>
+//   );
+// };
+
 const VariableIdentificationPanel = ({
   question,
   response,
@@ -910,14 +236,52 @@ const VariableIdentificationPanel = ({
   const sentences = question?.visualData?.sentences || [];
   const variables = question?.visualData?.variables || [];
   const expectedVars = question?.validation?.variables || {};
+  const { userInfo } = useSelector((state) => state.auth);
 
+  const { hasCompleted, markCompleted } = useSchemaProgress(
+    question?.schemaKind,
+    userInfo?.id || userInfo?._id,
+  );
   const shuffledVariables = useMemo(
     () => seededShuffle(variables, hashString(question?.text)),
     [variables, question?.text],
   );
 
+  // 1. GHOST LOGIC: Check if the user has started interacting
+  // Returns true if ANY variable has a 'role' or 'value' defined in the response state
+  const hasStarted = Object.values(response?.variables || {}).some(
+    (v) => v?.role || v?.value,
+  );
+
+  // const updateVariable = (key, field, value) => {
+  //   if (disabled && !isDummyMode) return;
+  //   if (!hasStarted) {
+  //     markCompleted();
+  //   }
+  //   setResponse((current) => ({
+  //     ...(current || {}),
+  //     variables: {
+  //       ...(current?.variables || {}),
+  //       [key]: {
+  //         ...(current?.variables?.[key] || {}),
+  //         [field]: value,
+  //         // When switching to "find", automatically clear the value field
+  //         ...(field === "role" && value === "find" ? { value: "" } : {}),
+  //       },
+  //     },
+  //   }));
+  // };
+
+  // Determine per-card feedback state
+
   const updateVariable = (key, field, value) => {
     if (disabled && !isDummyMode) return;
+
+    // Only mark as completed on real first interaction, not dummy mode
+    if (!hasStarted && !isDummyMode) {
+      markCompleted();
+    }
+
     setResponse((current) => ({
       ...(current || {}),
       variables: {
@@ -925,14 +289,12 @@ const VariableIdentificationPanel = ({
         [key]: {
           ...(current?.variables?.[key] || {}),
           [field]: value,
-          // When switching to "find", clear the value
           ...(field === "role" && value === "find" ? { value: "" } : {}),
         },
       },
     }));
   };
 
-  // Determine per-card feedback state
   const getCardState = (variable) => {
     const answer = response?.variables?.[variable.key] || {};
     const expected = expectedVars[variable.key];
@@ -944,7 +306,7 @@ const VariableIdentificationPanel = ({
 
     // Check role correctness
     const isRoleCorrect = answer.role === expected.role;
-    // For "given" variables, also check value
+    // For "given" variables, also check value. For "find", value check isn't strictly necessary here based on your logic, but we ensure it matches the expected condition.
     const isValueCorrect =
       expected.role === "find" ||
       String(answer.value) === String(expected.value);
@@ -979,23 +341,29 @@ const VariableIdentificationPanel = ({
           const cardState = getCardState(variable);
           const isCardLocked =
             cardState === "is-correct" || cardState === "is-revealed";
-          // const isCardLocked =
-          //   cardState === "is-correct" ||
-          //   cardState === "is-revealed" ||
-          //   (isDummyMode && expected?.role === "find");
 
           const displayRole = isRevealed ? expected?.role : answer.role;
-          // const displayRole = isRevealed
-          //   ? expected?.role
-          //   : isDummyMode && expected?.role === "find"
-          //     ? "find"
-          //     : answer.role;
-
           const displayValue = isRevealed ? expected?.value : answer.value;
+
+          // 🔥 2. GHOST LOGIC: Apply to ALL cards until the user starts
+          const hasStartedForVar = answer.role || answer.value;
+          const isGhostHint =
+            !hasStartedForVar && !isDummyMode && !hasCompleted;
+
+          // const isGhostHint = !hasStarted && !isDummyMode && !hasCompleted;
+          // 🔥 3. DYNAMIC TEXT: Tailor the hint to the specific expected answer
+          const ghostRoleText =
+            expected?.role === "given"
+              ? "e.g: Given Value"
+              : "e.g:Unknown Value";
+
+          const ghostValueText =
+            expected?.role === "given" ? `e.g., ${expected?.value}` : "?";
 
           return (
             <div
-              className={`variable-row-horizontal ${cardState}`}
+              // className={`variable-row-horizontal ${cardState} ${isGhostHint ? "is-hinted" : ""}`}
+              className={`variable-row-horizontal ${cardState} ${isGhostHint ? "is-hinted" : ""}`}
               key={variable.key}
             >
               {/* Left Side: Variable Name with Yellow Accent */}
@@ -1016,10 +384,13 @@ const VariableIdentificationPanel = ({
                     }
                     placeholder="Select"
                     disabled={isCardLocked}
+                    /* 🔥 Pass Ghosting Props */
+                    isGhosted={isGhostHint}
+                    ghostPlaceholder={isGhostHint ? ghostRoleText : ""}
                   />
                 </div>
 
-                {/* Control 2: Value Input or Placeholder */}
+                {/* Control 2: Value Input or Placeholder
                 <div className="control-group">
                   <span className="control-label">VALUE</span>
                   {displayRole === "find" ? (
@@ -1028,13 +399,66 @@ const VariableIdentificationPanel = ({
                     <input
                       type="text"
                       inputMode="numeric"
+                      // 🔥 Add Ghost Input Class
+                      className={`worksheet-input ${isGhostHint && !displayValue ? "ghost-input" : ""}`}
                       value={displayValue || ""}
                       disabled={isCardLocked || displayRole !== "given"}
-                      placeholder="?"
+                      // 🔥 Use dynamic value text for placeholder
+                      placeholder={isGhostHint ? ghostValueText : "?"}
                       onChange={(e) =>
                         updateVariable(variable.key, "value", e.target.value)
                       }
                     />
+                  )}
+                </div> */}
+                {/* Control 2: Value Input or Placeholder */}
+                <div className="control-group">
+                  <span className="control-label">VALUE</span>
+                  {displayRole === "find" ? (
+                    <div className="find-placeholder">?</div>
+                  ) : (
+                    <>
+                      {isGhostHint && !displayValue ? (
+                        // 👇 Ghost mode: contenteditable div with shimmer
+                        <div
+                          className="worksheet-input ghost-input shimmer-div"
+                          contentEditable={
+                            !isCardLocked && displayRole === "given"
+                          }
+                          suppressContentEditableWarning
+                          onBlur={(e) => {
+                            const newValue = e.currentTarget.innerText.trim();
+                            if (newValue) {
+                              updateVariable(variable.key, "value", newValue);
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              e.currentTarget.blur();
+                            }
+                          }}
+                        >
+                          {ghostValueText}
+                        </div>
+                      ) : (
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          className={`worksheet-input ${isGhostHint && !displayValue ? "ghost-input" : ""}`}
+                          value={displayValue || ""}
+                          disabled={isCardLocked || displayRole !== "given"}
+                          placeholder={isGhostHint ? ghostValueText : "?"}
+                          onChange={(e) =>
+                            updateVariable(
+                              variable.key,
+                              "value",
+                              e.target.value,
+                            )
+                          }
+                        />
+                      )}
+                    </>
                   )}
                 </div>
               </div>
@@ -1042,30 +466,10 @@ const VariableIdentificationPanel = ({
           );
         })}
       </div>
-
-      {/* Feedback bar */}
-      {/* {hasFeedback && !isDummyMode && (
-        <div
-          className={`variable-feedback-bar ${
-            shuffledVariables.every((v) => getCardState(v) === "is-correct")
-              ? "variable-feedback-bar--success"
-              : "variable-feedback-bar--error"
-          }`}
-        >
-          {shuffledVariables.every((v) => getCardState(v) === "is-correct")
-            ? "Correct! You have identified all given and unknown variables."
-            : "Some classifications or values are wrong — check the highlighted cards."}
-        </div>
-      )} */}
-      {/* 
-      {isRevealed && (
-        <div className="variable-feedback-bar variable-feedback-bar--success">
-          Correct answers have been revealed above.
-        </div>
-      )} */}
     </div>
   );
 };
+
 const getTrueExpectedValue = (questionData, key) => {
   // 1. Check Equation Template
   const templateItem = questionData?.equationSpec?.template?.find(
@@ -1285,6 +689,7 @@ const SchemaQuestion = ({
   const isEquationStage = ["bar_to_equation", "schema_equation"].includes(
     question?.moduleStage,
   );
+
   // Identify practice schemas so we can apply the Equation Board rules
   const isPracticeStage = ["practice", "equations"].includes(
     question?.moduleStage,
