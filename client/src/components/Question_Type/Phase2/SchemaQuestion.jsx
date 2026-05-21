@@ -865,6 +865,8 @@ import {
   EquationBoard,
 } from "./WorksheetParts";
 import BarModel, { CompareGuidedAnswerModel } from "./BarModelRenderer";
+import CustomSelect from "../../CustomSelect";
+
 // CustomSelect removed - no longer used in VariableIdentificationPanel
 
 // Deterministic shuffle
@@ -887,7 +889,9 @@ const highlightNumbers = (text) => {
   const parts = text.split(/(\d+)/);
   return parts.map((part, i) =>
     /^\d+$/.test(part) ? (
-      <span key={i} className="variable-sentence__number">{part}</span>
+      <span key={i} className="variable-sentence__number">
+        {part}
+      </span>
     ) : (
       part
     ),
@@ -942,11 +946,18 @@ const VariableIdentificationPanel = ({
     const isRoleCorrect = answer.role === expected.role;
     // For "given" variables, also check value
     const isValueCorrect =
-      expected.role === "find" || String(answer.value) === String(expected.value);
+      expected.role === "find" ||
+      String(answer.value) === String(expected.value);
 
     if (isRoleCorrect && isValueCorrect) return "is-correct";
     return "is-wrong";
   };
+
+  // Options for the Custom Select Dropdown
+  const roleOptions = [
+    { value: "given", label: "✓ Given Value" },
+    { value: "find", label: "? Unknown Value " },
+  ];
 
   return (
     <div className="variable-identification">
@@ -960,13 +971,6 @@ const VariableIdentificationPanel = ({
         ))}
       </div>
 
-      {/* Instruction text */}
-      <p className="variable-identification__instruction">
-        For each variable, decide: is it <strong>given</strong> in the problem, or is
-        it what we <strong>need to find</strong>?
-        For given variables, enter the value.
-      </p>
-
       {/* Variable cards */}
       <div className="variable-cards">
         {shuffledVariables.map((variable) => {
@@ -975,82 +979,72 @@ const VariableIdentificationPanel = ({
           const cardState = getCardState(variable);
           const isCardLocked =
             cardState === "is-correct" || cardState === "is-revealed";
+          // const isCardLocked =
+          //   cardState === "is-correct" ||
+          //   cardState === "is-revealed" ||
+          //   (isDummyMode && expected?.role === "find");
 
-          // In revealed state, show correct answers
           const displayRole = isRevealed ? expected?.role : answer.role;
+          // const displayRole = isRevealed
+          //   ? expected?.role
+          //   : isDummyMode && expected?.role === "find"
+          //     ? "find"
+          //     : answer.role;
+
           const displayValue = isRevealed ? expected?.value : answer.value;
 
           return (
             <div
-              className={`variable-card ${cardState}`}
+              className={`variable-row-horizontal ${cardState}`}
               key={variable.key}
             >
-              {/* Card header with name and badge */}
-              <div className="variable-card__header">
-                <div className="variable-card__name">{variable.label}</div>
-                {displayRole && (
-                  <span
-                    className={`variable-card__badge variable-card__badge--${
-                      displayRole === "given" ? "given" : "find"
-                    }`}
-                  >
-                    {displayRole === "given" ? "Given" : "Find?"}
-                  </span>
-                )}
+              {/* Left Side: Variable Name with Yellow Accent */}
+              <div className="variable-row-horizontal__name">
+                {variable.label}
               </div>
 
-              {/* Toggle buttons */}
-              <div className="variable-card__toggles">
-                <button
-                  type="button"
-                  className={`variable-toggle variable-toggle--given ${
-                    displayRole === "given" ? "is-active" : ""
-                  }`}
-                  disabled={isCardLocked}
-                  onClick={() => updateVariable(variable.key, "role", "given")}
-                >
-                  ✓ Given in the problem
-                </button>
-                <button
-                  type="button"
-                  className={`variable-toggle variable-toggle--find ${
-                    displayRole === "find" ? "is-active" : ""
-                  }`}
-                  disabled={isCardLocked}
-                  onClick={() => updateVariable(variable.key, "role", "find")}
-                >
-                  ? We need to find this
-                </button>
-              </div>
-
-              {/* Conditional content based on role */}
-              {displayRole === "given" && (
-                <label className="variable-card__value-row">
-                  <span>How many?</span>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={displayValue || ""}
-                    disabled={isCardLocked}
-                    placeholder="Enter value"
-                    onChange={(e) =>
-                      updateVariable(variable.key, "value", e.target.value)
+              {/* Right Side: Split Controls */}
+              <div className="variable-row-horizontal__controls">
+                {/* Control 1: Role Selection */}
+                <div className="control-group">
+                  <span className="control-label">ROLE</span>
+                  <CustomSelect
+                    options={roleOptions}
+                    value={displayRole || ""}
+                    onChange={(val) =>
+                      updateVariable(variable.key, "role", val)
                     }
+                    placeholder="Select"
+                    disabled={isCardLocked}
                   />
-                </label>
-              )}
-              {displayRole === "find" && (
-                <p className="variable-card__find-note">
-                  <em>This is what we need to find.</em>
-                </p>
-              )}
+                </div>
+
+                {/* Control 2: Value Input or Placeholder */}
+                <div className="control-group">
+                  <span className="control-label">VALUE</span>
+                  {displayRole === "find" ? (
+                    <div className="find-placeholder">?</div>
+                  ) : (
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={displayValue || ""}
+                      disabled={isCardLocked || displayRole !== "given"}
+                      placeholder="?"
+                      onChange={(e) =>
+                        updateVariable(variable.key, "value", e.target.value)
+                      }
+                    />
+                  )}
+                </div>
+              </div>
             </div>
           );
         })}
       </div>
 
       {/* Feedback bar */}
-      {hasFeedback && !isDummyMode && (
+      {/* {hasFeedback && !isDummyMode && (
         <div
           className={`variable-feedback-bar ${
             shuffledVariables.every((v) => getCardState(v) === "is-correct")
@@ -1062,18 +1056,16 @@ const VariableIdentificationPanel = ({
             ? "Correct! You have identified all given and unknown variables."
             : "Some classifications or values are wrong — check the highlighted cards."}
         </div>
-      )}
-
+      )} */}
+      {/* 
       {isRevealed && (
         <div className="variable-feedback-bar variable-feedback-bar--success">
           Correct answers have been revealed above.
         </div>
-      )}
+      )} */}
     </div>
   );
 };
-
-// 🔥 FIX 1: Universal Spec-Aware Helper
 const getTrueExpectedValue = (questionData, key) => {
   // 1. Check Equation Template
   const templateItem = questionData?.equationSpec?.template?.find(
@@ -1368,21 +1360,24 @@ const SchemaQuestion = ({
           }
 
           if (isRevealed) {
-            const isFinalAnswerStage = 
-              question?.moduleStage === "schema_solve" || 
+            const isFinalAnswerStage =
+              question?.moduleStage === "schema_solve" ||
               question?.moduleStage === "schema_direct_solve" ||
               (question?.stageTotal === 3 && question?.stageIndex === 3) ||
               question?.moduleStage === "direct";
 
             if (isUnknown) {
-              item.value = isFinalAnswerStage ? (mathResult || "?") : "?";
+              item.value = isFinalAnswerStage ? mathResult || "?" : "?";
             } else {
               item.value = getTrueExpectedValue(question, item.key);
             }
             item.editable = true;
             item.isUnknown = false;
           } else if (isCorrect) {
-            if (isUnknown && (!item.value || String(item.value).trim() === "")) {
+            if (
+              isUnknown &&
+              (!item.value || String(item.value).trim() === "")
+            ) {
               item.value = "?";
             }
             item.editable = true;
@@ -1397,7 +1392,10 @@ const SchemaQuestion = ({
               item.isUnknown = false;
             }
           } else {
-            if (isUnknown && (!item.value || String(item.value).trim() === "")) {
+            if (
+              isUnknown &&
+              (!item.value || String(item.value).trim() === "")
+            ) {
               item.value = "?";
             } else if (!isUnknown && String(item.value).trim() === "?") {
               item.value = "";
@@ -1606,20 +1604,25 @@ const SchemaQuestion = ({
 
     if (currentKeys.length === 0) return false;
 
-    const isFinalAnswerStage = 
-      question?.moduleStage === "schema_solve" || 
+    const isFinalAnswerStage =
+      question?.moduleStage === "schema_solve" ||
       question?.moduleStage === "schema_direct_solve" ||
       (question?.stageTotal === 3 && question?.stageIndex === 3) ||
       question?.moduleStage === "direct";
 
-    const opItem = (question?.equationSpec?.template || []).find((i) => i.type === 'operator');
-    const requiresOperator = opItem && opItem.editable !== false && question?.schemaKind !== 'combine';
+    const opItem = (question?.equationSpec?.template || []).find(
+      (i) => i.type === "operator",
+    );
+    const requiresOperator =
+      opItem && opItem.editable !== false && question?.schemaKind !== "combine";
     const hasOperator = !requiresOperator || Boolean(response?.operator);
     if (isFinalAnswerStage) {
-      return currentKeys.every((key) => {
-        const val = String(slots[key] || "").trim();
-        return val !== "" && val !== "?";
-      }) && hasOperator;
+      return (
+        currentKeys.every((key) => {
+          const val = String(slots[key] || "").trim();
+          return val !== "" && val !== "?";
+        }) && hasOperator
+      );
     } else {
       const requiredCount = currentKeys.filter((key) => {
         const correctVal = getTrueExpectedValue(question, key);
@@ -1807,8 +1810,8 @@ const SchemaQuestion = ({
   useEffect(() => {
     if ((hasFeedback && feedback?.isCorrect) || isRevealed) {
       const numericResult = solveMissingValue(question);
-      const isFinalAnswerStage = 
-        question?.moduleStage === "schema_solve" || 
+      const isFinalAnswerStage =
+        question?.moduleStage === "schema_solve" ||
         question?.moduleStage === "schema_direct_solve" ||
         (question?.stageTotal === 3 && question?.stageIndex === 3) ||
         question?.moduleStage === "direct";
@@ -1827,7 +1830,9 @@ const SchemaQuestion = ({
 
           // 1. Inject the math answer if final stage, otherwise keep "?"
           if (isTrueUnknown && numericResult) {
-            const desiredUnknownValue = isFinalAnswerStage ? numericResult : "?";
+            const desiredUnknownValue = isFinalAnswerStage
+              ? numericResult
+              : "?";
             if (newSlots[key] !== desiredUnknownValue) {
               newSlots[key] = desiredUnknownValue;
               changed = true;
@@ -1913,8 +1918,7 @@ const SchemaQuestion = ({
         const exp = expected[key];
         const isRoleCorrect = submitted.role === exp.role;
         const isValueCorrect =
-          exp.role === "find" ||
-          String(submitted.value) === String(exp.value);
+          exp.role === "find" || String(submitted.value) === String(exp.value);
 
         if (isRoleCorrect && isValueCorrect) {
           // Keep correct answers locked
@@ -2112,54 +2116,59 @@ const SchemaQuestion = ({
 
   return (
     <div className={`worksheet ${hasFeedback ? "is-completed" : ""}`}>
-      <div className="worksheet__helper">
-        <div className="worksheet__helper__div">
+      <div className="worksheet-utility-bar">
+        {/* Left Side: Title & Badge */}
+        <div className="worksheet-utility-bar__left">
           <div className="worksheet-title">
             {question?.promptTitle || "practice"}
           </div>
-          <div className="worksheet__topline-main">
-            {question?.schemaKind && (
-              <div
-                className={`schema-badge schema-badge--${question.schemaKind}`}
+          {question?.schemaKind && (
+            <div
+              className={`schema-badge schema-badge--${question.schemaKind}`}
+            >
+              {question.schemaKind} Schema
+            </div>
+          )}
+        </div>
+        {/* Right Side: The "Reveal Clue" button */}
+        <div className="worksheet-utility-bar__right">
+          {(() => {
+            const helpText = isCompareAnswerInput
+              ? "Use the bars to work out the missing amount, then type your answer."
+              : question?.helperText;
+            if (!helpText) return null;
+
+            return (
+              <button
+                type="button"
+                className={`worksheet-help ${showHint ? "is-open" : ""}`}
+                onClick={() => setShowHint(!showHint)}
               >
-                {question.schemaKind} Schema
-              </div>
+                {showHint ? (
+                  <span className="hint-text-reveal">{helpText}</span>
+                ) : (
+                  <span className="sparkle__main">
+                    <span className="sparkle">✨</span> How to Play?
+                  </span>
+                )}
+              </button>
+            );
+          })()}
+        </div>
+      </div>
+      {/* Only render the top line wrapper if there is actually a tab to show inside it */}
+      {(question?.moduleStage === "practice" || isSchemaStage) && (
+        <div className="worksheet__topline">
+          <div className="worksheet__topline-main">
+            {question?.moduleStage === "practice" && (
+              <PracticeTabs activeKey={question?.practiceMode} />
+            )}
+            {isSchemaStage && (
+              <StageTabs currentStage={question?.stageIndex || 1} />
             )}
           </div>
         </div>
-
-        {(() => {
-          const helpText = isCompareAnswerInput
-            ? "Use the bars to work out the missing amount, then type your answer."
-            : question?.helperText;
-          if (!helpText) return null;
-          return (
-            <button
-              type="button"
-              className={`worksheet-help ${showHint ? "is-open" : ""}`}
-              onClick={() => setShowHint(!showHint)}
-            >
-              {showHint ? (
-                <span className="hint-text-reveal">{helpText}</span>
-              ) : (
-                <span>
-                  <span className="sparkle">✨</span> Reveal Clue
-                </span>
-              )}
-            </button>
-          );
-        })()}
-      </div>
-      <div className="worksheet__topline">
-        <div className="worksheet__topline-main">
-          {question?.moduleStage === "practice" && (
-            <PracticeTabs activeKey={question?.practiceMode} />
-          )}
-          {isSchemaStage && (
-            <StageTabs currentStage={question?.stageIndex || 1} />
-          )}
-        </div>
-      </div>
+      )}
 
       {showPromptStrip && (
         <div className="worksheet-prompt">
@@ -2288,7 +2297,7 @@ const SchemaQuestion = ({
             <input
               type="number"
               inputMode="numeric"
-              // 🔥 FIX: Safely injects the calculated math result or fallback feedback
+              onWheel={(e) => e.target.blur()}
               value={
                 isRevealed
                   ? mathResult ||

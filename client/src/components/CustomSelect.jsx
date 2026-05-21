@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
-import "../sass/components/CustomSelect.scss"; // We will create this next
+import "../sass/components/CustomSelect.scss";
 
 const CustomSelect = ({
   options,
