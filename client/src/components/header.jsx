@@ -322,7 +322,7 @@ export default function Header() {
                 <UserAvatar
                   name={userInfo.avatarSeed}
                   variant={userInfo.avatar}
-                  size={50}
+                  size={40}
                 />
               </div>
 

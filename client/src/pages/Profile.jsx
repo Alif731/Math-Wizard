@@ -63,6 +63,26 @@ export default function Profile() {
       setMessage(err?.data?.message || err.error);
     }
   };
+  // ==========================================================
+  // CALCULATE OVERALL ACCURACY
+  // ==========================================================
+  let overallAccuracy = 0;
+  if (status?.mastery) {
+    let totalAttempts = 0;
+    let totalCorrect = 0;
+
+    // Loop through all concepts the student has interacted with
+    Object.values(status.mastery).forEach((concept) => {
+      if (concept.lastAttempts && Array.isArray(concept.lastAttempts)) {
+        totalAttempts += concept.lastAttempts.length;
+        totalCorrect += concept.lastAttempts.filter(Boolean).length;
+      }
+    });
+
+    // Avoid division by zero
+    overallAccuracy =
+      totalAttempts > 0 ? Math.round((totalCorrect / totalAttempts) * 100) : 0;
+  }
 
   return (
     <div className="profile-page">
@@ -165,6 +185,10 @@ export default function Profile() {
                             ).length
                           : 0}
                       </span>
+                    </div>
+                    <div className="stat-card">
+                      <span className="stat-label">Accuracy</span>
+                      <span className="stat-value">{overallAccuracy}%</span>
                     </div>
                   </div>
                 </section>

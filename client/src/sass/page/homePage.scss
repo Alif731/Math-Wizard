@@ -37,15 +37,18 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   // max-width: 1200px;
   // margin: 0.5rem;
   // width: fit-content;
-  margin: 0.8rem 0;
+  padding: 0.4rem;
+  margin: 0.4rem 0;
   margin-right: 0.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap; // Wrap on small phones
   gap: 1rem;
   @include ut.breakpoint(medium) {
-    // flex-direction: column;
+    flex-wrap: wrap; // Wrap on small phones
+    gap: 0.5rem;
+    padding: 0rem;
+    margin: 0.5rem 0;
   }
   @include ut.breakpoint(small) {
   }
@@ -57,6 +60,14 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     color: $primary-color;
     margin: 0;
   }
+
+  .player-badge-div {
+    @include ut.breakpoint(medium) {
+      display: flex;
+      justify-content: center;
+      width: -webkit-fill-available;
+    }
+  }
   .player-badge {
     border-radius: 12px;
     border-right: 5px solid #f2cc8f;
@@ -64,23 +75,32 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 
     font-family: "ActualComicSans", cursive;
 
-    color: #3d405b;
-    padding: 10px;
+    // color: #3d405b;
+    background: linear-gradient(180deg, #3d405b 0%, #1f2235 100%);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); // Slight lift on hover
+    // animation: none;
+    color: white;
+    text-shadow: none;
+    cursor: pointer;
+    padding: 9px 10px;
     border-radius: 9999px;
     font-weight: bold;
-    font-size: 1.1rem;
+    font-size: 0.8rem;
     @include ut.breakpoint(large) {
       width: fit-content;
+      font-size: 0.85rem;
     }
     @include ut.breakpoint(medium) {
+      justify-content: center;
       width: fit-content;
-      font-size: 0.72rem;
+      font-size: 0.82rem;
+      flex: 1;
     }
     @include ut.breakpoint(small) {
-      font-size: 0.62rem;
+      font-size: 0.72rem;
     }
     @include ut.breakpoint(xSmall) {
-      font-size: 0.47rem;
+      font-size: 0.62rem;
     }
 
     // transition
@@ -90,14 +110,14 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     transition: all 0.5s ease-in-out;
     // animation: tilt-shaking 1s ease-in-out infinite;
 
-    &:hover {
-      background-color: #3d405b;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); // Slight lift on hover
-      // animation: none;
-      color: white;
-      text-shadow: none;
-      cursor: pointer;
-    }
+    // &:hover {
+    //   background-color: #3d405b;
+    //   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); // Slight lift on hover
+    //   // animation: none;
+    //   color: white;
+    //   text-shadow: none;
+    //   cursor: pointer;
+    // }
 
     // --- THE HOVER LOGIC ---
     strong {
@@ -231,20 +251,38 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     width: 100%;
     justify-content: space-between;
     flex-wrap: wrap;
+    @include ut.breakpoint(medium) {
+      width: fit-content;
+    }
   }
 
   .practice-summary__stat {
-    flex: 1 1 30%;
-    min-width: 0;
+    // flex: 1 1 30%;
+    // min-width: 0;
+    @include ut.breakpoint(medium) {
+      flex: 1;
+    }
     strong {
       @include ut.breakpoint(medium) {
-        font-size: 0.9rem;
+        font-size: 0.85rem;
+      }
+      @include ut.breakpoint(small) {
+        font-size: 0.8rem;
+      }
+      @include ut.breakpoint(xSmall) {
+        font-size: 0.7rem;
       }
     }
   }
   .practice-summary__label {
     @include ut.breakpoint(medium) {
       font-size: 0.7rem;
+    }
+    @include ut.breakpoint(small) {
+      font-size: 0.6rem;
+    }
+    @include ut.breakpoint(small) {
+      font-size: 0.5rem;
     }
   }
 
@@ -254,49 +292,104 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
 /* --- Streak System Badge --- */
+// .streak__badge {
+//   position: relative;
+//   margin-left: auto;
+//   width: fit-content;
+//   font-family: "ActualComicSans", cursive;
+//   color: #ffffff;
+//   padding: 8px 20px;
+//   font-size: 1.1rem;
+//   font-weight: 800;
+//   color: #fff;
+//   overflow: hidden;
+//   border-radius: 10px;
+//   background: #22223b;
+//   border: 1px solid rgba(255, 255, 255, 0.1); // ← subtle unified border instead of 4 colored ones
+//   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08); // ← soft inner highlight
+
+//   &.pop-active {
+//     animation: popBounce 0.5s cubic-bezier(0.25, 1.5, 0.5, 1);
+//   }
+//   &.shake-active {
+//     animation: shakeError 0.5s ease-in-out;
+//     background-color: #b91c1c;
+//     color: white;
+//     border-color: rgba(255, 255, 255, 0.1);
+//     .highlight1,
+//     .highlight2 {
+//       text-shadow: none;
+//       color: #f2cc8f;
+//     }
+//   }
+//   @include ut.breakpoint(medium) {
+//     // margin-left: 0;
+//     width: fit-content;
+//     font-size: 0.72rem;
+//   }
+//   @include ut.breakpoint(small) {
+//     font-size: 0.62rem;
+//   }
+//   @include ut.breakpoint(xSmall) {
+//     font-size: 0.47rem;
+//   }
+// }
 .streak__badge {
   position: relative;
-  margin-left: auto;
-  width: 15%;
-  text-align: center;
-  // background: linear-gradient(135deg, #f4f1de, #f2cc8f);
-  // border-right: 5px solid #f2cc8f;
-  // border-bottom: 5px solid #f2cc8f;
+  // margin-left: auto;
+  width: fit-content;
   font-family: "ActualComicSans", cursive;
-  color: #ffffff;
-  // background-color: #22223b;
-  padding: 8px 16px;
-  // border-radius: 20px;
-  font-size: 1.1rem;
-  font-weight: 800;
-  // background-color: #3d405b;
-  // text-shadow: rgba(255, 162, 0, 0.84) 0px 0px 39px; // animation: popInBounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
   color: #fff;
+  padding: 9px 22px;
+  font-size: 0.8rem;
+  font-weight: 800;
   overflow: hidden;
-  border-top: 1px solid rgb(255 49 49);
-  border-right: 1px solid rgb(0 255 255);
-  border-bottom: 1px solid rgb(57 255 20);
-  border-left: 1px solid rgb(255 255 113);
   border-radius: 10px;
-  background: #22223b;
+  // background: #0f0f1a;
+  @include ut.breakpoint(large) {
+    // width: fit-content;
+    font-size: 0.85rem;
+  }
+  @include ut.breakpoint(medium) {
+    text-align: center;
+    flex: 1;
+  }
+  background: linear-gradient(180deg, #3d405b 0%, #1f2235 100%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+
+  // Amber shimmer sweep
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(251, 191, 36, 0.12),
+      transparent
+    );
+    animation: amberShimmer 2.5s ease-in-out infinite;
+  }
+
   &.pop-active {
     animation: popBounce 0.5s cubic-bezier(0.25, 1.5, 0.5, 1);
   }
+
   &.shake-active {
     animation: shakeError 0.5s ease-in-out;
     background-color: #b91c1c;
-    color: white;
-    border-color: #b91c1c;
-
-    /* Force the inner spans to turn white so they don't clash with the red background */
+    border-color: rgba(255, 255, 255, 0.15);
     .highlight1,
     .highlight2 {
       text-shadow: none;
       color: #f2cc8f;
     }
   }
+
   @include ut.breakpoint(medium) {
-    // margin-left: 0;
     width: fit-content;
     font-size: 0.72rem;
   }
@@ -305,6 +398,15 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   }
   @include ut.breakpoint(xSmall) {
     font-size: 0.47rem;
+  }
+}
+
+@keyframes amberShimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 200%;
   }
 }
 

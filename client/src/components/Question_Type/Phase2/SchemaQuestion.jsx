@@ -1,5 +1,5 @@
 // SchemaQuestion.jsx
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import {
   getDisplayedTextAnswer,
   isCompareAnswerInputQuestion,
@@ -237,6 +237,13 @@ const VariableIdentificationPanel = ({
   const variables = question?.visualData?.variables || [];
   const expectedVars = question?.validation?.variables || {};
   const { userInfo } = useSelector((state) => state.auth);
+  const [variableCardsReady, setVariableCardsReady] = useState(false);
+
+  useEffect(() => {
+    setVariableCardsReady(false);
+    const timer = setTimeout(() => setVariableCardsReady(true), 250); // same delay
+    return () => clearTimeout(timer);
+  }, [question?.id]);
 
   const { hasCompleted, markCompleted } = useSchemaProgress(
     question?.schemaKind,
@@ -334,7 +341,10 @@ const VariableIdentificationPanel = ({
       </div>
 
       {/* Variable cards */}
-      <div className="variable-cards">
+      {/* <div className="variable-cards"> */}
+      <div
+        className={`variable-cards ${variableCardsReady ? "animate-unfold" : ""}`}
+      >
         {shuffledVariables.map((variable) => {
           const answer = response?.variables?.[variable.key] || {};
           const expected = expectedVars[variable.key];
@@ -362,7 +372,6 @@ const VariableIdentificationPanel = ({
 
           return (
             <div
-              // className={`variable-row-horizontal ${cardState} ${isGhostHint ? "is-hinted" : ""}`}
               className={`variable-row-horizontal ${cardState} ${isGhostHint ? "is-hinted" : ""}`}
               key={variable.key}
             >
@@ -683,6 +692,7 @@ const SchemaQuestion = ({
   setIsDummyMode,
   isRevealed,
   setIsRevealed,
+  stageResults = {},
 }) => {
   const hasFeedback = Boolean(feedback);
   const isBarModelStage = Boolean(question?.barModelSpec);
@@ -690,15 +700,37 @@ const SchemaQuestion = ({
     question?.moduleStage,
   );
 
+  // Ghost setup for equation board (Module 3)
+  const { userInfo } = useSelector((state) => state.auth);
+  const userId = userInfo?.id || userInfo?._id;
+  // console.log(userInfo); // inspect this
+  const keypadWrapperRef = useRef(null);
+  const {
+    hasCompleted: equationGhostCompleted,
+    markCompleted: markEquationGhostCompleted,
+  } = useSchemaProgress(
+    `equation_${question?.schemaKind}_${userId}`, // ← userId now part of the key
+    userId,
+  );
+
   // Identify practice schemas so we can apply the Equation Board rules
   const isPracticeStage = ["practice", "equations"].includes(
     question?.moduleStage,
   );
+
   const isEquationBoardActive = isEquationStage || isPracticeStage;
+
+  // Only apply ghost logic when the equation board is shown
+  const isEquationGhostHint =
+    isEquationBoardActive &&
+    !isDummyMode &&
+    !isRevealed &&
+    !equationGhostCompleted &&
+    !!userInfo;
 
   const displayQuestion = useMemo(() => {
     if (!isEquationStage) return question;
-    if (!isEquationBoardActive) return question;
+    // if (!isEquationBoardActive) return question;
     const qClone = JSON.parse(JSON.stringify(question));
     const studentSlots = response?.slots || {};
     const isCorrect = hasFeedback && feedback?.isCorrect;
@@ -1060,7 +1092,7 @@ const SchemaQuestion = ({
 
   const isDirectSchemaSolve = question?.moduleStage === "schema_direct_solve";
   const isSolveStage =
-    question?.moduleStage === "schema_solve" || isDirectSchemaSolve; // 🔥 Added helper
+    question?.moduleStage === "schema_solve" || isDirectSchemaSolve;
 
   const canCheck =
     (isVariableIdentificationQuestion(question)
@@ -1080,6 +1112,7 @@ const SchemaQuestion = ({
   const showPromptStrip = !["practice", "equations"].includes(
     question?.moduleStage,
   );
+  const [keypadReady, setKeypadReady] = useState(false);
 
   const locksUnknownSlots = ["word_to_bar", "schema_bar_model"].includes(
     question?.moduleStage,
@@ -1119,6 +1152,10 @@ const SchemaQuestion = ({
 
   const updateActiveSlotValue = (nextValue) => {
     if (hasFeedback) return;
+
+    if (isEquationGhostHint) {
+      markEquationGhostCompleted();
+    }
 
     //  Strict operator validation
     if (response?.activeField === "__operator__") {
@@ -1214,6 +1251,10 @@ const SchemaQuestion = ({
   // 🔥 FIX 4: Push the correct numbers into memory AND clear the active selection
   useEffect(() => {
     if ((hasFeedback && feedback?.isCorrect) || isRevealed) {
+      // 🔥 ADD THIS: If they solved the equation successfully, take the training wheels off!
+      if (isEquationStage && !isDummyMode) {
+        markEquationGhostCompleted();
+      }
       const numericResult = solveMissingValue(question);
       const isFinalAnswerStage =
         question?.moduleStage === "schema_solve" ||
@@ -1386,18 +1427,23 @@ const SchemaQuestion = ({
           }
         });
         if (isCombine && current?.operator !== "+") changed = true;
-        if (current?.activeField !== "leftTerm") changed = true;
+        // if (current?.activeField !== "leftTerm") changed = true;
+        if (current?.activeField !== (isEquationGhostHint ? null : "leftTerm"))
+          changed = true;
         return changed
           ? {
               ...current,
               slots: newSlots,
               operator: isCombine ? "+" : current?.operator,
-              activeField: "leftTerm",
+              // activeField: "leftTerm",
+              activeField: isEquationGhostHint ? null : "leftTerm",
             }
           : current;
       });
     }
+    // }, [question?.id, isEquationStage, isDummyMode, isEquationGhostHint]);
   }, [question?.id, isEquationStage, isDummyMode]);
+
   useEffect(() => {
     const handleKeyDown = (event) => {
       // 1. Global Enter key handler for workflow progression
@@ -1486,6 +1532,8 @@ const SchemaQuestion = ({
         (event.key === "+" || event.key === "-")
       ) {
         event.preventDefault();
+        // 🔥 ADD THIS: Kill the hint if they type the operator
+        if (isEquationGhostHint) markEquationGhostCompleted();
         setResponse((current) => ({ ...(current || {}), operator: event.key }));
         return;
       }
@@ -1514,11 +1562,25 @@ const SchemaQuestion = ({
     setIsRevealed,
   ]);
 
+  useEffect(() => {
+    setKeypadReady(false);
+    const timer = setTimeout(() => setKeypadReady(true), 250);
+    return () => clearTimeout(timer);
+  }, [question?.id, hasFeedback]);
+
   const [showHint, setShowHint] = useState(false);
   useEffect(() => {
     setShowHint(false);
   }, [question]);
 
+  // Add temporarily right before the return in SchemaQuestion
+  // console.log("SOLVE DEBUG", {
+  //   mathResult,
+  //   textAnswer: response?.textAnswer,
+  //   feedbackCorrect: feedback?.isCorrect,
+  //   feedbackKeys: feedback ? Object.keys(feedback) : null,
+  //   isRevealed,
+  // });
   return (
     <div className={`worksheet ${hasFeedback ? "is-completed" : ""}`}>
       <div className="worksheet-utility-bar">
@@ -1569,7 +1631,10 @@ const SchemaQuestion = ({
               <PracticeTabs activeKey={question?.practiceMode} />
             )}
             {isSchemaStage && (
-              <StageTabs currentStage={question?.stageIndex || 1} />
+              <StageTabs
+                currentStage={question?.stageIndex || 1}
+                stageResults={stageResults}
+              />
             )}
           </div>
         </div>
@@ -1609,6 +1674,8 @@ const SchemaQuestion = ({
               setResponse={setResponse}
               locked={hasFeedback}
               feedback={isRevealed ? null : feedback}
+              isGhostHint={isEquationGhostHint} // add
+              markCompleted={markEquationGhostCompleted} // add
             />
           </div>
         </>
@@ -1703,11 +1770,22 @@ const SchemaQuestion = ({
               type="number"
               inputMode="numeric"
               onWheel={(e) => e.target.blur()}
+              // value={
+              //   isRevealed
+              //     ? mathResult ||
+              //       feedback?.correctAnswer ||
+              //       feedback?.expected ||
+              //       ""
+              //     : getDisplayedTextAnswer(response) || ""
+              // }
               value={
                 isRevealed
                   ? mathResult ||
                     feedback?.correctAnswer ||
                     feedback?.expected ||
+                    question?.answer ||
+                    question?.correctAnswer ||
+                    question?.validation?.answer ||
                     ""
                   : getDisplayedTextAnswer(response) || ""
               }
@@ -1723,7 +1801,12 @@ const SchemaQuestion = ({
               placeholder="Type Here"
             />
           </label>
-          <div className={`keypad-animator ${hasFeedback ? "is-hidden" : ""}`}>
+          <div
+            key={question?.id || question?.text}
+            ref={keypadWrapperRef}
+            // className={`keypad-animator ${hasFeedback ? "is-hidden" : ""}`}
+            className={`keypad-animator ${hasFeedback ? "is-hidden" : ""} ${keypadReady ? "animate-unfold" : ""}`}
+          >
             <Keypad
               title="Enter your answer."
               showUnknown={false}
@@ -1759,7 +1842,12 @@ const SchemaQuestion = ({
       )}
 
       {question?.inputMode !== "text_answer" && !isCompareAnswerInput && (
-        <div className={`keypad-animator ${hasFeedback ? "is-hidden" : ""}`}>
+        <div
+          ref={keypadWrapperRef}
+          key={question?.id || question?.text}
+          // className={`keypad-animator ${hasFeedback ? "is-hidden" : ""}`}
+          className={`keypad-animator ${hasFeedback ? "is-hidden" : ""} ${keypadReady ? "animate-unfold" : ""}`}
+        >
           <Keypad
             title={showOperatorPad ? "Choose the operator" : "Enter the number"}
             showUnknown={showUnknownButton}
@@ -1768,9 +1856,10 @@ const SchemaQuestion = ({
             onUnknown={() => updateActiveSlotValue("?")}
             onBackspace={handleBackspace}
             onClear={handleClear}
-            onOperator={(operator) =>
-              setResponse((current) => ({ ...(current || {}), operator }))
-            }
+            onOperator={(operator) => {
+              if (isEquationGhostHint) markEquationGhostCompleted();
+              setResponse((current) => ({ ...(current || {}), operator }));
+            }}
             disabled={hasFeedback || isSubmitting}
           />
         </div>
@@ -1862,7 +1951,11 @@ const SchemaQuestion = ({
             className="worksheet-button worksheet-button--continue"
             onClick={onNext}
           >
-            Next Problem →
+            {isSchemaStage && question?.stageIndex < question?.stageTotal
+              ? "Next Step →"
+              : "Next Problem →"}
+
+            {/* {isSchemaStage ? "Next Step →" : "Next Problem →"} */}
           </button>
         )}
         {/* {(feedback?.isCorrect ||

@@ -882,6 +882,13 @@ const combineMod2Items = [
     difficulty: 2,
   },
   {
+    text: "There are 16 orange balloons and 7 green balloons. How many balloons are there altogether?",
+    values: { partA: 16, partB: 7, total: 23 },
+    labels: { total: "balloons", partA: "orange", partB: "green" },
+    unknownSlot: "total",
+    difficulty: 2,
+  },
+  {
     text: "A vase has 22 flowers. 14 are roses and the rest are daisies. How many daisies are in the vase?",
     values: { partA: 14, partB: 8, total: 22 },
     labels: { total: "flowers", partA: "roses", partB: "daisies" },
@@ -908,13 +915,6 @@ const combineMod2Items = [
     labels: { total: "markers", partA: "thick", partB: "thin" },
     unknownSlot: "partB",
     difficulty: 3,
-  },
-  {
-    text: "There are 16 orange balloons and 7 green balloons. How many balloons are there altogether?",
-    values: { partA: 16, partB: 7, total: 23 },
-    labels: { total: "balloons", partA: "orange", partB: "green" },
-    unknownSlot: "total",
-    difficulty: 2,
   },
   {
     text: "A shelf has 28 library books. 17 are fiction and the rest are nonfiction. How many nonfiction books are there?",
@@ -3374,8 +3374,9 @@ const seedData = async () => {
       // 2. THE TESTING SWITCH
       // Change this variable to the ID you want to test right now.
       // Here are some common jump points:
-      const testStage = "combine_mod1"; // CHANGE THIS TO JUMP
-      // const testStage = "change_mod3"; // CHANGE THIS TO JUMP
+      // ----------------------------------------------867
+      const testStage = "combine_mod5"; // CHANGE THIS TO JUMP
+      // const testStage = "change_mod2"; // CHANGE THIS TO JUMP
 
       // 3. Create the test user with ONLY that stage active
       const testUser = new User({

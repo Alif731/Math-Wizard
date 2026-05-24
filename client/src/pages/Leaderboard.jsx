@@ -41,6 +41,31 @@ const Leaderboard = () => {
     error: leaderboardError,
   } = useGetLeaderboardQuery(50, { skip: !shouldFetchLeaderboard }); // show leaderboard for 50
 
+  /**
+   * Sorts the leaderboard entries.
+   * Primary criteria: Highest number of correct attempts.
+   * Secondary criteria (Tie-breaker): Highest accuracy percentage.
+   */
+  const sortedLeaderboard = useMemo(() => {
+    if (!leaderboardData?.entries) return [];
+
+    // 1. Sort the data
+    const sorted = [...leaderboardData.entries].sort((a, b) => {
+      // Primary: Who has the most correct answers?
+      if (b.correctAttempts !== a.correctAttempts) {
+        return b.correctAttempts - a.correctAttempts;
+      }
+      // Tie-Breaker: If correct answers are tied, who has the better accuracy?
+      return b.accuracy - a.accuracy;
+    });
+
+    // 2. Re-assign the rank numbers (1, 2, 3...) based on the new sorted order
+    return sorted.map((entry, index) => ({
+      ...entry,
+      rank: index + 1,
+    }));
+  }, [leaderboardData]);
+
   const toggleLeaderboard = async () => {
     if (!isTeacher || isToggling) return;
     await updateLeaderboardStatus(!isEnabled).unwrap();
@@ -127,7 +152,8 @@ const Leaderboard = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {leaderboardData.entries.map((entry) => (
+                      {/* {leaderboardData.entries.map((entry) => ( */}
+                      {sortedLeaderboard.map((entry) => (
                         <tr
                           key={entry.userId}
                           className={`rank-row ${entry.rank <= 3 ? `top-${entry.rank}` : ""}`}

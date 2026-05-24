@@ -67,9 +67,10 @@ $worksheet-shadow:
 .worksheet {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.8rem;
   // padding: 1.35rem 1.35rem 1.55rem;
   padding: 1rem 0px;
+  padding-top: 0.6rem;
   color: $worksheet-text;
 }
 
@@ -96,11 +97,11 @@ $worksheet-shadow:
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 8px 18px;
+  padding: 5px 10px;
   // padding: 1rem;
   border-radius: 30px;
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 0.8rem;
   transition: all 0.3s ease;
   margin-right: 24px;
   @include ut.breakpoint(large) {
@@ -189,7 +190,11 @@ $worksheet-shadow:
   background: $worksheet-sage-soft;
   color: #44735f;
 }
-
+.worksheet-tab.is-wrong {
+  background: #fce4ec;
+  border: 1px solid #e57373;
+  color: #c62828;
+}
 .worksheet__topline {
   display: flex;
   justify-content: center;
@@ -272,20 +277,23 @@ $worksheet-shadow:
 
 .worksheet-prompt {
   padding: 0.95rem 1.1rem;
-  line-height: 1.45;
+  // line-height: 1.45;
   font-family: "ActualComicSans", cursive;
   border-left: 5px solid #e07a5f;
   font-weight: 700;
   padding: 0.5rem;
   color: #3d405b;
   background-color: rgba(129, 178, 154, 0.1450980392);
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   border-radius: 10px;
-  @include ut.breakpoint(medium) {
+  @include ut.breakpoint(xLarge) {
     font-size: 1rem;
   }
-  @include ut.breakpoint(small) {
+  @include ut.breakpoint(medium) {
     font-size: 0.9rem;
+  }
+  @include ut.breakpoint(small) {
+    font-size: 0.8rem;
   }
   @include ut.breakpoint(xSmall) {
     font-size: 0.7rem;
@@ -945,7 +953,8 @@ $worksheet-shadow:
   grid-template-columns: 2.2rem 1fr;
   gap: 1.2rem;
   align-items: center;
-  padding: 0.8rem 1.2rem;
+  // padding: 0.8rem 1.2rem;
+  padding: 0.4rem 0.8rem;
   border: 2px solid #e2e8f0;
   border-radius: 12px;
   background: #fff;
@@ -988,7 +997,31 @@ $worksheet-shadow:
 .variable-cards {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1rem;
+  transform-origin: top center;
+  overflow: visible;
+  will-change: max-height, opacity, transform;
+
+  /* Hidden until the animation runs */
+  max-height: 0;
+  opacity: 0;
+
+  &.animate-unfold {
+    animation: variableCardsUnfold 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+}
+
+@keyframes variableCardsUnfold {
+  0% {
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  100% {
+    max-height: 800px; // ← enough for all cards
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .variable-row-horizontal {
@@ -998,7 +1031,8 @@ $worksheet-shadow:
   background: #ffffff;
   border: 3px solid #d7dde5; /* Matches old card border weight */
   border-radius: 16px;
-  padding: 1.25rem 1.5rem;
+  // padding: 1.25rem 1.5rem;
+  padding: 0.5rem 1rem;
   margin-bottom: 1rem;
   gap: 2rem;
   transition: all 0.2s ease;
@@ -1073,7 +1107,7 @@ $worksheet-shadow:
 
 .control-group input {
   width: 100%;
-  height: 3.2rem;
+  height: 2.7rem;
   padding: 0 1rem;
   border: 2px solid #cbd5e1;
   border-radius: 10px;
@@ -1107,7 +1141,7 @@ $worksheet-shadow:
 
 .find-placeholder {
   width: 100%;
-  height: 3.2rem;
+  height: 2.7rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1123,8 +1157,15 @@ $worksheet-shadow:
     #f1f5f9 10px,
     #f1f5f9 20px
   );
-  @include ut.breakpoint(larger) {
+  @include ut.breakpoint(large) {
+    font-size: 1rem;
     height: 2.5rem;
+  }
+  @include ut.breakpoint(medium) {
+    font-size: 0.9rem;
+  }
+  @include ut.breakpoint(xSmall) {
+    font-size: 0.8rem;
   }
 }
 
@@ -1318,7 +1359,7 @@ $worksheet-shadow:
   }
 
   strong {
-    font-size: 2.22rem;
+    font-size: 2rem;
     line-height: 1;
 
     @include ut.breakpoint(medium) {
@@ -1362,9 +1403,26 @@ $worksheet-shadow:
     padding: 0px 0.5rem;
   }
 }
-
+.equation-box.equation-box--operator.is-fixed {
+  border: 2px dashed #94a3b8 !important;
+  background: #f8fafc !important;
+  color: #0f172a !important;
+  cursor: default !important;
+  box-shadow: none !important;
+}
 .equation-box.is-fixed {
-  background: white !important;
+  // border: 2px dashed #94a3b8 !important; /* dashed grey border */
+  // background: #f8fafc !important; /* subtle off-white background */
+  // color: #0f172a !important; /* keep text readable */
+  // cursor: not-allowed !important; /* reinforce that it’s not clickable */
+  // box-shadow: none !important;
+
+  // border: 2px solid #e2e8f0 !important;
+  // background: #f1f5f9 !important;
+  // color: #334155 !important;
+  // cursor: not-allowed !important;
+  // box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+
   @include ut.breakpoint(medium) {
     min-width: 70px;
     min-height: 70px;
@@ -1376,6 +1434,14 @@ $worksheet-shadow:
     padding: 0px 0.5rem;
   }
 }
+.equation-box.is-fixed strong {
+  color: #3d405b !important;
+  // color: #60646b9f !important;
+}
+// .equation-box.is-fixed:focus {
+//   outline: none;
+//   box-shadow: none;
+// }
 
 /* Muted look for fixed boxes ONLY in the bar-to-equation stage */
 .equation-board--bar-stage .equation-box.is-fixed {
@@ -1512,8 +1578,8 @@ $worksheet-shadow:
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.6rem;
-  width: min(100%, 560px);
+  gap: 0.4rem;
+  width: min(100%, 500px);
   margin: 0 auto;
 }
 
@@ -1583,7 +1649,7 @@ $worksheet-shadow:
 .bar-box {
   border: 1px solid rgba(242, 204, 143, 0.84);
   border-radius: 18px;
-  padding: 0.78rem;
+  padding: 0.5rem;
   min-height: 82px;
   display: flex;
   flex-direction: column;
@@ -1599,7 +1665,7 @@ $worksheet-shadow:
   min-height: auto;
 
   strong {
-    font-size: 1.95rem;
+    font-size: 1.5rem;
     line-height: 1;
     @include ut.breakpoint(medium) {
       font-size: 1.4rem;
@@ -2191,7 +2257,7 @@ button.equation-box:active {
 }
 
 .worksheet-keypad {
-  width: min(100%, 560px);
+  width: min(100%, 500px);
   margin: 0 auto;
   border-radius: 20px;
   background: linear-gradient(
@@ -2312,15 +2378,19 @@ button.equation-box:active {
   background: #ffffff;
   border: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: 24px;
-  padding: 1.75rem;
+  padding: 1rem 1.5rem;
   box-shadow:
     0 4px 6px -1px rgba(15, 23, 42, 0.03),
     0 12px 36px -4px rgba(15, 23, 42, 0.08);
-  gap: 1.5rem;
-  width: min(100%, 560px);
-  margin: 1.5rem auto;
+  gap: 0.5rem;
+  width: min(100%, 450px);
+  margin: 0rem auto;
   display: flex;
   flex-direction: column;
+  @include ut.breakpoint(large) {
+    gap: 0.55rem;
+    width: min(100%, 400px);
+  }
   @include ut.breakpoint(medium) {
     width: fit-content;
   }
@@ -2602,7 +2672,7 @@ button.equation-box:active {
   align-items: center;
   gap: 15px;
   border: 4px solid #3d405b;
-  max-width: 440px;
+  max-width: 400px;
   margin: 1.5rem auto;
   cursor: pointer;
 
@@ -2644,7 +2714,7 @@ button.equation-box:active {
     outline: none;
     border: 3px solid #3d405b;
     padding: 12px;
-    font-size: 2.5rem;
+    font-size: 1.7rem;
     font-weight: 900;
     background: #fff;
     color: #3d405b;
@@ -2654,11 +2724,17 @@ button.equation-box:active {
     z-index: 3;
     text-align: center;
     border-radius: 12px;
-    @include ut.breakpoint(medium) {
+    @include ut.breakpoint(large) {
       font-size: 1.6rem;
+      padding: 10px;
+    }
+    @include ut.breakpoint(medium) {
+      font-size: 1.5rem;
+      padding: 8px;
     }
     @include ut.breakpoint(small) {
       font-size: 1.4rem;
+      padding: 8px;
     }
     @include ut.breakpoint(xSmall) {
       font-size: 1.2rem;
@@ -2798,7 +2874,7 @@ button.equation-box:active {
 
 .worksheet-feedback {
   margin: auto;
-  width: min(100%, 560px);
+  width: min(100%, 500px);
   padding: 0.95rem 0rem;
   text-align: center;
   font-size: 1rem;
@@ -2886,6 +2962,7 @@ button.equation-box:active {
 .worksheet-actions {
   width: 260px;
   margin: 0 auto;
+  // padding: 0.7rem;
   @include ut.breakpoint(larger) {
   }
   @include ut.breakpoint(large) {
@@ -3030,7 +3107,15 @@ button.equation-box:active {
     0 8px 0 #3d405b,
     inset 0 -5px 0 rgba(0, 0, 0, 0.15),
     inset 0 4px 0 rgba(255, 255, 255, 0.7);
-
+  @include ut.breakpoint(medium) {
+    padding: 1rem 1.75rem;
+  }
+  @include ut.breakpoint(small) {
+    padding: 0.7rem 1.3rem;
+  }
+  @include ut.breakpoint(xSmall) {
+    padding: 0.5rem 1rem;
+  }
   &:hover:enabled {
     // background: #e9a840;
     background: #fcd34d;
@@ -3058,6 +3143,7 @@ button.equation-box:active {
       inset 0 -4px 0 rgba(0, 0, 0, 0.05);
     cursor: not-allowed;
     transform: translateY(0);
+    z-index: -10;
   }
 }
 
@@ -3319,10 +3405,11 @@ button.equation-box:active {
 /* --- Utility Bar Layout --- */
 .worksheet-utility-bar {
   display: flex;
-  height: 55px;
+  // height: 55px;
+  height: 45px;
   justify-content: center;
   align-items: flex-end;
-  padding: 0 0.3rem;
+  padding: 0 0.5rem;
   @include ut.breakpoint(medium) {
     flex-direction: column;
     align-items: center;
@@ -3337,10 +3424,10 @@ button.equation-box:active {
     width: 37%;
     width: fit-content;
     @include ut.breakpoint(xLarge) {
-      font-size: 0.9rem;
+      font-size: 0.8rem;
     }
     @include ut.breakpoint(large) {
-      font-size: 0.73rem;
+      font-size: 0.64rem;
     }
     @include ut.breakpoint(medium) {
       font-size: 0.74rem;
@@ -3348,7 +3435,7 @@ button.equation-box:active {
       width: -webkit-fill-available;
     }
     @include ut.breakpoint(small) {
-      font-size: 0.8rem;
+      font-size: 0.7rem;
     }
     @include ut.breakpoint(xSmall) {
       font-size: 0.6rem;
@@ -3370,12 +3457,13 @@ button.equation-box:active {
 /* 1. Base Button Styles */
 .worksheet-help {
   // margin-right: 0.5rem;
-  padding: 0.6rem 1.25rem;
+  padding: 0.6rem 1rem;
   text-align: center;
-  font-size: 0.96rem;
+  // font-size: 0.96rem;
   font-weight: 800;
   color: #ffd166;
-  background: linear-gradient(180deg, #2a2d3e 0%, #1a1c29 100%);
+  background: linear-gradient(180deg, #3d405b 0%, #1f2235 100%);
+  // background: linear-gradient(180deg, #2a2d3e 0%, #1a1c29 100%);
   border-radius: 99px;
   box-shadow: 3px 3px 0 #e9b50b;
 
@@ -3415,7 +3503,7 @@ button.equation-box:active {
 
 .sparkle__main {
   @include ut.breakpoint(large) {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
   }
   @include ut.breakpoint(medium) {
     font-size: 0.8rem;
@@ -3570,7 +3658,7 @@ button.equation-box:active {
    ========================================= */
 
 .worksheet-keypad {
-  width: min(100%, 560px);
+  width: min(100%, 500px);
   margin: 0 auto;
   border-radius: 20px;
   background: linear-gradient(
@@ -3583,7 +3671,8 @@ button.equation-box:active {
 
 .worksheet-keypad__title {
   background: linear-gradient(180deg, rgba(61, 64, 91, 0.068) 0%, #fbf2e8 100%);
-  padding: 0.82rem 0.98rem;
+  // padding: 0.82rem 0.98rem;
+  padding: 0.5rem 1rem !important;
   font-size: 1rem;
   font-weight: 700;
   color: $worksheet-text;
@@ -3605,7 +3694,7 @@ button.equation-box:active {
 .worksheet-keypad__operator {
   position: relative;
   cursor: pointer;
-  min-height: 56px;
+  // min-height: 56px;
   border-radius: 14px;
 
   border: 1px solid rgba(242, 204, 143, 0.8);
@@ -4105,13 +4194,28 @@ button.equation-box:active {
   transform-origin: top center;
   overflow: hidden;
   will-change: max-height, opacity, transform;
-  animation: keypadUnfold 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 
-  /* Plays when the student hits Submit */
-  &.is-hidden {
-    animation: keypadCollapse 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-    pointer-events: none; /* Stops accidental clicks while it shrinks */
+  /* Hidden by default – no animation */
+  max-height: 0;
+  opacity: 0;
+
+  &.animate-unfold {
+    animation: keypadUnfold 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   }
+
+  &.is-hidden {
+    animation: keypadCollapse 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    pointer-events: none;
+  }
+}
+.keypad-animator.animate-unfold {
+  animation: keypadUnfold 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Collapse (hidden) stays the same */
+.keypad-animator.is-hidden {
+  animation: keypadCollapse 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  pointer-events: none;
 }
 
 /* Add this to your SASS file */

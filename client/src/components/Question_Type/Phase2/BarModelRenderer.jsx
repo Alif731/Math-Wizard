@@ -2463,6 +2463,12 @@ const BarModel = ({
   // 3. The definitive safe Ghosting flag
   const isGhostHint =
     !hasStarted && !isDummyMode && !isReadOnly && !hasCompleted && !!userId;
+  // // 🔥 NEW: Instantly kill auto-focus if the ghost UI is active
+  // useEffect(() => {
+  //   if (isGhostHint && response?.activeField !== null) {
+  //     setResponse((prev) => ({ ...prev, activeField: null }));
+  //   }
+  // }, [isGhostHint, response?.activeField, setResponse]);
   // 4. Mark as completed automatically when they get it right
   useEffect(() => {
     if (isAttempted && isCorrect && !isDummyMode && !isReadOnly) {

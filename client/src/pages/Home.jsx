@@ -36,6 +36,41 @@ const Home = () => {
 
   const prevStreakRef = useRef(0);
 
+  // ==========================================================
+  // PERSISTENT STAGE TRACKING (Survives Page Reloads!)
+  // ==========================================================
+  //  Module 4 tab UI error and correct color
+  const questionId = problem?.question?.id || problem?.question?._id;
+
+  const [stageResults, setStageResults] = useState(() => {
+    const saved = sessionStorage.getItem("currentStageResults");
+    return saved ? JSON.parse(saved) : {};
+  });
+
+  const [failedAnyStage, setFailedAnyStage] = useState(() => {
+    return sessionStorage.getItem("currentFailedAnyStage") === "true";
+  });
+
+  // 1. Instantly save to SessionStorage whenever they change
+  useEffect(() => {
+    sessionStorage.setItem("currentStageResults", JSON.stringify(stageResults));
+  }, [stageResults]);
+
+  useEffect(() => {
+    sessionStorage.setItem("currentFailedAnyStage", failedAnyStage);
+  }, [failedAnyStage]);
+
+  // 2. Wipe the memory clean ONLY when a brand new question starts
+  useEffect(() => {
+    if (problem?.question?.stageIndex === 1) {
+      setStageResults({});
+      setFailedAnyStage(false);
+      sessionStorage.removeItem("currentStageResults");
+      sessionStorage.removeItem("currentFailedAnyStage");
+    }
+  }, [problem?.question?.stageIndex, questionId]);
+  // ==========================================================
+
   useEffect(() => {
     const currentStreak = status?.streak || 0;
     const prevStreak = prevStreakRef.current;
@@ -129,6 +164,9 @@ const Home = () => {
       pendingMasteryRef.current = null;
       return; // Don't refetch yet — let the modal show first
     }
+
+    // 🔥 ADD THIS: Instantly wipe the CSS animation classes so they don't replay while loading!
+    setStatAnim({ key: 0, colorClass: "" });
     refetchProblem();
   };
 
@@ -141,11 +179,68 @@ const Home = () => {
     attempted: problem?.adaptiveState?.attemptCount || 0,
     streak: isAnimatingFailure ? 0 : status?.streak || 0,
   };
+  // 🔥 NEW: Lifted State from QuestionCard for Score Animations
+  const [pendingResult, setPendingResult] = useState(null);
+  const [statAnim, setStatAnim] = useState({ key: 0, colorClass: "" });
+
+  useEffect(() => {
+    if (pendingResult === "correct") {
+      setStatAnim((prev) => ({
+        key: prev.key + 1,
+        colorClass: "stat-pop-success",
+      }));
+    } else if (pendingResult === "wrong") {
+      setStatAnim((prev) => ({
+        key: prev.key + 1,
+        colorClass: "stat-pop-error",
+      }));
+    }
+  }, [pendingResult]);
+
+  useEffect(() => {
+    setPendingResult(null);
+    setStatAnim({ key: 0, colorClass: "" });
+  }, [problem?.question?.id]);
+
+  const displayAttempted = pendingResult
+    ? practiceSummary.attempted + 1
+    : practiceSummary.attempted;
+  const displayCorrect =
+    pendingResult === "correct"
+      ? practiceSummary.correct + 1
+      : practiceSummary.correct;
 
   if (!username) return <div className="loading-state">Loading...</div>;
   if (!problem) return <div className="loading-state">Loading...</div>;
 
   // Greet According to time
+  // const getGreeting = () => {
+  //   const hour = new Date().getHours();
+
+  //   if (hour < 12) {
+  //     return {
+  //       firstLetter: "M",
+  //       rest: "orning",
+  //       Icon: Sunrise,
+  //       color: "#f59e0b",
+  //     }; // Amber for Morning
+  //   } else if (hour < 17) {
+  //     return {
+  //       firstLetter: "A",
+  //       rest: "fternoon",
+  //       Icon: Sun,
+  //       color: "#eab308",
+  //     }; // Yellow for Afternoon
+  //   } else {
+  //     return {
+  //       firstLetter: "E",
+  //       rest: "vening",
+  //       Icon: Moon,
+  //       color: "#e9ab47",
+  //     };
+  //   }
+  // };
+  // const { firstLetter, rest, Icon, color } = getGreeting();
   const getGreeting = () => {
     const hour = new Date().getHours();
 
@@ -154,48 +249,90 @@ const Home = () => {
         firstLetter: "M",
         rest: "orning",
         Icon: Sunrise,
-        color: "#f59e0b",
-      }; // Amber for Morning
+        iconColor: "#f59e0b", // Bright Amber
+        // textColor: "#d97706", // Deep Amber for readable text
+      };
     } else if (hour < 17) {
       return {
         firstLetter: "A",
         rest: "fternoon",
         Icon: Sun,
-        color: "#eab308",
-      }; // Yellow for Afternoon
+        iconColor: "#eab308", // Bright Gold
+        // textColor: "#ca8a04", // Deep Gold for readable text
+      };
     } else {
       return {
         firstLetter: "E",
         rest: "vening",
         Icon: Moon,
-        color: "#e9ab47",
+        iconColor: "#8b5cf6", // Twilight Purple
+        // textColor: "#6d28d9", // Deep Purple for readable text
       };
     }
   };
-  const { firstLetter, rest, Icon, color } = getGreeting();
+
+  // Destructure the new color variables
+  const { firstLetter, rest, Icon, iconColor, textColor } = getGreeting();
 
   return (
     <div className="home-page">
       <header className="game-header">
-        <div className="player-badge highlight2">
-          <span
-            style={{
-              marginRight: "8px",
-              display: "inline-flex",
-              alignItems: "center",
-            }}
-          >
-            <Icon size={22} color={color} strokeWidth={2.5} />
-          </span>
-          <span className="highlight1">G</span>
-          <span style={{ marginRight: "6px" }}>ood</span>
-          <span className="highlight2"> {firstLetter}</span>
-          {rest} {username}
-          <strong style={{ marginLeft: "0.4rem" }}>
+        <div className="player-badge-div">
+          <div className="player-badge highlight2">
+            <span
+              style={{
+                marginRight: "8px",
+                display: "inline-flex",
+                alignItems: "center",
+              }}
+            >
+              <Icon size={22} color={iconColor} strokeWidth={2.5} />
+            </span>
+            <span className="highlight1">G</span>
+            <span style={{ marginRight: "6px" }}>ood</span>
+            <span className="highlight2"> {firstLetter}</span>
+            {rest} {username}
+            {/* <strong style={{ marginLeft: "0.4rem" }}>
             {" "}
             . <span className="highlight1">L</span>et's Continue this Journey!
+          </strong> */}
+          </div>
+        </div>
+
+        {/* CORRECT STAT */}
+        <div className="practice-summary__stat">
+          <span
+            className="practice-summary__label"
+            style={{ marginRight: "0.5rem" }}
+          >
+            Correct:
+          </span>
+          <strong
+            key={`correct-anim-${statAnim.key}`}
+            className={statAnim.colorClass}
+          >
+            {displayCorrect}
           </strong>
         </div>
+
+        {/* ATTEMPTED STAT */}
+        <div className="practice-summary__stat">
+          <span
+            className="practice-summary__label"
+            style={{ marginRight: "0.5rem" }}
+          >
+            Attempted:
+          </span>
+          <strong
+            /* Uses the exact same animation key so they pop at the exact same time */
+            key={`attempt-anim-${statAnim.key}`}
+            /* Only applies the subtle bump if an animation is actively playing */
+            className={statAnim.key > 0 ? "stat-pop-neutral" : ""}
+          >
+            {displayAttempted}
+          </strong>
+        </div>
+        {/* </div> */}
         {(practiceSummary.streak >= 1 || isAnimatingFailure) && (
           <div
             className={`streak__badge ${isAnimatingSuccess ? "pop-active" : ""} ${isAnimatingFailure ? "shake-active" : ""}`}
@@ -203,6 +340,7 @@ const Home = () => {
             <span className="highlight1">S</span>treak:{" "}
             <span className="highlight2">x</span>
             {practiceSummary.streak}
+            <span className="top"></span>
             <span className="right"></span>
             <span className="bottom"></span>
             <span className="left"></span>
@@ -280,10 +418,17 @@ const Home = () => {
             <QuestionCard
               key={problem.question.id}
               problem={problem}
+              failedAnyStage={failedAnyStage}
+              setFailedAnyStage={setFailedAnyStage}
+              stageResults={stageResults}
+              setStageResults={setStageResults}
               onSubmit={handleAnswerSubmit}
               onNext={handleNextProblem}
               disabled={isSubmitting}
               practiceSummary={practiceSummary}
+              pendingResult={pendingResult}
+              setPendingResult={setPendingResult}
+              statAnim={statAnim}
             />
           )
         )}
