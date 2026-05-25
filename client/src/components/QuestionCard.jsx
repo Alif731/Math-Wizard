@@ -52,6 +52,8 @@ const QuestionCard = ({
   pendingResult,
   setPendingResult,
   statAnim,
+  disableAutoNext = false,
+  hasPendingMastery = false,
 }) => {
   const [answer, setAnswer] = useState(() =>
     createInitialResponse(problem?.question),
@@ -70,6 +72,7 @@ const QuestionCard = ({
   // NEW: Holds our animation state safely
   // const [statAnim, setStatAnim] = useState({ key: 0, colorClass: "" });
   const [isRevealed, setIsRevealed] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
 
   // Module 4 single question counter
   // const [pendingResult, setPendingResult] = useState(null); // 'correct' | 'wrong' | null
@@ -78,26 +81,6 @@ const QuestionCard = ({
   const isFinalStage =
     !isSchemaStage ||
     problem?.question?.stageIndex === problem?.question?.stageTotal;
-
-  // const prevQuestionIdRef = useRef(problem?.question?.id);
-  // useEffect(() => {
-  //   const currentId = problem?.question?.id;
-  //   if (currentId !== prevQuestionIdRef.current) {
-  //     // Reset all states only when a completely new question loads
-  //     setAnswer(createInitialResponse(problem?.question));
-  //     setFeedback(null);
-  //     setIsSuccess(false);
-  //     setIsError(false);
-  //     setSelectedOption(null);
-  //     setStatAnim({ key: 0, colorClass: "" });
-  //     setIsDummyMode(false);
-  //     setFailedFirstTry(false);
-  //     setIsRevealed(false);
-  //     setPendingResult(null);
-  //     setFailedAnyStage(false);
-  //     prevQuestionIdRef.current = currentId;
-  //   }
-  // }, [problem?.question?.id]);
 
   // 1. When a new question loads, completely reset everything (including the animation)
   useEffect(() => {
@@ -113,6 +96,8 @@ const QuestionCard = ({
     // setPendingResult(null);
     // setFailedAnyStage(false);
     // setStageResults({});
+    setIsExiting(false);
+    setShowLoadingMsg(false);
   }, [problem]);
 
   useEffect(() => {
@@ -151,7 +136,6 @@ const QuestionCard = ({
   //     }));
   //   }
   // }, [isSuccess, isError]);
-
   useEffect(() => {
     if (isDummyMode) {
       setFeedback(null);
@@ -167,15 +151,90 @@ const QuestionCard = ({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const playSuccessSound = () => {
-    audioSuccess.currentTime = 0;
-    audioSuccess.play().catch(() => {});
-  };
+  //  ------------------------------ Automatically goes to next question ----------------------
+  // --- AUTO-ADVANCE COUNTDOWN LOGIC ---
+  const [autoNextCountdown, setAutoNextCountdown] = useState(null);
+  const [showLoadingMsg, setShowLoadingMsg] = useState(false);
 
-  const playErrorSound = () => {
-    audioFailure.currentTime = 0;
-    audioFailure.play().catch(() => {});
-  };
+  // 1. Start the countdown ONLY on a perfect final win
+  // useEffect(() => {
+  //   if (pendingResult === "correct" && !disableAutoNext) {
+  //     setAutoNextCountdown(3);
+  //   }
+  // }, [pendingResult, disableAutoNext]);
+
+  useEffect(() => {
+    if (disableAutoNext) {
+      setAutoNextCountdown(null);
+    }
+  }, [disableAutoNext]);
+
+  // Auto‑advance after reveal (when answer was wrong)
+  // useEffect(() => {
+  //   if (isRevealed && feedback && !feedback.isCorrect && !disableAutoNext) {
+  //     setAutoNextCountdown(3);
+  //   }
+  // }, [isRevealed, feedback, disableAutoNext]);
+
+  // 2. Handle the ticking timer
+  // useEffect(() => {
+  //   if (autoNextCountdown === null) return;
+
+  //   // if (autoNextCountdown === 0) {
+  //   //   // setFadeOut(true);
+  //   //   handleNext();
+  //   //   setTimeout(() => handleNext(), 400);
+  //   //   return;
+  //   // }
+  //   if (autoNextCountdown === 0) {
+  //     setTimeout(() => {
+  //       handleNext(); // load next problem after animation finishes
+  //     }, 350); // must match the CSS duration
+  //     return;
+  //   }
+
+  //   // // // When 1 second remains, start the fade‑out
+  //   if (autoNextCountdown === 1) {
+  //     setIsExiting(true);
+  //   }
+
+  //   const timer = setTimeout(() => {
+  //     setAutoNextCountdown((prev) => prev - 1);
+  //   }, 1000); // 1 second intervals
+
+  //   return () => clearTimeout(timer);
+  // }, [autoNextCountdown]);
+
+  // ------------------------ Smart Auto-Scroll for Module 1 ------------------------
+  useEffect(() => {
+    if (autoNextCountdown === null) return;
+
+    if (autoNextCountdown === 0) {
+      setIsExiting(true);
+      setAutoNextCountdown(null); // prevent the timer from firing again
+      setTimeout(() => {
+        setShowLoadingMsg(true);
+        setPendingResult(null); // clear the “+1” popup
+        onNext(); // trigger the parent to fetch the next problem
+      }, 350); // match the CSS animation duration
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setAutoNextCountdown((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [autoNextCountdown]);
+  // const playSuccessSound = () => {
+  //   audioSuccess.currentTime = 0;
+  //   audioSuccess.play().catch(() => {});
+  // };
+
+  // const playErrorSound = () => {
+  //   audioFailure.currentTime = 0;
+  //   audioFailure.play().catch(() => {});
+  // };
 
   const applyFeedback = (result) => {
     setFeedback(result);
@@ -196,27 +255,47 @@ const QuestionCard = ({
   };
 
   const handleNext = async () => {
-    // Standard local reset
-    setIsDummyMode(false);
-    setFailedFirstTry(false);
-    setFeedback(null);
-    setIsSuccess(false);
-    setIsError(false);
-    setIsRevealed(false);
-    setAnswer(createInitialResponse(problem?.question));
+    // 1. 🔥 START THE EXIT ANIMATION
+    setIsExiting(true);
 
-    // 🔥 ADD THIS: Instantly kill the "Correct" popup so it doesn't linger!
+    // 2. Kill the popup and countdown immediately
     setPendingResult(null);
+    setAutoNextCountdown(null);
 
-    onNext();
+    // 3. Wait for the CSS fade out (350ms), then fetch the next question
+    setTimeout(() => {
+      setShowLoadingMsg(true);
+      onNext();
+    }, 350);
 
-    // 🔥 ONLY reset if it's NOT a multi-stage question.
-    // If it is multi-stage, Home.jsx handles the reset on stageIndex 1.
     if (!isSchemaStage) {
       setFailedAnyStage(false);
     }
-  };
 
+    // 🛑 IMPORTANT: No manual state wipes here!
+    // The `useEffect(() => { ... }, [problem])` at the top of the file
+    // will wipe the board clean the millisecond the new question arrives.
+  };
+  // !---------- do not remove ---
+  // const handleNext = async () => {
+  //   // 1. 🔥 START THE EXIT ANIMATION
+  //   setIsExiting(true);
+
+  //   // 2. Kill the popup and countdown immediately
+  //   setPendingResult(null);
+  //   setAutoNextCountdown(null);
+
+  //   // 3. Notify parent to fetch next question
+  //   onNext();
+
+  //   if (!isSchemaStage) {
+  //     setFailedAnyStage(false);
+  //   }
+
+  //   // 🛑 IMPORTANT: We deleted the manual state wipes here!
+  //   // Wiping them here before the network responds is what caused the flicker.
+  //   // We will let the useEffect handle wiping them when the new problem actually arrives.
+  // };
   const submitStructuredResponse = async (overrideResponse) => {
     if (!problem?.question || disabled) return;
 
@@ -295,6 +374,14 @@ const QuestionCard = ({
       // }
 
       setIsSuccess(isDummyCorrect && isFinalStage);
+      if (
+        isDummyCorrect &&
+        isFinalStage &&
+        !disableAutoNext &&
+        !hasPendingMastery
+      ) {
+        setAutoNextCountdown(3);
+      }
       setIsError(!isDummyCorrect && isFinalStage);
       // if (isSchemaStage)
       //   setStageResults((prev) => ({
@@ -330,7 +417,21 @@ const QuestionCard = ({
           [problem?.question?.stageIndex]: isLocalCorrect ? "correct" : "wrong",
         })); // ← ADD
       if (isFinalStage && !isDummyMode)
-        setPendingResult(isLocalCorrect ? "correct" : "wrong");
+        // setPendingResult(isLocalCorrect ? "correct" : "wrong");
+        setPendingResult(
+          isLocalCorrect && !failedAnyStage ? "correct" : "wrong",
+        );
+
+      if (
+        isLocalCorrect &&
+        isFinalStage &&
+        !isDummyMode &&
+        !disableAutoNext &&
+        !failedAnyStage &&
+        !hasPendingMastery
+      ) {
+        setAutoNextCountdown(3);
+      }
 
       if (!isLocalCorrect) setFailedFirstTry(true);
 
@@ -422,6 +523,16 @@ const QuestionCard = ({
         setPendingResult(
           result?.isCorrect && !failedAnyStage ? "correct" : "wrong",
         );
+      if (
+        result?.isCorrect &&
+        !failedAnyStage &&
+        isFinalStage &&
+        !isDummyMode &&
+        !disableAutoNext &&
+        !hasPendingMastery
+      ) {
+        setAutoNextCountdown(3);
+      }
 
       if (!result.isCorrect && isBarModelStage && !isDummyMode)
         setFailedFirstTry(true);
@@ -586,7 +697,7 @@ const QuestionCard = ({
   // };
   return (
     <div className="question-shell">
-      <div className="question-shell__main">
+      <div className={`question-shell__main ${isExiting ? "is-exiting" : ""}`}>
         {/* {isSuccess && isFinalStage && !failedAnyStage && !isDummyMode && (
           <Confetti
             key={`success-confetti-${statAnim.key}`}
@@ -633,6 +744,9 @@ const QuestionCard = ({
               isRevealed={isRevealed}
               setIsRevealed={setIsRevealed}
               stageResults={stageResults}
+              autoNextCountdown={autoNextCountdown}
+              disableAutoNext={disableAutoNext}
+              isExiting={isExiting}
             />
           ) : (
             <>
@@ -709,6 +823,14 @@ const QuestionCard = ({
           </div>
         )}
       </div>
+      {showLoadingMsg && (
+        <div className="loading-next-overlay">
+          <div className="status-card loading status-card--inline">
+            <div className="spinner">⏳</div>
+            <p>Loading Next Challenge…</p>
+          </div>
+        </div>
+      )}
 
       {showTelemetry && (
         <aside className="question-shell__telemetry">

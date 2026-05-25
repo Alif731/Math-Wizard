@@ -55,7 +55,7 @@ export const PracticeTabs = ({ activeKey }) => {
 };
 
 export const StageTabs = ({ currentStage, stageResults = {} }) => {
-  console.log("StageTabs render", { currentStage, stageResults });
+  // console.log("StageTabs render", { currentStage, stageResults });
   return (
     <div className="worksheet-tabs progression-track">
       {SCHEMA_STAGES.map((stage) => {

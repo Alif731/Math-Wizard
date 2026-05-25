@@ -182,14 +182,20 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     }
   }
 
-  &.loading {
-    color: $page-text-soft;
+  .loading-next-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.7); // already present
+    z-index: 10;
 
-    .spinner {
-      font-size: 2.3rem;
-      margin-bottom: 0.9rem;
-      display: inline-block;
-      animation: spin 1s linear infinite;
+    // Remove default card margins so it sits perfectly in the center
+    .status-card {
+      margin: 0;
+      background: transparent;
+      box-shadow: none;
     }
   }
 

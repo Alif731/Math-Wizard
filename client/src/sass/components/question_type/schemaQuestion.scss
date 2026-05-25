@@ -71,6 +71,7 @@ $worksheet-shadow:
   // padding: 1.35rem 1.35rem 1.55rem;
   padding: 1rem 0px;
   padding-top: 0.6rem;
+  // padding-top: 10.6rem !important;
   color: $worksheet-text;
 }
 
@@ -997,13 +998,13 @@ $worksheet-shadow:
 .variable-cards {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  transform-origin: top center;
-  overflow: visible;
-  will-change: max-height, opacity, transform;
+  gap: 0.5rem;
 
-  /* Hidden until the animation runs */
-  max-height: 0;
+  transform-origin: top center;
+  // overflow: hidden; // clips the scaled content
+  will-change: transform, opacity;
+
+  transform: scaleY(0);
   opacity: 0;
 
   &.animate-unfold {
@@ -1013,16 +1014,44 @@ $worksheet-shadow:
 
 @keyframes variableCardsUnfold {
   0% {
-    max-height: 0;
+    transform: scaleY(0);
     opacity: 0;
-    transform: translateY(-20px) scale(0.95);
   }
   100% {
-    max-height: 800px; // ← enough for all cards
+    transform: scaleY(1);
     opacity: 1;
-    transform: translateY(0) scale(1);
   }
 }
+// .variable-cards {
+//   display: flex;
+//   flex-direction: column;
+//   // gap: 1rem;
+//   gap: 0.5rem;
+//   transform-origin: top center;
+//   overflow: visible;
+//   will-change: max-height, opacity, transform;
+
+//   /* Hidden until the animation runs */
+//   max-height: 0;
+//   opacity: 0;
+
+//   &.animate-unfold {
+//     animation: variableCardsUnfold 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+//   }
+// }
+
+// @keyframes variableCardsUnfold {
+//   0% {
+//     max-height: 0;
+//     opacity: 0;
+//     transform: translateY(-20px) scale(0.95);
+//   }
+//   100% {
+//     max-height: 800px; // ← enough for all cards
+//     opacity: 1;
+//     transform: translateY(0) scale(1);
+//   }
+// }
 
 .variable-row-horizontal {
   display: flex;
@@ -2960,7 +2989,7 @@ button.equation-box:active {
 }
 
 .worksheet-actions {
-  width: 260px;
+  min-width: 200px;
   margin: 0 auto;
   // padding: 0.7rem;
   @include ut.breakpoint(larger) {
@@ -4162,19 +4191,28 @@ button.equation-box:active {
 }
 
 /* -------------------- KEYPAD EXIT ANIMATION --------------------- */
+// @keyframes keypadUnfold {
+//   0% {
+//     max-height: 0;
+//     opacity: 0;
+//     transform: translateY(-20px) scale(0.95);
+//   }
+//   100% {
+//     max-height: 400px; /* Adjust if your keypad is taller */
+//     opacity: 1;
+//     transform: translateY(0) scale(1);
+//   }
+// }
 @keyframes keypadUnfold {
   0% {
-    max-height: 0;
+    transform: scaleY(0);
     opacity: 0;
-    transform: translateY(-20px) scale(0.95);
   }
   100% {
-    max-height: 400px; /* Adjust if your keypad is taller */
+    transform: scaleY(1);
     opacity: 1;
-    transform: translateY(0) scale(1);
   }
 }
-
 /* --- 2. THE CLOSING ANIMATION --- */
 @keyframes keypadCollapse {
   0% {
@@ -4190,13 +4228,31 @@ button.equation-box:active {
   }
 }
 
+// .keypad-animator {
+//   transform-origin: top center;
+//   overflow: hidden;
+//   will-change: max-height, opacity, transform;
+
+//   /* Hidden by default – no animation */
+//   max-height: 0;
+//   opacity: 0;
+
+//   &.animate-unfold {
+//     animation: keypadUnfold 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+//   }
+
+//   &.is-hidden {
+//     animation: keypadCollapse 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+//     pointer-events: none;
+//   }
+// }
 .keypad-animator {
   transform-origin: top center;
   overflow: hidden;
-  will-change: max-height, opacity, transform;
+  will-change: transform, opacity;
 
-  /* Hidden by default – no animation */
-  max-height: 0;
+  /* Hidden but retains full layout height */
+  transform: scaleY(0);
   opacity: 0;
 
   &.animate-unfold {

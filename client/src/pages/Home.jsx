@@ -29,12 +29,14 @@ const Home = () => {
 
   const { data: status } = useGetUserStatusQuery(username, { skip: !username });
   const [submitAnswer, { isLoading: isSubmitting }] = useSubmitAnswerMutation();
+  const [masteryBuffered, setMasteryBuffered] = useState(false);
 
   // Streak Animation ----------------------------
   const [isAnimatingSuccess, setIsAnimatingSuccess] = useState(false);
   const [isAnimatingFailure, setIsAnimatingFailure] = useState(false);
 
   const prevStreakRef = useRef(0);
+  const [hasPendingMastery, setHasPendingMastery] = useState(false);
 
   // ==========================================================
   // PERSISTENT STAGE TRACKING (Survives Page Reloads!)
@@ -124,8 +126,9 @@ const Home = () => {
         attempts: entry?.attemptCount || 1,
         accuracy: windowAccuracy,
       };
+      setHasPendingMastery(true);
     }
-
+    setMasteryBuffered(true);
     // Keep track for the next render
     prevConceptStatus.current[currentConceptId] = currentStatus;
   }, [currentConceptId, status]);
@@ -154,6 +157,13 @@ const Home = () => {
       throw err;
     }
   };
+
+  const [displayProblem, setDisplayProblem] = useState(null);
+  useEffect(() => {
+    if (problem && !loadingProblem) {
+      setDisplayProblem(problem);
+    }
+  }, [problem, loadingProblem]);
 
   const handleNextProblem = () => {
     // Flush any pending mastery modal BEFORE loading the next question.
@@ -200,7 +210,17 @@ const Home = () => {
   useEffect(() => {
     setPendingResult(null);
     setStatAnim({ key: 0, colorClass: "" });
+    setHasPendingMastery(false);
   }, [problem?.question?.id]);
+
+  // ----------------Show Reward Modal Instantly-----------------
+  useEffect(() => {
+    if (pendingResult === "correct" && masteryBuffered) {
+      setMasteredModalInfo(pendingMasteryRef.current);
+      pendingMasteryRef.current = null;
+      setMasteryBuffered(false);
+    }
+  }, [pendingResult, masteryBuffered]);
 
   const displayAttempted = pendingResult
     ? practiceSummary.attempted + 1
@@ -211,36 +231,9 @@ const Home = () => {
       : practiceSummary.correct;
 
   if (!username) return <div className="loading-state">Loading...</div>;
-  if (!problem) return <div className="loading-state">Loading...</div>;
+  // if (!problem) return <div className="loading-state">Loading...</div>;
 
   // Greet According to time
-  // const getGreeting = () => {
-  //   const hour = new Date().getHours();
-
-  //   if (hour < 12) {
-  //     return {
-  //       firstLetter: "M",
-  //       rest: "orning",
-  //       Icon: Sunrise,
-  //       color: "#f59e0b",
-  //     }; // Amber for Morning
-  //   } else if (hour < 17) {
-  //     return {
-  //       firstLetter: "A",
-  //       rest: "fternoon",
-  //       Icon: Sun,
-  //       color: "#eab308",
-  //     }; // Yellow for Afternoon
-  //   } else {
-  //     return {
-  //       firstLetter: "E",
-  //       rest: "vening",
-  //       Icon: Moon,
-  //       color: "#e9ab47",
-  //     };
-  //   }
-  // };
-  // const { firstLetter, rest, Icon, color } = getGreeting();
   const getGreeting = () => {
     const hour = new Date().getHours();
 
@@ -348,49 +341,18 @@ const Home = () => {
         )}
       </header>
 
-      {/* <main className="home-layout">
-        {isGameMastered ? (
-          // Restored your original "Game Over" message
-          <div className="status-card master">
-            You have mastered all available concepts!
-          </div>
-        ) : loadingProblem ? (
-          <div className="status-card loading">
-            <div className="spinner">⏳</div>
-            Loading your challenge...
-          </div>
-        ) : errorProblem ? (
-          <div className="status-card error-msg">
-            Error loading game data. Please try refreshing.
-          </div>
-        ) : (
-          problem &&
-          problem.question && (
-            <QuestionCard
-              key={problem.question.id}
-              problem={problem}
-              onSubmit={handleAnswerSubmit}
-              onNext={handleNextProblem}
-              disabled={isSubmitting}
-              practiceSummary={practiceSummary}
-            />
-          )
-        )}
-      </main> */}
       <main className="home-layout">
         {isGameMastered ? (
-          /* --- NEW VICTORY BANNER --- */
+          /* --- VICTORY BANNER – keep exactly as is --- */
           <div className="mastery-complete-banner">
             <div className="banner-icon-container">
               <Trophy size={32} />
             </div>
-
             <div className="banner-content">
               <h3>Mastery Achieved!</h3>
               <p>
                 You have successfully conquered every concept in this journey.
               </p>
-
               <button
                 className="banner-action-btn"
                 onClick={() => navigate("/progress")}
@@ -398,40 +360,44 @@ const Home = () => {
                 View Your Knowledge Map
               </button>
             </div>
-
-            {/* Decorative Sparkles for that "Magic" feel */}
             <Sparkles className="decoration-star top-right" size={20} />
             <Sparkles className="decoration-star bottom-left" size={16} />
           </div>
+        ) : displayProblem ? (
+          /* SHOW THE PREVIOUS CARD WHILE LOADING */
+          <QuestionCard
+            key={displayProblem.question.id}
+            problem={displayProblem}
+            failedAnyStage={failedAnyStage}
+            setFailedAnyStage={setFailedAnyStage}
+            stageResults={stageResults}
+            setStageResults={setStageResults}
+            onSubmit={handleAnswerSubmit}
+            onNext={handleNextProblem}
+            disabled={isSubmitting}
+            practiceSummary={practiceSummary}
+            pendingResult={pendingResult}
+            setPendingResult={setPendingResult}
+            statAnim={statAnim}
+            disableAutoNext={!!masteredModalInfo}
+            hasPendingMastery={hasPendingMastery}
+          />
         ) : loadingProblem ? (
-          <div className="status-card loading">
-            <div className="spinner">⏳</div>
-            Loading your challenge...
+          // <div className="status-card loading">
+          //   <div className="spinner">⏳</div>
+          //   Loading your challenge...
+          // </div>
+          <div className="loading-next-overlay">
+            <div className="status-card loading status-card--inline">
+              <div className="spinner">⏳</div>
+              <p>Loading next challenge…</p>
+            </div>
           </div>
         ) : errorProblem ? (
           <div className="status-card error-msg">
             Error loading game data. Please try refreshing.
           </div>
-        ) : (
-          problem &&
-          problem.question && (
-            <QuestionCard
-              key={problem.question.id}
-              problem={problem}
-              failedAnyStage={failedAnyStage}
-              setFailedAnyStage={setFailedAnyStage}
-              stageResults={stageResults}
-              setStageResults={setStageResults}
-              onSubmit={handleAnswerSubmit}
-              onNext={handleNextProblem}
-              disabled={isSubmitting}
-              practiceSummary={practiceSummary}
-              pendingResult={pendingResult}
-              setPendingResult={setPendingResult}
-              statAnim={statAnim}
-            />
-          )
-        )}
+        ) : null}
       </main>
 
       {/* --- INJECTED MODAL AS AN OVERLAY --- */}
@@ -442,8 +408,11 @@ const Home = () => {
         score={masteredModalInfo?.accuracy ?? 100}
         attempts={masteredModalInfo?.attempts || 1}
         onClose={() => {
+          setPendingResult(null); // ← clear "correct" flag
           setMasteredModalInfo(null);
-          refetchProblem(); // Load next module after dismissing the modal
+          setMasteryBuffered(false);
+          setHasPendingMastery(false);
+          refetchProblem(); // now
         }}
       />
     </div>
@@ -451,3 +420,60 @@ const Home = () => {
 };
 
 export default Home;
+
+// <main className="home-layout">
+//   {isGameMastered ? (
+//     <div className="mastery-complete-banner">
+//       <div className="banner-icon-container">
+//         <Trophy size={32} />
+//       </div>
+
+//       <div className="banner-content">
+//         <h3>Mastery Achieved!</h3>
+//         <p>
+//           You have successfully conquered every concept in this journey.
+//         </p>
+
+//         <button
+//           className="banner-action-btn"
+//           onClick={() => navigate("/progress")}
+//         >
+//           View Your Knowledge Map
+//         </button>
+//       </div>
+
+//       {/* Decorative Sparkles for that "Magic" feel */}
+//       <Sparkles className="decoration-star top-right" size={20} />
+//       <Sparkles className="decoration-star bottom-left" size={16} />
+//     </div>
+//   ) : loadingProblem ? (
+//     <div className="status-card loading">
+//       <div className="spinner">⏳</div>
+//       Loading your challenge...
+//     </div>
+//   ) : errorProblem ? (
+//     <div className="status-card error-msg">
+//       Error loading game data. Please try refreshing.
+//     </div>
+//   ) : (
+//     problem &&
+//     problem.question && (
+//       <QuestionCard
+//         key={problem.question.id}
+//         problem={problem}
+//         failedAnyStage={failedAnyStage}
+//         setFailedAnyStage={setFailedAnyStage}
+//         stageResults={stageResults}
+//         setStageResults={setStageResults}
+//         onSubmit={handleAnswerSubmit}
+//         onNext={handleNextProblem}
+//         disabled={isSubmitting}
+//         practiceSummary={practiceSummary}
+//         pendingResult={pendingResult}
+//         setPendingResult={setPendingResult}
+//         statAnim={statAnim}
+//         disableAutoNext={!!masteredModalInfo} // true while modal is open
+//       />
+//     )
+//   )}
+// </main>

@@ -349,3 +349,119 @@ $page-accent: #f2cc8f;
     opacity: 0;
   }
 }
+// .question-shell__main {
+//   transition: none; // we'll use keyframes instead
+
+//   &.is-exiting {
+//     animation: questionExit 0.15s ease-in forwards;
+//     pointer-events: none;
+//   }
+// }
+
+// @keyframes questionExit {
+//   0% {
+//     opacity: 1;
+//     transform: translateY(0) scale(1);
+//   }
+//   100% {
+//     opacity: 0;
+//     transform: translateY(-12px) scale(0.96);
+//   }
+// }
+
+.question-shell__main {
+  &.is-exiting {
+    animation: questionExit 0.35s ease-in forwards;
+    pointer-events: none; // prevent interactions
+    position: relative; // needed for the loading overlay
+  }
+}
+
+@keyframes questionExit {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0.15; // dimmed, but still visible
+    transform: translateY(0) scale(1); // no movement, just dim
+  }
+}
+
+.loading-next-overlay {
+  // Ensure it covers the whole card perfectly
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  // Slightly stronger blur to hide the background better
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 100; // Bumped up to ensure it sits on top of everything
+  border-radius: inherit;
+
+  .status-card {
+    display: flex;
+    align-items: center;
+    gap: 20px; // Increased gap
+    background: #ffffff;
+    padding: 24px 48px; // 🔥 MUCH bigger padding
+    border-radius: 100px;
+    box-shadow: 0 15px 40px rgba(61, 64, 91, 0.15); // Larger, softer shadow
+    border: 3px solid #f1f5f9; // Slightly thicker border
+
+    // Snappy entrance
+    animation: popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+
+    .spinner {
+      font-size: 2.5rem; // 🔥 MASSIVE emoji size
+      animation: floatTilt 2s infinite ease-in-out;
+    }
+
+    p {
+      margin: 0;
+      font-weight: 800; // Extra bold
+      color: #3d405b;
+      font-size: 1.6rem; // 🔥 MUCH bigger text
+      letter-spacing: 0.5px;
+      animation: textPulse 1.5s infinite ease-in-out;
+    }
+  }
+}
+
+// --- Smooth Animations ---
+
+@keyframes popIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.85) translateY(15px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes textPulse {
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes floatTilt {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    // Floats up slightly and tilts right
+    transform: translateY(-6px) rotate(15deg);
+  }
+}

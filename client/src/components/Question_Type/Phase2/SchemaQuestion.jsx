@@ -232,18 +232,19 @@ const VariableIdentificationPanel = ({
   hasFeedback,
   isDummyMode,
   isRevealed,
+  animateCards = false,
 }) => {
   const sentences = question?.visualData?.sentences || [];
   const variables = question?.visualData?.variables || [];
   const expectedVars = question?.validation?.variables || {};
   const { userInfo } = useSelector((state) => state.auth);
-  const [variableCardsReady, setVariableCardsReady] = useState(false);
+  // const [variableCardsReady, setVariableCardsReady] = useState(false);
 
-  useEffect(() => {
-    setVariableCardsReady(false);
-    const timer = setTimeout(() => setVariableCardsReady(true), 250); // same delay
-    return () => clearTimeout(timer);
-  }, [question?.id]);
+  // useEffect(() => {
+  //   setVariableCardsReady(false);
+  //   const timer = setTimeout(() => setVariableCardsReady(true), 250); // same delay
+  //   return () => clearTimeout(timer);
+  // }, [question?.id]);
 
   const { hasCompleted, markCompleted } = useSchemaProgress(
     question?.schemaKind,
@@ -342,9 +343,7 @@ const VariableIdentificationPanel = ({
 
       {/* Variable cards */}
       {/* <div className="variable-cards"> */}
-      <div
-        className={`variable-cards ${variableCardsReady ? "animate-unfold" : ""}`}
-      >
+      <div className={`variable-cards ${animateCards ? "animate-unfold" : ""}`}>
         {shuffledVariables.map((variable) => {
           const answer = response?.variables?.[variable.key] || {};
           const expected = expectedVars[variable.key];
@@ -693,6 +692,9 @@ const SchemaQuestion = ({
   isRevealed,
   setIsRevealed,
   stageResults = {},
+  autoNextCountdown,
+  disableAutoNext = false,
+  isExiting = false,
 }) => {
   const hasFeedback = Boolean(feedback);
   const isBarModelStage = Boolean(question?.barModelSpec);
@@ -854,104 +856,6 @@ const SchemaQuestion = ({
     isRevealed,
     response,
   ]);
-  // const displayQuestion = useMemo(() => {
-  //   if (!isEquationStage) return question;
-  //   const qClone = JSON.parse(JSON.stringify(question));
-  //   const studentSlots = response?.slots || {};
-  //   const isCorrect = hasFeedback && feedback?.isCorrect;
-
-  //   // Calculate the missing number once
-  //   const mathResult = solveMissingValue(question);
-
-  //   const isUnknownSlot = (key) => {
-  //     return getTrueExpectedValue(question, key) === "?";
-  //   };
-
-  //   // 🔥 THE FIX: Lock the operator box from being clicked in Dummy Mode or Reveal State
-  //   if (qClone.equationSpec) {
-  //     if (isDummyMode || isRevealed || isCorrect) {
-  //       qClone.equationSpec.operatorEditable = false;
-  //     }
-  //   }
-
-  //   // --- THE STRICT LOCK: Restored to your original working logic ---
-  //   if (qClone.equationSpec?.template) {
-  //     qClone.equationSpec.template.forEach((item) => {
-  //       if (item?.type === "operator") {
-  //         // 1. Sync the operator with the student's input
-  //         if (response?.operator) {
-  //           item.value = response.operator;
-  //         }
-
-  //         // 2. Manage UI state for correct grading borders
-  //         if (isRevealed) {
-  //           item.editable = true; // Neutral standard look (feedback stripped downstream)
-  //         } else if (isCorrect) {
-  //           item.editable = true; // 🔥 Keeps it true so it gets the GREEN success border!
-  //         } else if (isDummyMode) {
-  //           if (hasFeedback) {
-  //             item.editable = true; // Grades it (red/green) after they click Check
-  //           } else {
-  //             item.editable = false; // Locks it while they are just typing numbers
-  //           }
-  //         } else {
-  //           item.editable = true; // Main screen: clickable and gradable
-  //         }
-  //       }
-
-  //       if (item?.type === "slot") {
-  //         const isUnknown = isUnknownSlot(item.key);
-
-  //         // 1. Sync visually with student input
-  //         if (item.key && studentSlots[item.key] !== undefined) {
-  //           item.value = studentSlots[item.key];
-  //         }
-
-  //         // 🔥 UI FEEDBACK LOGIC
-  //         if (isRevealed) {
-  //           // REVEAL STATE: Show correct numbers, apply the EXACT SAME style to all boxes
-  //           if (isUnknown) {
-  //             item.value = mathResult || "?";
-  //           } else {
-  //             item.value = getTrueExpectedValue(question, item.key);
-  //           }
-  //           item.editable = true; // Prevents the gray disabled look
-  //           item.isUnknown = false; // 🔥 THE FIX: Forces ALL boxes to use the standard solid border
-  //         } else if (isCorrect) {
-  //           // SUCCESS STATE: Keep green success styling
-  //           if (isUnknown) {
-  //             item.value = mathResult || "?";
-  //           }
-  //           item.editable = true;
-  //           item.isUnknown = false;
-  //         } else if (isDummyMode) {
-  //           if (isUnknown) {
-  //             item.value = "?";
-  //             item.editable = false; // Keeps the hint background neutral
-  //             item.isUnknown = true;
-  //           } else {
-  //             item.editable = true;
-  //             item.isUnknown = false;
-  //           }
-  //         } else {
-  //           // MAIN SCREEN
-  //           if (String(item.value).trim() === "?") item.value = "";
-  //           item.editable = true;
-  //           item.isUnknown = false;
-  //         }
-  //       }
-  //     });
-  //   }
-  //   return qClone;
-  // }, [
-  //   question,
-  //   isEquationStage,
-  //   isDummyMode,
-  //   hasFeedback,
-  //   feedback,
-  //   isRevealed,
-  //   response,
-  // ]);
 
   const isBarModelFullyFilled = useMemo(() => {
     if (!isBarModelStage || isEquationStage) return true;
@@ -1210,7 +1114,7 @@ const SchemaQuestion = ({
     });
   };
 
-  // // 🔥 FIX: Push the correct math result AND correct story numbers into the memory on success OR reveal
+  // 🔥 FIX: Push the correct math result AND correct story numbers into the memory on success OR reveal
   // useEffect(() => {
   //   if ((hasFeedback && feedback?.isCorrect) || isRevealed) {
   //     const numericResult = solveMissingValue(question);
@@ -1562,10 +1466,40 @@ const SchemaQuestion = ({
     setIsRevealed,
   ]);
 
+  // ------------------------ Conditional Auto-Scroll & Unfold (Module 2-5)------------------------
   useEffect(() => {
-    setKeypadReady(false);
-    const timer = setTimeout(() => setKeypadReady(true), 250);
-    return () => clearTimeout(timer);
+    if (hasFeedback) return; // Never scroll or animate after feedback
+
+    setKeypadReady(false); // Reset animation state on new question
+
+    const initTimer = setTimeout(() => {
+      const wrapperEl = keypadWrapperRef.current;
+      if (!wrapperEl) {
+        setKeypadReady(true);
+        return;
+      }
+
+      // 1. Calculate if the keypad will fit on the screen
+      const rect = wrapperEl.getBoundingClientRect();
+      const viewportHeight =
+        window.innerHeight || document.documentElement.clientHeight;
+
+      // We estimate the keypad needs about 300px of space to unfold safely
+      const needsScroll = rect.top + 300 > viewportHeight;
+
+      if (needsScroll) {
+        // SCROLL NEEDED: Add 200ms delay before scrolling, then wait 650ms to unfold
+        setTimeout(() => {
+          wrapperEl.scrollIntoView({ behavior: "smooth", block: "center" });
+          setTimeout(() => setKeypadReady(true), 300);
+        }, 200);
+      } else {
+        // NO SCROLL NEEDED: Fast unfold after 200ms
+        setTimeout(() => setKeypadReady(true), 200);
+      }
+    }, 50); // Tiny initial delay to let React paint the DOM
+
+    return () => clearTimeout(initTimer);
   }, [question?.id, hasFeedback]);
 
   const [showHint, setShowHint] = useState(false);
@@ -1573,14 +1507,39 @@ const SchemaQuestion = ({
     setShowHint(false);
   }, [question]);
 
-  // Add temporarily right before the return in SchemaQuestion
-  // console.log("SOLVE DEBUG", {
-  //   mathResult,
-  //   textAnswer: response?.textAnswer,
-  //   feedbackCorrect: feedback?.isCorrect,
-  //   feedbackKeys: feedback ? Object.keys(feedback) : null,
-  //   isRevealed,
-  // });
+  // ------------------------ Conditional Auto-Scroll & Unfold (Module 1)------------------------
+  const [animateCards, setAnimateCards] = useState(false);
+  const actionsRef = useRef(null);
+  useEffect(() => {
+    if (question?.moduleStage !== "schema_variables" || hasFeedback) return;
+
+    setAnimateCards(false); // reset animation
+
+    const initTimer = setTimeout(() => {
+      const actionsEl = actionsRef.current;
+      if (!actionsEl) {
+        setAnimateCards(true);
+        return;
+      }
+
+      const rect = actionsEl.getBoundingClientRect();
+      const viewportHeight =
+        window.innerHeight || document.documentElement.clientHeight;
+      const needsScroll = rect.bottom > viewportHeight;
+
+      if (needsScroll) {
+        setTimeout(() => {
+          actionsEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          setTimeout(() => setAnimateCards(true), 300);
+        }, 200);
+      } else {
+        setTimeout(() => setAnimateCards(true), 200);
+      }
+    }, 50);
+
+    return () => clearTimeout(initTimer);
+  }, [question?.id, hasFeedback]);
+
   return (
     <div className={`worksheet ${hasFeedback ? "is-completed" : ""}`}>
       <div className="worksheet-utility-bar">
@@ -1728,6 +1687,7 @@ const SchemaQuestion = ({
           hasFeedback={hasFeedback}
           isDummyMode={isDummyMode}
           isRevealed={isRevealed}
+          animateCards={animateCards}
         />
       )}
 
@@ -1865,7 +1825,7 @@ const SchemaQuestion = ({
         </div>
       )}
 
-      <div className="worksheet-actions">
+      <div className="worksheet-actions" ref={actionsRef}>
         {!hasFeedback && !isDummyMode && (
           <button
             type="button"
@@ -1938,7 +1898,7 @@ const SchemaQuestion = ({
 
         {/* 5. NEXT PROBLEM: Show after correct answer OR after reveal */}
         {/* For variable identification: only after correct or revealed (never on wrong without reveal) */}
-        {(feedback?.isCorrect ||
+        {/* {(feedback?.isCorrect ||
           isRevealed ||
           (!isBarModelStage &&
             !isVariableIdentification &&
@@ -1954,21 +1914,33 @@ const SchemaQuestion = ({
             {isSchemaStage && question?.stageIndex < question?.stageTotal
               ? "Next Step →"
               : "Next Problem →"}
-
-            {/* {isSchemaStage ? "Next Step →" : "Next Problem →"} */}
-          </button>
-        )}
-        {/* {(feedback?.isCorrect ||
-          isRevealed ||
-          (!isBarModelStage && hasFeedback && !feedback?.isCorrect)) && (
-          <button
-            type="button"
-            className="worksheet-button worksheet-button--continue"
-            onClick={onNext}
-          >
-            Next Problem →
           </button>
         )} */}
+        {(feedback?.isCorrect ||
+          isRevealed ||
+          (!isBarModelStage &&
+            !isVariableIdentification &&
+            !isSolveStage &&
+            !isPracticeStage &&
+            hasFeedback &&
+            !feedback?.isCorrect)) && (
+          <button
+            type="button"
+            className="worksheet-button worksheet-button worksheet-button--primary"
+            onClick={onNext}
+            disabled={
+              autoNextCountdown !== null || disableAutoNext || isExiting
+            }
+          >
+            {autoNextCountdown !== null
+              ? `Next Problem in ${autoNextCountdown}s`
+              : isExiting
+                ? "Loading…"
+                : isSchemaStage && question?.stageIndex < question?.stageTotal
+                  ? "Next Step →"
+                  : "Next Problem →"}
+          </button>
+        )}
       </div>
     </div>
   );

@@ -667,3 +667,59 @@ $page-sage: #81b29a;
       0 8px 16px rgba(0, 0, 0, 0.25);
   }
 }
+// !------------------------------- Sub-schema Grouping inside Word Problems----------------------------------------------------- ---
+.schema-groups-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 36px; // Large gap between different schemas
+}
+
+.schema-group {
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+
+    .schema-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      text-transform: capitalize;
+      margin: 0;
+      white-space: nowrap;
+      color: #3d405b; // Default text color
+
+      // Highlight specific schema colors!
+      &.text-combine {
+        color: #3b82f6;
+      } // Blue
+      &.text-change {
+        color: #f59e0b;
+      } // Yellow
+      &.text-compare {
+        color: #10b981;
+      } // Green
+    }
+
+    .schema-divider {
+      flex-grow: 1;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+    }
+  }
+}
+
+.accuracy-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0.6rem 0 0.2rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #64748b;
+
+  span:last-child {
+    color: #3d405b;
+  }
+}
