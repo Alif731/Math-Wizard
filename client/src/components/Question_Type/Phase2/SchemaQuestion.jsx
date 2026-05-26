@@ -17,6 +17,7 @@ import {
 } from "./SchemaUtils";
 import {
   PracticeTabs,
+  EquationTabs,
   StageTabs,
   Keypad,
   VerificationPanel,
@@ -1855,11 +1856,14 @@ const SchemaQuestion = ({
         </div>
       </div>
       {/* Only render the top line wrapper if there is actually a tab to show inside it */}
-      {(question?.moduleStage === "practice" || isSchemaStage) && (
+      {(question?.moduleStage === "practice" || question?.moduleStage === "equations" || isSchemaStage) && (
         <div className="worksheet__topline">
           <div className="worksheet__topline-main">
             {question?.moduleStage === "practice" && (
               <PracticeTabs activeKey={question?.practiceMode} />
+            )}
+            {question?.moduleStage === "equations" && (
+              <EquationTabs activeKey={question?.practiceMode} />
             )}
             {isSchemaStage && (
               <StageTabs
