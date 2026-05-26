@@ -12,6 +12,44 @@ export const isVariableIdentificationQuestion = (question) =>
   question?.interactionMode === "variable_identification" ||
   question?.moduleStage === "schema_variables";
 
+export const isChangeIdentificationQuestion = (question) =>
+  question?.interactionMode === "change_identification" ||
+  question?.moduleStage === "change_identify";
+
+export const isWorksheetDrivenQuestion = (question) =>
+  [
+    "practice",
+    "equations",
+    "bar_to_equation",
+    "schema_bar_model",
+    "schema_direct_solve",
+    "schema_equation",
+    "schema_solve",
+    "schema_variables",
+    "word_to_bar",
+    "change_identify",
+  ].includes(question?.moduleStage);
+
+export const getChangeIdentificationFeedback = (question, response = {}) => {
+  const expectedDirection = normalizeString(question?.validation?.changeDirection);
+  const expectedBarModel = normalizeString(question?.validation?.correctBarModel);
+  const selectedDirection = normalizeString(response?.changeDirection);
+  const selectedBarModel = normalizeString(response?.barModel);
+
+  return {
+    correctDirection: expectedDirection,
+    correctBarModel: expectedBarModel,
+    selectedDirection,
+    selectedBarModel,
+    directionAnswered: selectedDirection !== "",
+    barModelAnswered: selectedBarModel !== "",
+    directionCorrect:
+      selectedDirection !== "" && selectedDirection === expectedDirection,
+    barModelCorrect:
+      selectedBarModel !== "" && selectedBarModel === expectedBarModel,
+  };
+};
+
 export const getEditableEquationItems = (question) =>
   (question?.equationSpec?.template || []).filter(
     (item) => item.type === "slot" && item.editable !== false,
@@ -141,29 +179,10 @@ export const evaluateEquationStageResponse = (question, response = {}) => {
   const slotItems = getEquationSlotItems(question);
   const feedback = {};
   const canonicalSlots = {};
-  const isCombine = question?.schemaKind?.toLowerCase() === "combine";
 
   let isCorrect = true;
-  let combinePartsSwapped = false;
 
-  if (isCombine && slotItems.length >= 2) {
-    const leftKey = slotItems[0].key;
-    const rightKey = slotItems[1].key;
-    const leftStudent = String(slots[leftKey] || "").trim();
-    const rightStudent = String(slots[rightKey] || "").trim();
-    const leftExpected = getExpectedEquationSlotValue(question, leftKey);
-    const rightExpected = getExpectedEquationSlotValue(question, rightKey);
-
-    combinePartsSwapped =
-      leftStudent !== "" &&
-      rightStudent !== "" &&
-      leftStudent === rightExpected &&
-      rightStudent === leftExpected &&
-      !isUnknownEquationSlot(leftExpected) &&
-      !isUnknownEquationSlot(rightExpected);
-  }
-
-  slotItems.forEach((item, index) => {
+  slotItems.forEach((item) => {
     const key = item.key;
     const student = String(slots[key] || "").trim();
     const expected = getExpectedEquationSlotValue(question, key);
@@ -178,9 +197,6 @@ export const evaluateEquationStageResponse = (question, response = {}) => {
         student === "?" ||
         (calculated !== "" && normalizeString(student) === normalizeString(calculated));
       canonicalSlots[key] = student === "" ? "?" : student;
-    } else if (combinePartsSwapped && (index === 0 || index === 1)) {
-      isSlotCorrect = true;
-      canonicalSlots[key] = expected;
     } else {
       isSlotCorrect = normalizeString(student) === normalizeString(expected);
       canonicalSlots[key] = student;
@@ -253,6 +269,14 @@ export const createInitialResponse = (question) => {
     };
   }
 
+  if (isChangeIdentificationQuestion(question)) {
+    return {
+      changeDirection: "",
+      barModel: "",
+      subStep: "2a",
+    };
+  }
+
   if (isVariableIdentificationQuestion(question)) {
     return {
       variables: Object.fromEntries(
@@ -284,9 +308,12 @@ export const createInitialResponse = (question) => {
     return {
       slots: Object.fromEntries(editableSlots.map((item) => [item.key, ""])),
       activeField: editableSlots[0]?.key || "__operator__",
-      operator: question?.equationSpec?.operatorEditable
-        ? ""
-        : question?.equationSpec?.operator || "",
+      operator:
+        question?.schemaKind === "change"
+          ? question?.equationSpec?.operator || ""
+          : question?.equationSpec?.operatorEditable
+            ? ""
+            : question?.equationSpec?.operator || "",
       textAnswer: "",
     };
   }
@@ -316,6 +343,13 @@ export const isQuestionResponseReady = (question, response) => {
     return normalizeString(response?.textAnswer) !== "";
   }
 
+  if (isChangeIdentificationQuestion(question)) {
+    return (
+      (response?.subStep === "2a" && normalizeString(response?.changeDirection) !== "") ||
+      (response?.subStep === "2b" && normalizeString(response?.barModel) !== "")
+    );
+  }
+
   if (isVariableIdentificationQuestion(question)) {
     const variables = question?.visualData?.variables || [];
     return variables.every((variable) => {
@@ -340,7 +374,10 @@ export const isQuestionResponseReady = (question, response) => {
       (item) => normalizeString(response?.slots?.[item.key]) !== "",
     );
 
-    if (question?.equationSpec?.operatorEditable) {
+    if (
+      question?.equationSpec?.operatorEditable &&
+      question?.schemaKind !== "change"
+    ) {
       return equationReady && normalizeString(response?.operator) !== "";
     }
 
@@ -380,6 +417,13 @@ export const buildSubmissionResponse = (question, response) => {
         ...(question?.validation?.slots || {}),
         [question?.unknownSlot || "smaller"]: response?.textAnswer || "",
       },
+    };
+  }
+
+  if (isChangeIdentificationQuestion(question)) {
+    return {
+      changeDirection: response?.changeDirection || "",
+      barModel: response?.barModel || "",
     };
   }
 

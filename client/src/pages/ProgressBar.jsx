@@ -476,7 +476,8 @@ const ProgressBar = () => {
     "single_sub",
     "multi_add",
     "multi_sub",
-    "missing_part_equations",
+    "missing_part_easy",
+    "missing_part_hard",
     "combine_mod1",
     "combine_mod2",
     "combine_mod3",
@@ -487,10 +488,11 @@ const ProgressBar = () => {
     "change_mod3",
     "change_mod4",
     "change_mod5",
+    "change_mod6",
   ];
 
   const practiceIds = ["single_add", "single_sub", "multi_add", "multi_sub"];
-  const equationIds = ["missing_part_equations"];
+  const equationIds = ["missing_part_easy", "missing_part_hard"];
 
   const sections = [
     {

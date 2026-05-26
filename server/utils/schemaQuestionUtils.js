@@ -10,6 +10,7 @@ const QUESTION_TYPES = Object.freeze([
   "bar_model_builder",
   "full_model",
   "variable_identification",
+  "change_identification",
 ]);
 
 const SCHEMA_KINDS = Object.freeze([
@@ -26,6 +27,7 @@ const INTERACTION_MODES = Object.freeze([
   "bar_model_builder",
   "full_model",
   "variable_identification",
+  "change_identification",
 ]);
 
 const MODULE_STAGES = Object.freeze([
@@ -38,6 +40,7 @@ const MODULE_STAGES = Object.freeze([
   "schema_solve",
   "schema_variables",
   "word_to_bar",
+  "change_identify",
 ]);
 
 const INPUT_MODES = Object.freeze([
@@ -45,6 +48,7 @@ const INPUT_MODES = Object.freeze([
   "keypad_equation",
   "keypad_bar_model",
   "text_answer",
+  "change_identify",
 ]);
 
 const normalizeString = (value) =>
@@ -406,6 +410,14 @@ const validateFullModel = (question, response) => {
 
 const validateQuestionResponse = (question, response) => {
   const mode = question?.interactionMode || "direct_answer";
+
+  if (mode === "change_identification") {
+    const expectedDirection = normalizeString(question?.validation?.changeDirection);
+    const expectedBarModel = normalizeString(question?.validation?.correctBarModel);
+    const submittedDirection = normalizeString(response?.changeDirection);
+    const submittedBarModel = normalizeString(response?.barModel);
+    return submittedDirection === expectedDirection && submittedBarModel === expectedBarModel;
+  }
 
   if (mode === "variable_identification") {
     const expectedVariables = question?.validation?.variables || {};

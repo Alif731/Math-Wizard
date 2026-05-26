@@ -2,9 +2,11 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import {
   getDisplayedTextAnswer,
+  getChangeIdentificationFeedback,
   isCompareAnswerInputQuestion,
   isQuestionResponseReady,
   isVariableIdentificationQuestion,
+  isChangeIdentificationQuestion,
 } from "../../../utils/questionValidation";
 import {
   joinSlotValue,
@@ -224,6 +226,224 @@ const highlightNumbers = (text) => {
 //   );
 // };
 
+// ===========================================
+// Change Module 2: Two-Step Identification
+// Step 2a: Is the quantity increasing or decreasing?
+// Step 2b: Pick the correct bar model layout
+// ===========================================
+const ChangeIdentificationPanel = ({
+  question,
+  response,
+  setResponse,
+  disabled,
+  hasFeedback,
+  feedbackData,
+}) => {
+  const subStep = response?.subStep || "2a";
+  const labels = question?.visualData?.labels || {};
+  const changeFeedback = getChangeIdentificationFeedback(question, response);
+  const hasDirectionFeedback =
+    hasFeedback &&
+    subStep === "2a" &&
+    feedbackData?.changeDirectionCorrect !== undefined;
+  const hasBarModelFeedback =
+    hasFeedback &&
+    subStep === "2b" &&
+    feedbackData?.barModelCorrect !== undefined;
+
+  // Step 2a feedback
+  const step2aCorrect =
+    hasFeedback &&
+    subStep === "2a" &&
+    feedbackData?.changeDirectionCorrect;
+  const step2aWrong =
+    hasFeedback &&
+    subStep === "2a" &&
+    feedbackData?.changeDirectionCorrect === false;
+
+  // Step 2b feedback
+  const step2bCorrect =
+    hasFeedback &&
+    subStep === "2b" &&
+    feedbackData?.barModelCorrect;
+  const step2bWrong =
+    hasFeedback &&
+    subStep === "2b" &&
+    feedbackData?.barModelCorrect === false;
+
+  const handleDirectionSelect = (dir) => {
+    if (disabled) return;
+    setResponse((prev) => ({
+      ...prev,
+      changeDirection: dir,
+    }));
+  };
+
+  const handleBarModelSelect = (model) => {
+    if (disabled) return;
+    setResponse((prev) => ({
+      ...prev,
+      barModel: model,
+    }));
+  };
+
+  const getDirectionClass = (direction) =>
+    [
+      response?.changeDirection === direction ? "is-selected" : "",
+      hasDirectionFeedback && changeFeedback.correctDirection === direction
+        ? "is-correct"
+        : "",
+      hasDirectionFeedback &&
+      changeFeedback.selectedDirection === direction &&
+      changeFeedback.correctDirection !== direction
+        ? "is-wrong"
+        : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+  const getBarModelClass = (model) =>
+    [
+      response?.barModel === model ? "is-selected" : "",
+      hasBarModelFeedback && changeFeedback.correctBarModel === model
+        ? "is-correct"
+        : "",
+      hasBarModelFeedback &&
+      changeFeedback.selectedBarModel === model &&
+      changeFeedback.correctBarModel !== model
+        ? "is-wrong"
+        : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+  return (
+    <div className="change-identify">
+      {/* Step 2a: Increase or Decrease? */}
+      {subStep === "2a" && (
+        <div className="change-identify__step">
+          <h3 className="change-identify__title">
+            Is the quantity <strong>increasing</strong> or{" "}
+            <strong>decreasing</strong>?
+          </h3>
+          <div className="change-identify__options">
+            <button
+              type="button"
+              className={`change-identify__option change-identify__option--increase ${getDirectionClass("increase")}`}
+              onClick={() => handleDirectionSelect("increase")}
+              disabled={disabled}
+            >
+              <span className="change-identify__option-icon">📈</span>
+              <span className="change-identify__option-label">Increase</span>
+            </button>
+            <button
+              type="button"
+              className={`change-identify__option change-identify__option--decrease ${getDirectionClass("decrease")}`}
+              onClick={() => handleDirectionSelect("decrease")}
+              disabled={disabled}
+            >
+              <span className="change-identify__option-icon">📉</span>
+              <span className="change-identify__option-label">Decrease</span>
+            </button>
+          </div>
+          {step2aCorrect && (
+            <div className="change-identify__feedback change-identify__feedback--correct">
+              ✓ Correct! The quantity is{" "}
+              <strong>{response?.changeDirection === "increase" ? "increasing" : "decreasing"}</strong>.
+            </div>
+          )}
+          {step2aWrong && (
+            <div className="change-identify__feedback change-identify__feedback--wrong">
+              ✕ Not quite. The correct answer is{" "}
+              <strong>
+                {question?.validation?.changeDirection === "increase"
+                  ? "Increase"
+                  : "Decrease"}
+              </strong>.
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Step 2b: Pick the bar model */}
+      {subStep === "2b" && (
+        <div className="change-identify__step">
+          <h3 className="change-identify__title">
+            Pick the correct bar model for this problem:
+          </h3>
+          <div className="change-identify__bar-options">
+            {/* Increase bar: End on top (bigger), Start + Change on bottom */}
+            <button
+              type="button"
+              className={`change-identify__bar-option ${getBarModelClass("increase_bar")}`}
+              onClick={() => handleBarModelSelect("increase_bar")}
+              disabled={disabled}
+            >
+              <div className="change-identify__bar-label">Increase Model</div>
+              <div className="static-bar-model static-bar-model--increase">
+                <div className="static-bar-model__top">
+                  <div className="static-bar__block static-bar__block--end">
+                    {labels.end || "End"}
+                  </div>
+                </div>
+                <div className="static-bar-model__bottom">
+                  <div className="static-bar__block static-bar__block--start">
+                    {labels.start || "Start"}
+                  </div>
+                  <div className="static-bar__block static-bar__block--change">
+                    {labels.change || "Change"}
+                  </div>
+                </div>
+              </div>
+            </button>
+
+            {/* Decrease bar: Start on top (bigger), End + Change on bottom */}
+            <button
+              type="button"
+              className={`change-identify__bar-option ${getBarModelClass("decrease_bar")}`}
+              onClick={() => handleBarModelSelect("decrease_bar")}
+              disabled={disabled}
+            >
+              <div className="change-identify__bar-label">Decrease Model</div>
+              <div className="static-bar-model static-bar-model--decrease">
+                <div className="static-bar-model__top">
+                  <div className="static-bar__block static-bar__block--start">
+                    {labels.start || "Start"}
+                  </div>
+                </div>
+                <div className="static-bar-model__bottom">
+                  <div className="static-bar__block static-bar__block--end">
+                    {labels.end || "End"}
+                  </div>
+                  <div className="static-bar__block static-bar__block--change">
+                    {labels.change || "Change"}
+                  </div>
+                </div>
+              </div>
+            </button>
+          </div>
+          {step2bCorrect && (
+            <div className="change-identify__feedback change-identify__feedback--correct">
+              ✓ Correct! That is the right bar model.
+            </div>
+          )}
+          {step2bWrong && (
+            <div className="change-identify__feedback change-identify__feedback--wrong">
+              ✕ Not quite. The correct bar model is the{" "}
+              <strong>
+                {question?.validation?.correctBarModel === "increase_bar"
+                  ? "Increase"
+                  : "Decrease"}
+              </strong>{" "}
+              model.
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const VariableIdentificationPanel = ({
   question,
   response,
@@ -250,10 +470,21 @@ const VariableIdentificationPanel = ({
     question?.schemaKind,
     userInfo?.id || userInfo?._id,
   );
-  const shuffledVariables = useMemo(
-    () => seededShuffle(variables, hashString(question?.text)),
-    [variables, question?.text],
-  );
+  // For change schema: fixed chronological order (start → change → end)
+  // For other schemas: seeded shuffle as before
+  const shuffledVariables = useMemo(() => {
+    if (question?.schemaKind === "change") {
+      const order = ["start", "change", "end"];
+      const sorted = [...variables].sort(
+        (a, b) => order.indexOf(a.key) - order.indexOf(b.key),
+      );
+      // Only use sorted if all 3 keys matched; else fall through to shuffle
+      if (sorted.length === variables.length && sorted.every((v, i) => order.indexOf(v.key) === i)) {
+        return sorted;
+      }
+    }
+    return seededShuffle(variables, hashString(question?.text));
+  }, [variables, question?.text, question?.schemaKind]);
 
   // 1. GHOST LOGIC: Check if the user has started interacting
   // Returns true if ANY variable has a 'role' or 'value' defined in the response state
@@ -374,8 +605,13 @@ const VariableIdentificationPanel = ({
               className={`variable-row-horizontal ${cardState} ${isGhostHint ? "is-hinted" : ""}`}
               key={variable.key}
             >
-              {/* Left Side: Variable Name with Yellow Accent */}
+              {/* Left Side: Variable Name with Tag */}
               <div className="variable-row-horizontal__name">
+                {question?.schemaKind === "change" && (
+                  <span className={`variable-tag variable-tag--${variable.key}`}>
+                    {variable.key === "start" ? "Start" : variable.key === "change" ? "Change" : "End"}
+                  </span>
+                )}
                 {variable.label}
               </div>
 
@@ -702,6 +938,9 @@ const SchemaQuestion = ({
     question?.moduleStage,
   );
 
+  // --- Change Identification: local 2a feedback state ---
+  const [changeIdLocalFeedback, setChangeIdLocalFeedback] = useState(null);
+
   // Ghost setup for equation board (Module 3)
   const { userInfo } = useSelector((state) => state.auth);
   const userId = userInfo?.id || userInfo?._id;
@@ -721,6 +960,7 @@ const SchemaQuestion = ({
   );
 
   const isEquationBoardActive = isEquationStage || isPracticeStage;
+  const mathResult = useMemo(() => solveMissingValue(question), [question]);
 
   // Only apply ghost logic when the equation board is shown
   const isEquationGhostHint =
@@ -737,13 +977,14 @@ const SchemaQuestion = ({
     const studentSlots = response?.slots || {};
     const isCorrect = hasFeedback && feedback?.isCorrect;
 
-    const mathResult = solveMissingValue(question);
-
     const isUnknownSlot = (key) => {
       return getTrueExpectedValue(question, key) === "?";
     };
 
     if (qClone.equationSpec) {
+      if (question?.schemaKind === "change") {
+        qClone.equationSpec.operatorEditable = false;
+      }
       if (isDummyMode || isRevealed || isCorrect) {
         qClone.equationSpec.operatorEditable = false;
       }
@@ -753,9 +994,10 @@ const SchemaQuestion = ({
       qClone.equationSpec.template.forEach((item) => {
         // --- 1. OPERATOR LOGIC ---
         if (item?.type === "operator") {
+          const isChangeOperator = question?.schemaKind === "change";
           const blueprintOp =
             (question?.equationSpec?.template || []).find(
-              (t) => t.type === "operator",
+              (t) => t.type === "operator" || t.key === "operator",
             )?.value || (question?.schemaKind === "combine" ? "+" : "");
 
           // Sync the value: show the blueprint sign in Reveal
@@ -768,7 +1010,7 @@ const SchemaQuestion = ({
           // LOCKING & FEEDBACK LOGIC
           if (isRevealed) {
             // 🔥 REVEAL: Show default/neutral UI (No green/red borders)
-            item.editable = true;
+            item.editable = !isChangeOperator;
             item.isCorrect = false;
             item.isWrong = false;
           } else if (isDummyMode && !isCorrect) {
@@ -778,7 +1020,7 @@ const SchemaQuestion = ({
             item.isWrong = false;
           } else {
             // MAIN SCREEN / SUCCESS
-            item.editable = true;
+            item.editable = !isChangeOperator;
 
             // Show feedback only on Main Screen/Success
             if (hasFeedback) {
@@ -802,7 +1044,8 @@ const SchemaQuestion = ({
             const isFinalAnswerStage =
               question?.moduleStage === "schema_solve" ||
               question?.moduleStage === "schema_direct_solve" ||
-              (question?.stageTotal === 3 && question?.stageIndex === 3) ||
+              (Number(question?.stageTotal) > 1 &&
+                question?.stageIndex === question?.stageTotal) ||
               question?.moduleStage === "direct";
 
             if (isUnknown) {
@@ -854,6 +1097,7 @@ const SchemaQuestion = ({
     hasFeedback,
     feedback,
     isRevealed,
+    mathResult,
     response,
   ]);
 
@@ -948,7 +1192,8 @@ const SchemaQuestion = ({
     const isFinalAnswerStage =
       question?.moduleStage === "schema_solve" ||
       question?.moduleStage === "schema_direct_solve" ||
-      (question?.stageTotal === 3 && question?.stageIndex === 3) ||
+      (Number(question?.stageTotal) > 1 &&
+        question?.stageIndex === question?.stageTotal) ||
       question?.moduleStage === "direct";
 
     const opItem = (question?.equationSpec?.template || []).find(
@@ -1009,10 +1254,10 @@ const SchemaQuestion = ({
     !isSubmitting &&
     !hasFeedback;
 
-  const isSchemaStage = question?.stageTotal === 3;
+  const isSchemaStage = Number(question?.stageTotal) > 1;
   const isCompareAnswerInput = isCompareAnswerInputQuestion(question);
   const isVariableIdentification = isVariableIdentificationQuestion(question);
-  const mathResult = solveMissingValue(question); // 🔥 Pre-calculate answer for reveal
+  const isChangeIdentification = isChangeIdentificationQuestion(question);
   const showPromptStrip = !["practice", "equations"].includes(
     question?.moduleStage,
   );
@@ -1045,7 +1290,33 @@ const SchemaQuestion = ({
     : getActiveInputLabel(question, response?.activeField);
 
   const triggerCheck = () => {
-    if (canCheck) onCheck();
+    if (!canCheck) return;
+
+    // --- Change Identification 2-step intercept ---
+    if (isChangeIdentification && response?.subStep === "2a") {
+      const directionCorrect =
+        response?.changeDirection === question?.validation?.changeDirection;
+
+      if (directionCorrect) {
+        // Correct! Advance to step 2b
+        setChangeIdLocalFeedback({ step: "2a", correct: true });
+        setTimeout(() => {
+          setChangeIdLocalFeedback(null);
+          setResponse((prev) => ({
+            ...prev,
+            subStep: "2b",
+            barModel: "",
+          }));
+        }, 1200);
+      } else {
+        // Wrong direction: submit immediately so server feedback can show
+        // the selected wrong option and the correct option on the same screen.
+        onCheck();
+      }
+      return;
+    }
+
+    onCheck();
   };
 
   const isSlotLockedInDummy = (field) => {
@@ -1163,7 +1434,8 @@ const SchemaQuestion = ({
       const isFinalAnswerStage =
         question?.moduleStage === "schema_solve" ||
         question?.moduleStage === "schema_direct_solve" ||
-        (question?.stageTotal === 3 && question?.stageIndex === 3) ||
+        (Number(question?.stageTotal) > 1 &&
+          question?.stageIndex === question?.stageTotal) ||
         question?.moduleStage === "direct";
 
       setResponse((prev) => {
@@ -1593,6 +1865,7 @@ const SchemaQuestion = ({
               <StageTabs
                 currentStage={question?.stageIndex || 1}
                 stageResults={stageResults}
+                stageTotal={question?.stageTotal || 3}
               />
             )}
           </div>
@@ -1688,6 +1961,28 @@ const SchemaQuestion = ({
           isDummyMode={isDummyMode}
           isRevealed={isRevealed}
           animateCards={animateCards}
+        />
+      )}
+
+      {isChangeIdentification && (
+        <ChangeIdentificationPanel
+          question={question}
+          response={response}
+          setResponse={setResponse}
+          disabled={hasFeedback || isSubmitting || changeIdLocalFeedback !== null}
+          hasFeedback={hasFeedback || changeIdLocalFeedback !== null}
+          feedbackData={{
+            changeDirectionCorrect:
+              changeIdLocalFeedback?.step === "2a"
+                ? changeIdLocalFeedback.correct
+                : hasFeedback
+                  ? response?.changeDirection === question?.validation?.changeDirection
+                  : undefined,
+            barModelCorrect:
+              hasFeedback
+                ? response?.barModel === question?.validation?.correctBarModel
+                : undefined,
+          }}
         />
       )}
 
@@ -1801,7 +2096,7 @@ const SchemaQuestion = ({
         </div>
       )}
 
-      {question?.inputMode !== "text_answer" && !isCompareAnswerInput && (
+      {question?.inputMode !== "text_answer" && !isCompareAnswerInput && !isChangeIdentification && (
         <div
           ref={keypadWrapperRef}
           key={question?.id || question?.text}
@@ -1826,7 +2121,7 @@ const SchemaQuestion = ({
       )}
 
       <div className="worksheet-actions" ref={actionsRef}>
-        {!hasFeedback && !isDummyMode && (
+        {!hasFeedback && !isDummyMode && changeIdLocalFeedback === null && (
           <button
             type="button"
             className="worksheet-button worksheet-button--primary"
@@ -1843,6 +2138,7 @@ const SchemaQuestion = ({
             isEquationStage ||
             isVariableIdentification ||
             isSolveStage) &&
+          !isChangeIdentification &&
           !isDummyMode &&
           !isRevealed && (
             <button
@@ -1886,7 +2182,8 @@ const SchemaQuestion = ({
         {(isDummyMode || isPracticeStage) &&
           hasFeedback &&
           !feedback?.isCorrect &&
-          !isRevealed && (
+          !isRevealed &&
+          !isChangeIdentification && (
             <button
               type="button"
               className="worksheet-button worksheet-button--reveal"

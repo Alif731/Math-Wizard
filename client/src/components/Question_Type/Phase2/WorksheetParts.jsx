@@ -21,6 +21,13 @@ const SCHEMA_STAGES = [
   { key: 3, label: "3. Solve" },
 ];
 
+const CHANGE_FULL_STAGES = [
+  { key: 1, label: "1. Identify" },
+  { key: 2, label: "2. Bar model" },
+  { key: 3, label: "3. Equation" },
+  { key: 4, label: "4. Solve" },
+];
+
 export const PracticeTabs = ({ activeKey }) => {
   // Find where the user currently is in the sequence
   const activeIndex = PRACTICE_PILLS.findIndex(
@@ -54,11 +61,47 @@ export const PracticeTabs = ({ activeKey }) => {
   );
 };
 
-export const StageTabs = ({ currentStage, stageResults = {} }) => {
+const EQUATION_PILLS = [
+  { key: "missing_part_easy", label: "Missing Easy" },
+  { key: "missing_part_hard", label: "Missing Hard" },
+];
+
+export const EquationTabs = ({ activeKey }) => {
+  const activeIndex = EQUATION_PILLS.findIndex(
+    (pill) => pill.key === activeKey,
+  );
+
+  return (
+    <div className="worksheet-tabs progression-track">
+      {EQUATION_PILLS.map((pill, index) => {
+        let statusClass = "";
+        if (index < activeIndex) statusClass = "is-completed";
+        else if (index === activeIndex) statusClass = "is-active";
+        else statusClass = "is-locked";
+
+        return (
+          <div key={pill.key} className={`worksheet-tab ${statusClass}`}>
+            {statusClass === "is-completed" && (
+              <Check size={14} className="tab-icon" />
+            )}
+            {statusClass === "is-locked" && (
+              <Lock size={12} className="tab-icon" />
+            )}
+
+            <span>{pill.label}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+export const StageTabs = ({ currentStage, stageResults = {}, stageTotal = 3 }) => {
+  const stages = stageTotal === 4 ? CHANGE_FULL_STAGES : SCHEMA_STAGES;
   // console.log("StageTabs render", { currentStage, stageResults });
   return (
     <div className="worksheet-tabs progression-track">
-      {SCHEMA_STAGES.map((stage) => {
+      {stages.map((stage) => {
         // Determine the state based on the current stage number (1, 2, or 3)
         const result = stageResults[stage.key];
         let statusClass = "";

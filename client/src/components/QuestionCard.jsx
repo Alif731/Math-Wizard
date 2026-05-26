@@ -22,6 +22,7 @@ import {
   evaluateBarModelStageResponse,
   evaluateEquationStageResponse,
   isQuestionResponseReady,
+  isWorksheetDrivenQuestion,
 } from "../utils/questionValidation";
 
 const audioSuccess = new Audio("/success1.mp3");
@@ -77,7 +78,7 @@ const QuestionCard = ({
   // Module 4 single question counter
   // const [pendingResult, setPendingResult] = useState(null); // 'correct' | 'wrong' | null
   // const [failedAnyStage, setFailedAnyStage] = useState(false);
-  const isSchemaStage = problem?.question?.stageTotal === 3;
+  const isSchemaStage = Number(problem?.question?.stageTotal) > 1;
   const isFinalStage =
     !isSchemaStage ||
     problem?.question?.stageIndex === problem?.question?.stageTotal;
@@ -516,6 +517,17 @@ const QuestionCard = ({
     try {
       const result = await onSubmit(responseToSubmit);
       applyFeedback(result);
+      if (isSchemaStage) {
+        setStageResults((prev) => ({
+          ...prev,
+          [problem?.question?.stageIndex]: result?.isCorrect
+            ? "correct"
+            : "wrong",
+        }));
+        if (!result?.isCorrect) {
+          setFailedAnyStage(true);
+        }
+      }
       if (isFinalStage && !isDummyMode)
         // setPendingResult(result?.isCorrect ? "correct" : "wrong"); // ← ADD HERE
         // 🔥 THE FIX: Only mark the whole sequence as a success if
@@ -605,17 +617,7 @@ const QuestionCard = ({
   const isConceptual = questionType === "conceptual";
   const visualData = problem.question.visualData;
   const isIconsItems = questionType === "icons_items";
-  const isWorksheetDriven = [
-    "practice",
-    "equations",
-    "bar_to_equation",
-    "schema_bar_model",
-    "schema_direct_solve",
-    "schema_equation",
-    "schema_solve",
-    "schema_variables",
-    "word_to_bar",
-  ].includes(problem?.question?.moduleStage);
+  const isWorksheetDriven = isWorksheetDrivenQuestion(problem?.question);
   const showTelemetry = Boolean(problem?.adaptiveState) && import.meta.env.DEV;
   const isMatchTheFollowing =
     isIconsItems &&
