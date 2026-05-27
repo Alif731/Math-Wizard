@@ -55,109 +55,11 @@ const ensureTeacherSignupCode = async () => {
   }
 };
 
-// ------------------------------------------  Prerequisite Question ----------------------------------
-// a, Standard Arithmetic ( Direct Arithmetic calculation)
-// b, Algebraic Thinking ( Fill the missing par)
+// ============================================================================
 
-const createPracticeQuestion = ({
-  concept,
-  promptTitle,
-  practiceMode,
-  left,
-  operator,
-  right,
-  answer,
-  difficulty,
-}) => {
-  const equationSpec = {
-    operator,
-    template: createEquationTemplate({
-      operator,
-      left: { key: "left", label: "1st number", value: left },
-      right: { key: "right", label: "2nd number", value: right },
-      result: { key: "answer", label: "answer", value: answer },
-      editableKeys: ["answer"],
-    }),
-  };
+// SHARED SCHEMA HELPERS
 
-  return createQuestionEnvelope({
-    text: `${left} ${operator} ${right} = ?`,
-    concept,
-    type: "direct",
-    difficulty,
-    correctAnswer: answer,
-    schemaKind: "practice",
-    interactionMode: "direct_answer",
-    moduleStage: "practice",
-    practiceMode,
-    promptTitle,
-    inputMode: "keypad_single_blank",
-    helperText: "Tap the ? box, then type the answer.",
-    equationSpec,
-    operands: [left, right],
-    validation: {
-      acceptableAnswers: [String(answer)],
-      slots: { answer: String(answer) },
-    },
-  });
-};
-
-const createMissingPartQuestion = ({
-  concept,
-  operator,
-  values,
-  unknownKey,
-  difficulty,
-}) => {
-  const equationSpec = {
-    operator,
-    template: createEquationTemplate({
-      operator,
-      left:
-        operator === "+"
-          ? { key: "partA", label: "1st number", value: values.partA }
-          : { key: "start", label: "1st number", value: values.start },
-      right:
-        operator === "+"
-          ? { key: "partB", label: "2nd number", value: values.partB }
-          : { key: "change", label: "2nd number", value: values.change },
-      result:
-        operator === "+"
-          ? { key: "total", label: "answer", value: values.total }
-          : { key: "end", label: "answer", value: values.end },
-      editableKeys: [unknownKey],
-    }),
-  };
-
-  const solvedValues =
-    operator === "+"
-      ? { partA: values.partA, partB: values.partB, total: values.total }
-      : { start: values.start, change: values.change, end: values.end };
-
-  return createQuestionEnvelope({
-    text: buildEquationString(equationSpec, { slots: solvedValues }),
-    concept,
-    type: "equation_builder",
-    difficulty,
-    correctAnswer: solvedValues[unknownKey],
-    // schemaKind: "missing_part",
-    schemaKind: "practice",
-    interactionMode: "equation_builder",
-    moduleStage: "equations",
-    practiceMode: concept,
-    promptTitle: "find the missing number",
-    inputMode: "keypad_equation",
-    helperText: "Tap the blue box and type your answer.",
-    unknownSlot: unknownKey,
-    equationSpec,
-    validation: {
-      slots: { [unknownKey]: String(solvedValues[unknownKey]) },
-      equation: buildEquationString(equationSpec, { slots: solvedValues }),
-    },
-  });
-};
-
-// --------------------- Module 1 --------------------------------
+// ============================================================================
 
 const createEquationFromBarQuestion = ({
   concept,
@@ -289,8 +191,6 @@ const createEquationFromBarQuestion = ({
   });
 };
 
-// --------------------- Module 2 --------------------------------
-
 const createSchemaRecognitionQuestion = ({
   concept,
   text,
@@ -331,7 +231,7 @@ const createSchemaRecognitionQuestion = ({
       alternateSlots: stringifySlots(alternateSlots),
     },
   });
-// --------------------- Module 3 --------------------------------
+
 const createSchemaBarQuestion = ({
   concept,
   text,
@@ -619,193 +519,6 @@ const createDirectSchemaQuestion = ({
     },
   });
 
-// --- Change Module 2: Identify Change Direction & Bar Model ---
-const createChangeIdentificationQuestion = ({
-  concept,
-  text,
-  values,
-  labels,
-  changeDirection, // "increase" or "decrease"
-  difficulty,
-  stageIndex = null,
-  stageLabel = null,
-  stageTotal = null,
-  itemNoun = null,
-  increaseSubtext = null,
-  decreaseSubtext = null,
-}) => {
-  // The correct bar model follows directly from changeDirection
-  const correctBarModel =
-    changeDirection === "increase" ? "increase_bar" : "decrease_bar";
-
-  const resolvedNoun = itemNoun || extractNounFromQuestion(text);
-  const resolvedIncrease = increaseSubtext || (resolvedNoun ? `${resolvedNoun} were added or received` : "quantity was added or received");
-  const resolvedDecrease = decreaseSubtext || (resolvedNoun ? `${resolvedNoun} were removed or given away` : "quantity was removed or given away");
-
-  return createQuestionEnvelope({
-    text,
-    concept,
-    type: "change_identification",
-    difficulty,
-    correctAnswer: `${changeDirection}_${correctBarModel}`,
-    schemaKind: "change",
-    interactionMode: "change_identification",
-    moduleStage: "change_identify",
-    promptTitle: "identify the change",
-    inputMode: "change_identify",
-    stageIndex,
-    stageLabel,
-    stageTotal,
-    helperText:
-      "First decide if the quantity increased or decreased, then pick the matching bar model.",
-    visualData: {
-      labels,
-      values: {
-        start: String(values.start),
-        change: String(values.change),
-        end: String(values.end),
-      },
-      itemNoun: resolvedNoun,
-      increaseSubtext: resolvedIncrease,
-      decreaseSubtext: resolvedDecrease,
-    },
-    validation: {
-      changeDirection,
-      correctBarModel,
-    },
-  });
-};
-
-const createCombineBarModelQuestion = ({
-  concept,
-  text,
-  values,
-  labels,
-  unknownSlot,
-  difficulty,
-  moduleStage = "word_to_bar",
-}) => {
-  const displayValues = { partA: "?", partB: "?", total: "?" };
-  const validationSlots = withUnknownSlot(values, unknownSlot);
-
-  const createQuestion =
-    moduleStage === "schema_bar_model"
-      ? createSchemaBarQuestion
-      : createSchemaRecognitionQuestion;
-
-  return createQuestion({
-    concept,
-    text,
-    schemaKind: "combine",
-    values,
-    labels,
-    displayValues,
-    validationSlots,
-    alternateSlots: stringifySlots(values),
-    unknownSlot,
-    difficulty,
-  });
-};
-
-const createCombineEquationQuestion = ({
-  concept,
-  text,
-  values,
-  labels,
-  unknownSlot,
-  difficulty,
-  moduleStage = "bar_to_equation",
-}) => {
-  const displayValues = withUnknownSlot(values, unknownSlot);
-  const equationLabels = {
-    ...labels,
-    left: labels.partA,
-    right: labels.partB,
-    result: labels.total,
-  };
-  const equationSlots = {
-    leftTerm: displayValues.partA,
-    rightTerm: displayValues.partB,
-    result: displayValues.total,
-  };
-  const alternateSlots = {
-    leftTerm: String(values.partA),
-    rightTerm: String(values.partB),
-    result: String(values.total),
-  };
-
-  const question =
-    moduleStage === "schema_equation"
-      ? createSchemaEquationQuestion({
-          concept,
-          text,
-          schemaKind: "combine",
-          values: displayValues,
-          displayBarValues: displayValues,
-          scaleValues: values,
-          labels: equationLabels,
-          unknownSlot,
-          equationValues: equationSlots,
-          validationSlots: equationSlots,
-          alternateSlots,
-          operator: "+",
-          difficulty,
-        })
-      : createEquationFromBarQuestion({
-          concept,
-          text,
-          schemaKind: "combine",
-          barValues: displayValues,
-          scaleValues: values,
-          labels: equationLabels,
-          equationDisplayValues: equationSlots,
-          validationSlots: equationSlots,
-          alternateSlots,
-          operator: "+",
-          difficulty,
-        });
-
-  return question;
-};
-
-const createCombineSolveQuestion = ({
-  concept,
-  text,
-  values,
-  unknownSlot,
-  difficulty,
-}) => {
-  const displayValues = withUnknownSlot(values, unknownSlot);
-  const displayEquation = `${displayValues.partA} + ${displayValues.partB} = ${displayValues.total}`;
-  const answer = values[unknownSlot];
-  const verificationEquation = `${values.partA} + ${values.partB} = ${values.total}`;
-
-  return createSchemaSolveQuestion({
-    concept,
-    text,
-    schemaKind: "combine",
-    answer,
-    displayEquation,
-    verificationEquation,
-    solutionLabel: `? = ${answer}`,
-    difficulty,
-  });
-};
-
-const createCombineFullBundle = (item, concept = "combine_mod4") => [
-  createCombineBarModelQuestion({
-    ...item,
-    concept,
-    moduleStage: "schema_bar_model",
-  }),
-  createCombineEquationQuestion({
-    ...item,
-    concept,
-    moduleStage: "schema_equation",
-  }),
-  createCombineSolveQuestion({ ...item, concept }),
-];
-
 const createSchemaVariableQuestionFromItem = ({
   item,
   concept,
@@ -835,1064 +548,56 @@ const createDirectQuestionFromItem = ({ item, concept, schemaKind }) =>
     difficulty: item.difficulty,
   });
 
-const createChangeFullBundle = (item, concept = "change_mod5") => {
-  const displayValues = withUnknownSlot(item.values, item.unknownSlot);
-  const validationSlots = withUnknownSlot(item.values, item.unknownSlot);
-  const equationLabels = {
-    ...item.labels,
-    left: item.labels.start,
-    right: item.labels.change,
-    result: item.labels.end,
-  };
-  const equationSlots = {
-    leftTerm: displayValues.start,
-    rightTerm: displayValues.change,
-    result: displayValues.end,
-  };
-  const alternateSlots = {
-    leftTerm: String(item.values.start),
-    rightTerm: String(item.values.change),
-    result: String(item.values.end),
-  };
-  const displayEquation = `${displayValues.start} ${item.operator} ${displayValues.change} = ${displayValues.end}`;
-  const verificationEquation = `${item.values.start} ${item.operator} ${item.values.change} = ${item.values.end}`;
-  const answer = item.values[item.unknownSlot];
+// ============================================================================
 
-  return [
-    createChangeIdentificationQuestion({
-      concept,
-      text: item.text,
-      values: item.values,
-      labels: item.labels,
-      changeDirection:
-        item.values.end > item.values.start ? "increase" : "decrease",
-      difficulty: item.difficulty,
-      stageIndex: 1,
-      stageLabel: "1. Identify",
-      stageTotal: 4,
-      itemNoun: item.itemNoun,
-      increaseSubtext: item.increaseSubtext,
-      decreaseSubtext: item.decreaseSubtext,
+// 1. ARITHMETIC PRACTICE (4 MODULES)
+
+// ============================================================================
+
+const createPracticeQuestion = ({
+  concept,
+  promptTitle,
+  practiceMode,
+  left,
+  operator,
+  right,
+  answer,
+  difficulty,
+}) => {
+  const equationSpec = {
+    operator,
+    template: createEquationTemplate({
+      operator,
+      left: { key: "left", label: "1st number", value: left },
+      right: { key: "right", label: "2nd number", value: right },
+      result: { key: "answer", label: "answer", value: answer },
+      editableKeys: ["answer"],
     }),
-    createSchemaBarQuestion({
-      concept,
-      text: item.text,
-      schemaKind: "change",
-      values: item.values,
-      labels: item.labels,
-      displayValues: { start: "?", change: "?", end: "?" },
-      validationSlots,
-      alternateSlots: item.values,
-      unknownSlot: item.unknownSlot,
-      difficulty: item.difficulty,
-      stageIndex: 2,
-      stageLabel: "2. Bar model",
-      stageTotal: 4,
-    }),
-    createSchemaEquationQuestion({
-      concept,
-      text: item.text,
-      schemaKind: "change",
-      values: displayValues,
-      displayBarValues: displayValues,
-      scaleValues: item.values,
-      labels: equationLabels,
-      unknownSlot: item.unknownSlot,
-      equationValues: equationSlots,
-      validationSlots: equationSlots,
-      alternateSlots,
-      operator: item.operator,
-      difficulty: item.difficulty,
-      stageIndex: 3,
-      stageLabel: "3. Equation",
-      stageTotal: 4,
-    }),
-    createSchemaSolveQuestion({
-      concept,
-      text: item.text,
-      schemaKind: "change",
-      answer,
-      displayEquation,
-      verificationEquation,
-      solutionLabel: `? = ${answer}`,
-      difficulty: item.difficulty,
-      stageIndex: 4,
-      stageLabel: "4. Solve",
-      stageTotal: 4,
-    }),
-  ];
+  };
+
+  return createQuestionEnvelope({
+    text: `${left} ${operator} ${right} = ?`,
+    concept,
+    type: "direct",
+    difficulty,
+    correctAnswer: answer,
+    schemaKind: "practice",
+    interactionMode: "direct_answer",
+    moduleStage: "practice",
+    practiceMode,
+    promptTitle,
+    inputMode: "keypad_single_blank",
+    helperText: "Tap the ? box, then type the answer.",
+    equationSpec,
+    operands: [left, right],
+    validation: {
+      acceptableAnswers: [String(answer)],
+      slots: { answer: String(answer) },
+    },
+  });
 };
 
-const combineMod1Items = [
-  {
-    text: "A bowl has 25 berries. 12 are blueberries and the rest are strawberries. How many strawberries are in the bowl?",
-    values: { partA: 12, partB: 13, total: 25 },
-    labels: { total: "berries", partA: "blueberries", partB: "strawberries" },
-    unknownSlot: "partB",
-    difficulty: 2,
-  },
-  {
-    text: "There are 30 animals at the farm. 18 are sheep and the rest are pigs. How many pigs are at the farm?",
-    values: { partA: 18, partB: 12, total: 30 },
-    labels: { total: "animals", partA: "sheep", partB: "pigs" },
-    unknownSlot: "partB",
-    difficulty: 3,
-  },
-  {
-    text: "A pencil case holds 22 pens. 15 are blue pens and the rest are black pens. How many black pens are in the case?",
-    values: { partA: 15, partB: 7, total: 22 },
-    labels: { total: "pens", partA: "blue pens", partB: "black pens" },
-    unknownSlot: "partB",
-    difficulty: 2,
-  },
-  {
-    text: "Mia baked 36 muffins. 20 are blueberry muffins and the rest are chocolate chip. How many chocolate chip muffins did Mia bake?",
-    values: { partA: 20, partB: 16, total: 36 },
-    labels: { total: "muffins", partA: "blueberry", partB: "chocolate chip" },
-    unknownSlot: "partB",
-    difficulty: 3,
-  },
-  {
-    text: "A sports store sold 45 balls today. 25 were soccer balls and the rest were basketballs. How many basketballs did they sell?",
-    values: { partA: 25, partB: 20, total: 45 },
-    labels: { total: "balls", partA: "soccer balls", partB: "basketballs" },
-    unknownSlot: "partB",
-    difficulty: 3,
-  },
-  {
-    text: "Mia has 4 red and 6 blue marbles. How many marbles does Mia have in total?",
-    values: { partA: 4, partB: 6, total: 10 },
-    labels: { total: "total", partA: "red", partB: "blue" },
-    unknownSlot: "total",
-    difficulty: 1,
-  },
-  {
-    text: "A basket has 15 pieces of fruit. 9 are apples and the rest are bananas. How many bananas are in the basket?",
-    values: { partA: 6, partB: 9, total: 15 },
-    labels: { total: "fruit", partA: "bananas", partB: "apples" },
-    unknownSlot: "partA",
-    difficulty: 2,
-  },
-  {
-    text: "Tara has 18 stickers. 7 are star stickers and the rest are heart stickers. How many heart stickers does Tara have?",
-    values: { partA: 7, partB: 11, total: 18 },
-    labels: { total: "stickers", partA: "stars", partB: "hearts" },
-    unknownSlot: "partB",
-    difficulty: 2,
-  },
-  {
-    text: "A desk has 12 pencils and 5 pens. How many writing tools are on the desk?",
-    values: { partA: 12, partB: 5, total: 17 },
-    labels: { total: "tools", partA: "pencils", partB: "pens" },
-    unknownSlot: "total",
-    difficulty: 2,
-  },
-  {
-    text: "Noah found 20 shells. 8 shells are white and the rest are pink. How many pink shells did Noah find?",
-    values: { partA: 12, partB: 8, total: 20 },
-    labels: { total: "shells", partA: "pink", partB: "white" },
-    unknownSlot: "partA",
-    difficulty: 2,
-  },
-  {
-    text: "There are 14 boys and 13 girls in a club. How many children are in the club?",
-    values: { partA: 14, partB: 13, total: 27 },
-    labels: { total: "children", partA: "boys", partB: "girls" },
-    unknownSlot: "total",
-    difficulty: 2,
-  },
-  {
-    text: "A box has 16 crayons. 10 are red and the rest are blue. How many blue crayons are in the box?",
-    values: { partA: 10, partB: 6, total: 16 },
-    labels: { total: "crayons", partA: "red", partB: "blue" },
-    unknownSlot: "partB",
-    difficulty: 2,
-  },
-  {
-    text: "Leo spent $25 on books and $15 on toys. How much money did Leo spend in total?",
-    values: { partA: 25, partB: 15, total: 40 },
-    labels: { total: "money", partA: "books", partB: "toys" },
-    unknownSlot: "total",
-    difficulty: 3,
-  },
-  {
-    text: "A jar has 30 marbles. 18 are glass marbles and the rest are clay marbles. How many clay marbles are in the jar?",
-    values: { partA: 12, partB: 18, total: 30 },
-    labels: { total: "marbles", partA: "clay", partB: "glass" },
-    unknownSlot: "partA",
-    difficulty: 3,
-  },
-  {
-    text: "A parking lot has 7 cars and 5 trucks. How many vehicles are there?",
-    values: { partA: 7, partB: 5, total: 12 },
-    labels: { total: "vehicles", partA: "cars", partB: "trucks" },
-    unknownSlot: "total",
-    difficulty: 1,
-  },
-];
-
-const combineMod2Items = [
-  {
-    text: "Sara collected 8 shells and 5 rocks. How many objects did Sara collect?",
-    values: { partA: 8, partB: 5, total: 13 },
-    labels: { total: "objects", partA: "shells", partB: "rocks" },
-    unknownSlot: "total",
-    difficulty: 2,
-  },
-  {
-    text: "There are 16 orange balloons and 7 green balloons. How many balloons are there altogether?",
-    values: { partA: 16, partB: 7, total: 23 },
-    labels: { total: "balloons", partA: "orange", partB: "green" },
-    unknownSlot: "total",
-    difficulty: 2,
-  },
-  {
-    text: "A vase has 22 flowers. 14 are roses and the rest are daisies. How many daisies are in the vase?",
-    values: { partA: 14, partB: 8, total: 22 },
-    labels: { total: "flowers", partA: "roses", partB: "daisies" },
-    unknownSlot: "partB",
-    difficulty: 2,
-  },
-  {
-    text: "A snack tray has 19 snacks. 6 are cookies and the rest are crackers. How many crackers are on the tray?",
-    values: { partA: 13, partB: 6, total: 19 },
-    labels: { total: "snacks", partA: "crackers", partB: "cookies" },
-    unknownSlot: "partA",
-    difficulty: 2,
-  },
-  {
-    text: "Maya has 11 stamps and 9 postcards. How many paper items does Maya have?",
-    values: { partA: 11, partB: 9, total: 20 },
-    labels: { total: "items", partA: "stamps", partB: "postcards" },
-    unknownSlot: "total",
-    difficulty: 2,
-  },
-  {
-    text: "A supply cup has 24 markers. 15 are thick markers and the rest are thin markers. How many thin markers are there?",
-    values: { partA: 15, partB: 9, total: 24 },
-    labels: { total: "markers", partA: "thick", partB: "thin" },
-    unknownSlot: "partB",
-    difficulty: 3,
-  },
-  {
-    text: "A shelf has 28 library books. 17 are fiction and the rest are nonfiction. How many nonfiction books are there?",
-    values: { partA: 11, partB: 17, total: 28 },
-    labels: { total: "books", partA: "nonfiction", partB: "fiction" },
-    unknownSlot: "partA",
-    difficulty: 3,
-  },
-  {
-    text: "A pouch has 21 silver coins and 12 gold coins. How many coins are in the pouch?",
-    values: { partA: 21, partB: 12, total: 33 },
-    labels: { total: "coins", partA: "silver", partB: "gold" },
-    unknownSlot: "total",
-    difficulty: 3,
-  },
-  {
-    text: "A game box has 35 tokens. 20 are red tokens and the rest are blue tokens. How many blue tokens are there?",
-    values: { partA: 20, partB: 15, total: 35 },
-    labels: { total: "tokens", partA: "red", partB: "blue" },
-    unknownSlot: "partB",
-    difficulty: 3,
-  },
-  {
-    text: "A folder has 26 drawings. 10 are pencil drawings and the rest are paint drawings. How many paint drawings are in the folder?",
-    values: { partA: 16, partB: 10, total: 26 },
-    labels: { total: "drawings", partA: "paint", partB: "pencil" },
-    unknownSlot: "partA",
-    difficulty: 3,
-  },
-];
-
-const combineMod3Items = [
-  {
-    text: "Nia has 8 green and 5 yellow beads. How many beads altogether?",
-    values: { partA: 8, partB: 5, total: 13 },
-    labels: { total: "beads", partA: "green", partB: "yellow" },
-    unknownSlot: "total",
-    difficulty: 2,
-  },
-  {
-    text: "Lena packed 20 school supplies. 12 are pencils and the rest are erasers. How many erasers did Lena pack?",
-    values: { partA: 12, partB: 8, total: 20 },
-    labels: { total: "supplies", partA: "pencils", partB: "erasers" },
-    unknownSlot: "partB",
-    difficulty: 2,
-  },
-  {
-    text: "A music club has 15 singers and 14 dancers. How many members are in the club?",
-    values: { partA: 15, partB: 14, total: 29 },
-    labels: { total: "members", partA: "singers", partB: "dancers" },
-    unknownSlot: "total",
-    difficulty: 2,
-  },
-  {
-    text: "Avery saved $25 in January and $15 in February. How much did Avery save in total?",
-    values: { partA: 25, partB: 15, total: 40 },
-    labels: { total: "savings", partA: "January", partB: "February" },
-    unknownSlot: "total",
-    difficulty: 3,
-  },
-  {
-    text: "A tray has 12 dishes. 5 are plates and the rest are cups. How many cups are on the tray?",
-    values: { partA: 7, partB: 5, total: 12 },
-    labels: { total: "dishes", partA: "cups", partB: "plates" },
-    unknownSlot: "partA",
-    difficulty: 1,
-  },
-  {
-    text: "A toy box has 18 toys. 11 are cars and the rest are trucks. How many trucks are in the toy box?",
-    values: { partA: 11, partB: 7, total: 18 },
-    labels: { total: "toys", partA: "cars", partB: "trucks" },
-    unknownSlot: "partB",
-    difficulty: 2,
-  },
-  {
-    text: "A garden has 27 flowers. 16 are tulips and the rest are roses. How many roses are in the garden?",
-    values: { partA: 11, partB: 16, total: 27 },
-    labels: { total: "flowers", partA: "roses", partB: "tulips" },
-    unknownSlot: "partA",
-    difficulty: 3,
-  },
-  {
-    text: "A shelf has 13 storybooks and 9 comics. How many books are on the shelf?",
-    values: { partA: 13, partB: 9, total: 22 },
-    labels: { total: "books", partA: "storybooks", partB: "comics" },
-    unknownSlot: "total",
-    difficulty: 2,
-  },
-  {
-    text: "An art kit has 31 tools. 18 are brushes and the rest are pencils. How many pencils are in the art kit?",
-    values: { partA: 18, partB: 13, total: 31 },
-    labels: { total: "tools", partA: "brushes", partB: "pencils" },
-    unknownSlot: "partB",
-    difficulty: 3,
-  },
-  {
-    text: "A team scored 24 points in the first half and 17 points in the second half. How many points did the team score?",
-    values: { partA: 24, partB: 17, total: 41 },
-    labels: { total: "points", partA: "first half", partB: "second half" },
-    unknownSlot: "total",
-    difficulty: 3,
-  },
-];
-
-const combineVariableItems = [
-  {
-    text: "There are 18 cows and 7 sheep in a field. How many animals are in the field?",
-    sentences: [
-      "There are 18 cows and 7 sheep in a field.",
-      "How many animals are in the field?",
-    ],
-    values: { partA: 18, partB: 7, total: 25 },
-    labels: { partA: "cows", partB: "sheep", total: "animals" },
-    unknownSlot: "total",
-    difficulty: 2,
-  },
-  {
-    text: "A basket has 24 fruits. 9 are apples and the rest are oranges. How many oranges are in the basket?",
-    sentences: [
-      "A basket has 24 fruits.",
-      "9 are apples and the rest are oranges.",
-      "How many oranges are in the basket?",
-    ],
-    values: { partA: 9, partB: 15, total: 24 },
-    labels: { partA: "apples", partB: "oranges", total: "fruits" },
-    unknownSlot: "partB",
-    difficulty: 2,
-  },
-  {
-    text: "A class has 31 students. 16 are boys and the rest are girls. How many girls are in the class?",
-    sentences: [
-      "A class has 31 students.",
-      "16 are boys and the rest are girls.",
-      "How many girls are in the class?",
-    ],
-    values: { partA: 16, partB: 15, total: 31 },
-    labels: { partA: "boys", partB: "girls", total: "students" },
-    unknownSlot: "partB",
-    difficulty: 2,
-  },
-  {
-    text: "Nina has 14 red beads and 11 blue beads. How many beads does Nina have altogether?",
-    sentences: [
-      "Nina has 14 red beads and 11 blue beads.",
-      "How many beads does Nina have altogether?",
-    ],
-    values: { partA: 14, partB: 11, total: 25 },
-    labels: { partA: "red beads", partB: "blue beads", total: "beads" },
-    unknownSlot: "total",
-    difficulty: 2,
-  },
-  {
-    text: "A shelf has 40 books. 23 are storybooks and the rest are comics. How many comics are on the shelf?",
-    sentences: [
-      "A shelf has 40 books.",
-      "23 are storybooks and the rest are comics.",
-      "How many comics are on the shelf?",
-    ],
-    values: { partA: 23, partB: 17, total: 40 },
-    labels: { partA: "storybooks", partB: "comics", total: "books" },
-    unknownSlot: "partB",
-    difficulty: 3,
-  },
-  {
-    text: "A jar has 28 marbles. 10 are glass marbles and the rest are clay marbles. How many clay marbles are in the jar?",
-    sentences: [
-      "A jar has 28 marbles.",
-      "10 are glass marbles and the rest are clay marbles.",
-      "How many clay marbles are in the jar?",
-    ],
-    values: { partA: 10, partB: 18, total: 28 },
-    labels: { partA: "glass marbles", partB: "clay marbles", total: "marbles" },
-    unknownSlot: "partB",
-    difficulty: 2,
-  },
-  {
-    text: "A team scored 19 points in the first half and 22 points in the second half. How many points did the team score in all?",
-    sentences: [
-      "A team scored 19 points in the first half and 22 points in the second half.",
-      "How many points did the team score in all?",
-    ],
-    values: { partA: 19, partB: 22, total: 41 },
-    labels: { partA: "first half", partB: "second half", total: "points" },
-    unknownSlot: "total",
-    difficulty: 3,
-  },
-  {
-    text: "A tray has 36 snacks. 14 are crackers and the rest are cookies. How many cookies are on the tray?",
-    sentences: [
-      "A tray has 36 snacks.",
-      "14 are crackers and the rest are cookies.",
-      "How many cookies are on the tray?",
-    ],
-    values: { partA: 14, partB: 22, total: 36 },
-    labels: { partA: "crackers", partB: "cookies", total: "snacks" },
-    unknownSlot: "partB",
-    difficulty: 3,
-  },
-  {
-    text: "Liam packed 12 pencils and 8 erasers. How many school supplies did Liam pack?",
-    sentences: [
-      "Liam packed 12 pencils and 8 erasers.",
-      "How many school supplies did Liam pack?",
-    ],
-    values: { partA: 12, partB: 8, total: 20 },
-    labels: { partA: "pencils", partB: "erasers", total: "supplies" },
-    unknownSlot: "total",
-    difficulty: 2,
-  },
-  {
-    text: "There are 27 flowers in a garden. 15 are tulips and the rest are roses. How many roses are in the garden?",
-    sentences: [
-      "There are 27 flowers in a garden.",
-      "15 are tulips and the rest are roses.",
-      "How many roses are in the garden?",
-    ],
-    values: { partA: 15, partB: 12, total: 27 },
-    labels: { partA: "tulips", partB: "roses", total: "flowers" },
-    unknownSlot: "partB",
-    difficulty: 2,
-  },
-  {
-    text: "A store sold 45 drinks. 18 were juice boxes and the rest were water bottles. How many water bottles were sold?",
-    sentences: [
-      "A store sold 45 drinks.",
-      "18 were juice boxes and the rest were water bottles.",
-      "How many water bottles were sold?",
-    ],
-    values: { partA: 18, partB: 27, total: 45 },
-    labels: { partA: "juice boxes", partB: "water bottles", total: "drinks" },
-    unknownSlot: "partB",
-    difficulty: 3,
-  },
-  {
-    text: "A desk has 13 markers and 9 crayons. How many art tools are on the desk?",
-    sentences: [
-      "A desk has 13 markers and 9 crayons.",
-      "How many art tools are on the desk?",
-    ],
-    values: { partA: 13, partB: 9, total: 22 },
-    labels: { partA: "markers", partB: "crayons", total: "art tools" },
-    unknownSlot: "total",
-    difficulty: 2,
-  },
-  {
-    text: "A box has 50 tickets. 32 are adult tickets and the rest are child tickets. How many child tickets are in the box?",
-    sentences: [
-      "A box has 50 tickets.",
-      "32 are adult tickets and the rest are child tickets.",
-      "How many child tickets are in the box?",
-    ],
-    values: { partA: 32, partB: 18, total: 50 },
-    labels: {
-      partA: "adult tickets",
-      partB: "child tickets",
-      total: "tickets",
-    },
-    unknownSlot: "partB",
-    difficulty: 3,
-  },
-  {
-    text: "Maya saved 26 dollars in March and 14 dollars in April. How much money did Maya save altogether?",
-    sentences: [
-      "Maya saved 26 dollars in March and 14 dollars in April.",
-      "How much money did Maya save altogether?",
-    ],
-    values: { partA: 26, partB: 14, total: 40 },
-    labels: {
-      partA: "March savings",
-      partB: "April savings",
-      total: "money saved",
-    },
-    unknownSlot: "total",
-    difficulty: 3,
-  },
-  {
-    text: "A bin has 33 blocks. 20 are square blocks and the rest are triangle blocks. How many triangle blocks are in the bin?",
-    sentences: [
-      "A bin has 33 blocks.",
-      "20 are square blocks and the rest are triangle blocks.",
-      "How many triangle blocks are in the bin?",
-    ],
-    values: { partA: 20, partB: 13, total: 33 },
-    labels: {
-      partA: "square blocks",
-      partB: "triangle blocks",
-      total: "blocks",
-    },
-    unknownSlot: "partB",
-    difficulty: 2,
-  },
-];
-
-const changeVariableItems = [
-  {
-    text: "Leo had 20 cookies. He ate 6 cookies. How many cookies does Leo have left?",
-    sentences: [
-      "Leo had 20 cookies.",
-      "He ate 6 cookies.",
-      "How many cookies does Leo have left?",
-    ],
-    values: { start: 20, change: 6, end: 14 },
-    labels: { start: "start", change: "ate", end: "left" },
-    unknownSlot: "end",
-    difficulty: 2,
-  },
-  {
-    text: "A tree had 24 leaves. The wind blew some leaves away. Now there are 15 leaves left. How many leaves blew away?",
-    sentences: [
-      "A tree had 24 leaves.",
-      "The wind blew some leaves away.",
-      "Now there are 15 leaves left.",
-      "How many leaves blew away?",
-    ],
-    values: { start: 24, change: 9, end: 15 },
-    labels: { start: "start", change: "blew away", end: "left" },
-    unknownSlot: "change",
-    difficulty: 2,
-  },
-  {
-    text: "Sam had some money. He spent 18 dollars on a toy. He has 32 dollars left. How much money did Sam start with?",
-    sentences: [
-      "Sam had some money.",
-      "He spent 18 dollars on a toy.",
-      "He has 32 dollars left.",
-      "How much money did Sam start with?",
-    ],
-    values: { start: 50, change: 18, end: 32 },
-    labels: { start: "start", change: "spent", end: "left" },
-    unknownSlot: "start",
-    difficulty: 3,
-  },
-  {
-    text: "Twelve birds were on a fence. Five birds flew away. How many birds are still on the fence?",
-    sentences: [
-      "Twelve birds were on a fence.",
-      "Five birds flew away.",
-      "How many birds are still on the fence?",
-    ],
-    values: { start: 12, change: 5, end: 7 },
-    labels: { start: "start", change: "flew away", end: "still on fence" },
-    unknownSlot: "end",
-    difficulty: 1,
-  },
-  {
-    text: "Emma had some candies. She gave 15 candies to her friends. Now she has 20 candies left. How many candies did she start with?",
-    sentences: [
-      "Emma had some candies.",
-      "She gave 15 candies to her friends.",
-      "Now she has 20 candies left.",
-      "How many candies did she start with?",
-    ],
-    values: { start: 35, change: 15, end: 20 },
-    labels: { start: "start", change: "gave", end: "left" },
-    unknownSlot: "start",
-    difficulty: 3,
-  },
-  {
-    text: "Mia had some stickers. She got 4 more stickers. Now Mia has 10 stickers. How many stickers did Mia start with?",
-    sentences: [
-      "Mia had some stickers.",
-      "She got 4 more stickers.",
-      "Now Mia has 10 stickers.",
-      "How many stickers did Mia start with?",
-    ],
-    values: { start: 6, change: 4, end: 10 },
-    labels: { start: "start", change: "got", end: "now" },
-    unknownSlot: "start",
-    difficulty: 2,
-  },
-  {
-    text: "Jorge had 52 dollars. He earned 16 dollars babysitting. How much money does Jorge have now?",
-    sentences: [
-      "Jorge had 52 dollars.",
-      "He earned 16 dollars babysitting.",
-      "How much money does Jorge have now?",
-    ],
-    values: { start: 52, change: 16, end: 68 },
-    labels: { start: "start", change: "earned", end: "now" },
-    unknownSlot: "end",
-    difficulty: 2,
-  },
-  {
-    text: "Sam had 20 baseball cards. He bought 15 more cards. How many cards does Sam have now?",
-    sentences: [
-      "Sam had 20 baseball cards.",
-      "He bought 15 more cards.",
-      "How many cards does Sam have now?",
-    ],
-    values: { start: 20, change: 15, end: 35 },
-    labels: { start: "start", change: "bought", end: "now" },
-    unknownSlot: "end",
-    difficulty: 2,
-  },
-  {
-    text: "Maya had already read some pages. She read 8 more pages. She finished page 20. What page had Maya reached before reading more?",
-    sentences: [
-      "Maya had already read some pages.",
-      "She read 8 more pages.",
-      "She finished page 20.",
-      "What page had Maya reached before reading more?",
-    ],
-    values: { start: 12, change: 8, end: 20 },
-    labels: { start: "before", change: "read more", end: "finished" },
-    unknownSlot: "start",
-    difficulty: 1,
-  },
-  {
-    text: "The team had 45 points. They scored 10 more points. How many points did the team have then?",
-    sentences: [
-      "The team had 45 points.",
-      "They scored 10 more points.",
-      "How many points did the team have then?",
-    ],
-    values: { start: 45, change: 10, end: 55 },
-    labels: { start: "start", change: "scored", end: "then" },
-    unknownSlot: "end",
-    difficulty: 3,
-  },
-  {
-    text: "A bus had 38 passengers. Fourteen passengers got off. How many passengers stayed on the bus?",
-    sentences: [
-      "A bus had 38 passengers.",
-      "Fourteen passengers got off.",
-      "How many passengers stayed on the bus?",
-    ],
-    values: { start: 38, change: 14, end: 24 },
-    labels: { start: "start", change: "got off", end: "stayed" },
-    unknownSlot: "end",
-    difficulty: 3,
-  },
-  {
-    text: "A box had some pencils. The teacher added 17 pencils. Now the box has 42 pencils. How many pencils were in the box at first?",
-    sentences: [
-      "A box had some pencils.",
-      "The teacher added 17 pencils.",
-      "Now the box has 42 pencils.",
-      "How many pencils were in the box at first?",
-    ],
-    values: { start: 25, change: 17, end: 42 },
-    labels: { start: "at first", change: "added", end: "now" },
-    unknownSlot: "start",
-    difficulty: 3,
-  },
-  {
-    text: "A game had 63 players at noon. Some players left. There were 48 players after lunch. How many players left?",
-    sentences: [
-      "A game had 63 players at noon.",
-      "Some players left.",
-      "There were 48 players after lunch.",
-      "How many players left?",
-    ],
-    values: { start: 63, change: 15, end: 48 },
-    labels: { start: "at noon", change: "left", end: "after lunch" },
-    unknownSlot: "change",
-    difficulty: 3,
-  },
-  {
-    text: "A baker had 29 cupcakes. She baked 18 more cupcakes. How many cupcakes does the baker have now?",
-    sentences: [
-      "A baker had 29 cupcakes.",
-      "She baked 18 more cupcakes.",
-      "How many cupcakes does the baker have now?",
-    ],
-    values: { start: 29, change: 18, end: 47 },
-    labels: { start: "start", change: "baked", end: "now" },
-    unknownSlot: "end",
-    difficulty: 3,
-  },
-  {
-    text: "A library shelf had some books. Students borrowed 21 books. There are 34 books left. How many books were on the shelf at first?",
-    sentences: [
-      "A library shelf had some books.",
-      "Students borrowed 21 books.",
-      "There are 34 books left.",
-      "How many books were on the shelf at first?",
-    ],
-    values: { start: 55, change: 21, end: 34 },
-    labels: { start: "at first", change: "borrowed", end: "left" },
-    unknownSlot: "start",
-    difficulty: 3,
-  },
-];
-
-const changeFullIntegrationItems = [
-  {
-    text: "Sarah had $45. She spent $12 on a new book. How much money does she have now?",
-    values: { start: 45, change: 12, end: 33 },
-    labels: { end: "left over", start: "start", change: "spent" },
-    unknownSlot: "end",
-    operator: "-",
-    difficulty: 3,
-  },
-  {
-    text: "A tree had 24 leaves. The wind blew some away, and now there are 15 leaves left. How many leaves blew away?",
-    values: { start: 24, change: 9, end: 15 },
-    labels: { end: "left over", start: "start", change: "blew away" },
-    unknownSlot: "change",
-    operator: "-",
-    difficulty: 2,
-  },
-  {
-    text: "Sam had some money. He spent $18 on a toy and has $32 left. How much money did Sam start with?",
-    values: { start: 50, change: 18, end: 32 },
-    labels: { end: "left over", start: "start", change: "spent" },
-    unknownSlot: "start",
-    operator: "-",
-    difficulty: 3,
-  },
-  {
-    text: "12 birds were sitting on a fence. 5 birds flew away. How many birds are still on the fence?",
-    values: { start: 12, change: 5, end: 7 },
-    labels: { end: "remaining", start: "start", change: "flew away" },
-    unknownSlot: "end",
-    operator: "-",
-    difficulty: 1,
-  },
-  {
-    text: "Emma had some candies. She gave 15 to her friends and now has 20 left. How many candies did she start with?",
-    values: { start: 35, change: 15, end: 20 },
-    labels: { end: "left over", start: "start", change: "gave away" },
-    unknownSlot: "start",
-    operator: "-",
-    difficulty: 3,
-  },
-  {
-    text: "Lina had some stamps. She found 4 more and now has 10.",
-    values: { start: 6, change: 4, end: 10 },
-    labels: { end: "total", start: "start", change: "found" },
-    unknownSlot: "start",
-    operator: "+",
-    difficulty: 3,
-  },
-  {
-    text: "Tara had some points. She earned 16 bonus points and now has 68.",
-    values: { start: 52, change: 16, end: 68 },
-    labels: { end: "total", start: "start", change: "bonus" },
-    unknownSlot: "start",
-    operator: "+",
-    difficulty: 3,
-  },
-  {
-    text: "A club had some members. 15 new members joined, and now there are 35.",
-    values: { start: 20, change: 15, end: 35 },
-    labels: { end: "total", start: "start", change: "joined" },
-    unknownSlot: "start",
-    operator: "+",
-    difficulty: 2,
-  },
-  {
-    text: "Rina had already solved some puzzles. She solved 8 more and finished 20.",
-    values: { start: 12, change: 8, end: 20 },
-    labels: { end: "total", start: "start", change: "solved" },
-    unknownSlot: "start",
-    operator: "+",
-    difficulty: 1,
-  },
-  {
-    text: "A class had some tokens. They earned 10 more to reach 55 tokens.",
-    values: { start: 45, change: 10, end: 55 },
-    labels: { end: "total", start: "start", change: "earned" },
-    unknownSlot: "start",
-    operator: "+",
-    difficulty: 3,
-  },
-];
-
-const changeMod2Items = [
-  {
-    text: "Leo had 20 cookies. He ate 6 cookies. Now Leo has 14 cookies left.",
-    values: { start: 20, change: 6, end: 14 },
-    labels: { start: "start", change: "ate", end: "left" },
-    difficulty: 2,
-    itemNoun: "cookies",
-    increaseSubtext: "cookies were baked or added",
-    decreaseSubtext: "cookies were eaten or removed",
-  },
-  {
-    text: "A tree had 24 leaves. The wind blew 9 leaves away. Now there are 15 leaves left.",
-    values: { start: 24, change: 9, end: 15 },
-    labels: { start: "start", change: "blew away", end: "left" },
-    difficulty: 2,
-    itemNoun: "leaves",
-    increaseSubtext: "leaves grew or were added",
-    decreaseSubtext: "leaves blew away or fell",
-  },
-  {
-    text: "Sam had 50 dollars. He spent 18 dollars on a toy. Now Sam has 32 dollars.",
-    values: { start: 50, change: 18, end: 32 },
-    labels: { start: "start", change: "spent", end: "left" },
-    difficulty: 3,
-    itemNoun: "money",
-    increaseSubtext: "money was earned or added",
-    decreaseSubtext: "money was spent or lost",
-  },
-  {
-    text: "Twelve birds were on a fence. Five birds flew away. Now there are 7 birds still on the fence.",
-    values: { start: 12, change: 5, end: 7 },
-    labels: { start: "start", change: "flew away", end: "still on fence" },
-    difficulty: 1,
-    itemNoun: "birds",
-    increaseSubtext: "birds landed or were added",
-    decreaseSubtext: "birds flew away or left",
-  },
-  {
-    text: "Emma had 35 candies. She gave 15 candies to her friends. Now Emma has 20 candies left.",
-    values: { start: 35, change: 15, end: 20 },
-    labels: { start: "start", change: "gave", end: "left" },
-    difficulty: 3,
-    itemNoun: "candies",
-    increaseSubtext: "candies were bought or added",
-    decreaseSubtext: "candies were given away or eaten",
-  },
-  {
-    text: "Mia had 6 stickers. She got 4 more stickers. Now Mia has 10 stickers.",
-    values: { start: 6, change: 4, end: 10 },
-    labels: { start: "start", change: "got", end: "now" },
-    difficulty: 2,
-    itemNoun: "stickers",
-    increaseSubtext: "stickers were received or got",
-    decreaseSubtext: "stickers were lost or used",
-  },
-  {
-    text: "Jorge had 52 dollars. He earned 16 dollars babysitting. Now Jorge has 68 dollars.",
-    values: { start: 52, change: 16, end: 68 },
-    labels: { start: "start", change: "earned", end: "now" },
-    difficulty: 2,
-    itemNoun: "money",
-    increaseSubtext: "money was earned or babysat",
-    decreaseSubtext: "money was spent or lost",
-  },
-  {
-    text: "Sam had 20 baseball cards. He bought 15 more cards. Now Sam has 35 baseball cards.",
-    values: { start: 20, change: 15, end: 35 },
-    labels: { start: "start", change: "bought", end: "now" },
-    difficulty: 2,
-    itemNoun: "baseball cards",
-    increaseSubtext: "cards were bought or added",
-    decreaseSubtext: "cards were sold or lost",
-  },
-  {
-    text: "Maya had already read 12 pages. She read 8 more pages. Now Maya has finished page 20.",
-    values: { start: 12, change: 8, end: 20 },
-    labels: { start: "before", change: "read more", end: "finished" },
-    difficulty: 1,
-    itemNoun: "pages",
-    increaseSubtext: "pages were read or added",
-    decreaseSubtext: "pages were skipped or removed",
-  },
-  {
-    text: "The team had 45 points. They scored 10 more points. Now the team has 55 points.",
-    values: { start: 45, change: 10, end: 55 },
-    labels: { start: "start", change: "scored", end: "then" },
-    difficulty: 3,
-    itemNoun: "points",
-    increaseSubtext: "points were scored or gained",
-    decreaseSubtext: "points were lost or penalized",
-  },
-  {
-    text: "A bus had 38 passengers. Fourteen passengers got off. Now 24 passengers stayed on the bus.",
-    values: { start: 38, change: 14, end: 24 },
-    labels: { start: "start", change: "got off", end: "stayed" },
-    difficulty: 3,
-    itemNoun: "passengers",
-    increaseSubtext: "passengers boarded or got on",
-    decreaseSubtext: "passengers got off or left",
-  },
-  {
-    text: "A box had 25 pencils. The teacher added 17 pencils. Now the box has 42 pencils.",
-    values: { start: 25, change: 17, end: 42 },
-    labels: { start: "at first", change: "added", end: "now" },
-    difficulty: 3,
-    itemNoun: "pencils",
-    increaseSubtext: "pencils were added or bought",
-    decreaseSubtext: "pencils were lost or given away",
-  },
-  {
-    text: "A game had 63 players at noon. Some players left. Now there are 48 players remaining.",
-    values: { start: 63, change: 15, end: 48 },
-    labels: { start: "at noon", change: "left", end: "after lunch" },
-    difficulty: 3,
-    itemNoun: "players",
-    increaseSubtext: "players joined the game",
-    decreaseSubtext: "players left the game",
-  },
-  {
-    text: "A baker had 29 cupcakes. She baked 18 more cupcakes. Now the baker has 47 cupcakes.",
-    values: { start: 29, change: 18, end: 47 },
-    labels: { start: "start", change: "baked", end: "now" },
-    difficulty: 3,
-    itemNoun: "cupcakes",
-    increaseSubtext: "cupcakes were baked or added",
-    decreaseSubtext: "cupcakes were eaten or sold",
-  },
-  {
-    text: "A library shelf had 55 books. Students borrowed 21 books. Now there are 34 books left.",
-    values: { start: 55, change: 21, end: 34 },
-    labels: { start: "at first", change: "borrowed", end: "left" },
-    difficulty: 3,
-    itemNoun: "books",
-    increaseSubtext: "books were returned or added",
-    decreaseSubtext: "books were borrowed or removed",
-  },
-];
-
-const changeMod5Items = [
-  {
-    text: "Sarah had $45. She spent $12 on a new book. How much money does she have now?",
-    values: { start: 45, change: 12, end: 33 },
-    labels: { end: "left over", start: "start", change: "spent" },
-    unknownSlot: "end",
-    operator: "-",
-    difficulty: 3,
-    itemNoun: "money",
-    increaseSubtext: "money was earned or added",
-    decreaseSubtext: "money was spent or lost",
-  },
-  {
-    text: "A tree had 24 leaves. The wind blew some away, and now there are 15 leaves left. How many leaves blew away?",
-    values: { start: 24, change: 9, end: 15 },
-    labels: { end: "left over", start: "start", change: "blew away" },
-    unknownSlot: "change",
-    operator: "-",
-    difficulty: 2,
-    itemNoun: "leaves",
-    increaseSubtext: "leaves grew or were added",
-    decreaseSubtext: "leaves blew away or fell",
-  },
-  {
-    text: "Sam had $50. He spent $18 on a toy. How much money does Sam have left?",
-    values: { start: 50, change: 18, end: 32 },
-    labels: { end: "left over", start: "start", change: "spent" },
-    unknownSlot: "end",
-    operator: "-",
-    difficulty: 3,
-    itemNoun: "money",
-    increaseSubtext: "money was earned or added",
-    decreaseSubtext: "money was spent or lost",
-  },
-  {
-    text: "12 birds were sitting on a fence. 5 birds flew away. How many birds are still on the fence?",
-    values: { start: 12, change: 5, end: 7 },
-    labels: { end: "remaining", start: "start", change: "flew away" },
-    unknownSlot: "end",
-    operator: "-",
-    difficulty: 1,
-    itemNoun: "birds",
-    increaseSubtext: "birds landed or were added",
-    decreaseSubtext: "birds flew away or left",
-  },
-  {
-    text: "Emma had 35 candies. She gave 15 to her friends. How many candies does Emma have left?",
-    values: { start: 35, change: 15, end: 20 },
-    labels: { end: "left over", start: "start", change: "gave away" },
-    unknownSlot: "end",
-    operator: "-",
-    difficulty: 3,
-    itemNoun: "candies",
-    increaseSubtext: "candies were bought or added",
-    decreaseSubtext: "candies were given away or eaten",
-  },
-  {
-    text: "Lina had 6 stamps. She found 4 more. How many stamps does she have now?",
-    values: { start: 6, change: 4, end: 10 },
-    labels: { end: "total", start: "start", change: "found" },
-    unknownSlot: "end",
-    operator: "+",
-    difficulty: 3,
-    itemNoun: "stamps",
-    increaseSubtext: "stamps were found or added",
-    decreaseSubtext: "stamps were lost or used",
-  },
-  {
-    text: "Tara had 52 points. She earned 16 bonus points. How many points does she have now?",
-    values: { start: 52, change: 16, end: 68 },
-    labels: { end: "total", start: "start", change: "bonus" },
-    unknownSlot: "end",
-    operator: "+",
-    difficulty: 3,
-    itemNoun: "points",
-    increaseSubtext: "points were earned or gained",
-    decreaseSubtext: "points were lost or penalized",
-  },
-  {
-    text: "A club had 20 members. 15 new members joined. How many members are in the club now?",
-    values: { start: 20, change: 15, end: 35 },
-    labels: { end: "total", start: "start", change: "joined" },
-    unknownSlot: "end",
-    operator: "+",
-    difficulty: 2,
-    itemNoun: "members",
-    increaseSubtext: "members joined or were added",
-    decreaseSubtext: "members left or resigned",
-  },
-  {
-    text: "Rina had already solved 12 puzzles. She solved 8 more. How many puzzles has she solved in total?",
-    values: { start: 12, change: 8, end: 20 },
-    labels: { end: "total", start: "start", change: "solved" },
-    unknownSlot: "end",
-    operator: "+",
-    difficulty: 1,
-    itemNoun: "puzzles solved",
-    increaseSubtext: "more puzzles were solved",
-    decreaseSubtext: "fewer puzzles were solved",
-  },
-  {
-    text: "A class had 45 tokens. They earned 10 more. How many tokens does the class have now?",
-    values: { start: 45, change: 10, end: 55 },
-    labels: { end: "total", start: "start", change: "earned" },
-    unknownSlot: "end",
-    operator: "+",
-    difficulty: 3,
-    itemNoun: "tokens",
-    increaseSubtext: "tokens were earned or added",
-    decreaseSubtext: "tokens were spent or lost",
-  },
-];
-
-const conceptsData = [
-  // ---------------------------a, Standard Arithmetic (Prerequisite)--------------------
+const arithmeticConcepts = [
   {
     id: "single_add",
     title: "Single +",
@@ -2205,7 +910,70 @@ const conceptsData = [
       }),
     ],
   },
-  // --------------------------- b, Algebraic Thinking  (Prerequisite)--------------------
+];
+
+// ============================================================================
+
+// 2. MISSING NUMBERS (2 MODULES)
+
+// ============================================================================
+
+const createMissingPartQuestion = ({
+  concept,
+  operator,
+  values,
+  unknownKey,
+  difficulty,
+}) => {
+  const equationSpec = {
+    operator,
+    template: createEquationTemplate({
+      operator,
+      left:
+        operator === "+"
+          ? { key: "partA", label: "1st number", value: values.partA }
+          : { key: "start", label: "1st number", value: values.start },
+      right:
+        operator === "+"
+          ? { key: "partB", label: "2nd number", value: values.partB }
+          : { key: "change", label: "2nd number", value: values.change },
+      result:
+        operator === "+"
+          ? { key: "total", label: "answer", value: values.total }
+          : { key: "end", label: "answer", value: values.end },
+      editableKeys: [unknownKey],
+    }),
+  };
+
+  const solvedValues =
+    operator === "+"
+      ? { partA: values.partA, partB: values.partB, total: values.total }
+      : { start: values.start, change: values.change, end: values.end };
+
+  return createQuestionEnvelope({
+    text: buildEquationString(equationSpec, { slots: solvedValues }),
+    concept,
+    type: "equation_builder",
+    difficulty,
+    correctAnswer: solvedValues[unknownKey],
+    // schemaKind: "missing_part",
+    schemaKind: "practice",
+    interactionMode: "equation_builder",
+    moduleStage: "equations",
+    practiceMode: concept,
+    promptTitle: "find the missing number",
+    inputMode: "keypad_equation",
+    helperText: "Tap the blue box and type your answer.",
+    unknownSlot: unknownKey,
+    equationSpec,
+    validation: {
+      slots: { [unknownKey]: String(solvedValues[unknownKey]) },
+      equation: buildEquationString(equationSpec, { slots: solvedValues }),
+    },
+  });
+};
+
+const missingNumberConcepts = [
   {
     id: "missing_part_easy",
     title: "Missing Number (Easy)",
@@ -2408,15 +1176,657 @@ const conceptsData = [
       }),
     ],
   },
-  // ============================================================================
-  // TRACK 1: THE COMBINE SCHEMA
-  // ============================================================================
+];
+
+// ============================================================================
+
+// 3. COMBINE SCHEMA (5 MODULES)
+
+// ============================================================================
+
+const createCombineBarModelQuestion = ({
+  concept,
+  text,
+  values,
+  labels,
+  unknownSlot,
+  difficulty,
+  moduleStage = "word_to_bar",
+}) => {
+  const displayValues = { partA: "?", partB: "?", total: "?" };
+  const validationSlots = withUnknownSlot(values, unknownSlot);
+
+  const createQuestion =
+    moduleStage === "schema_bar_model"
+      ? createSchemaBarQuestion
+      : createSchemaRecognitionQuestion;
+
+  return createQuestion({
+    concept,
+    text,
+    schemaKind: "combine",
+    values,
+    labels,
+    displayValues,
+    validationSlots,
+    alternateSlots: stringifySlots(values),
+    unknownSlot,
+    difficulty,
+  });
+};
+
+const createCombineEquationQuestion = ({
+  concept,
+  text,
+  values,
+  labels,
+  unknownSlot,
+  difficulty,
+  moduleStage = "bar_to_equation",
+}) => {
+  const displayValues = withUnknownSlot(values, unknownSlot);
+  const equationLabels = {
+    ...labels,
+    left: labels.partA,
+    right: labels.partB,
+    result: labels.total,
+  };
+  const equationSlots = {
+    leftTerm: displayValues.partA,
+    rightTerm: displayValues.partB,
+    result: displayValues.total,
+  };
+  const alternateSlots = {
+    leftTerm: String(values.partA),
+    rightTerm: String(values.partB),
+    result: String(values.total),
+  };
+
+  const question =
+    moduleStage === "schema_equation"
+      ? createSchemaEquationQuestion({
+          concept,
+          text,
+          schemaKind: "combine",
+          values: displayValues,
+          displayBarValues: displayValues,
+          scaleValues: values,
+          labels: equationLabels,
+          unknownSlot,
+          equationValues: equationSlots,
+          validationSlots: equationSlots,
+          alternateSlots,
+          operator: "+",
+          difficulty,
+        })
+      : createEquationFromBarQuestion({
+          concept,
+          text,
+          schemaKind: "combine",
+          barValues: displayValues,
+          scaleValues: values,
+          labels: equationLabels,
+          equationDisplayValues: equationSlots,
+          validationSlots: equationSlots,
+          alternateSlots,
+          operator: "+",
+          difficulty,
+        });
+
+  return question;
+};
+
+const createCombineSolveQuestion = ({
+  concept,
+  text,
+  values,
+  unknownSlot,
+  difficulty,
+}) => {
+  const displayValues = withUnknownSlot(values, unknownSlot);
+  const displayEquation = `${displayValues.partA} + ${displayValues.partB} = ${displayValues.total}`;
+  const answer = values[unknownSlot];
+  const verificationEquation = `${values.partA} + ${values.partB} = ${values.total}`;
+
+  return createSchemaSolveQuestion({
+    concept,
+    text,
+    schemaKind: "combine",
+    answer,
+    displayEquation,
+    verificationEquation,
+    solutionLabel: `? = ${answer}`,
+    difficulty,
+  });
+};
+
+const createCombineFullBundle = (item, concept = "combine_mod4") => [
+  createCombineBarModelQuestion({
+    ...item,
+    concept,
+    moduleStage: "schema_bar_model",
+  }),
+  createCombineEquationQuestion({
+    ...item,
+    concept,
+    moduleStage: "schema_equation",
+  }),
+  createCombineSolveQuestion({ ...item, concept }),
+];
+
+const combineMod1Items = [
+  {
+    text: "There are 18 cows and 7 sheep in a field. How many animals are in the field?",
+    sentences: [
+      "There are 18 cows and 7 sheep in a field.",
+      "How many animals are in the field?",
+    ],
+    values: { partA: 18, partB: 7, total: 25 },
+    labels: { partA: "cows", partB: "sheep", total: "total animals" },
+    unknownSlot: "total",
+    difficulty: 2,
+  },
+  {
+    text: "A basket has 24 fruits. 9 are apples and the rest are oranges. How many oranges are in the basket?",
+    sentences: [
+      "A basket has 24 fruits.",
+      "9 are apples and the rest are oranges.",
+      "How many oranges are in the basket?",
+    ],
+    values: { partA: 9, partB: 15, total: 24 },
+    labels: { partA: "apples", partB: "oranges", total: "total fruits" },
+    unknownSlot: "partB",
+    difficulty: 2,
+  },
+  {
+    text: "A class has 31 students. 16 are boys and the rest are girls. How many girls are in the class?",
+    sentences: [
+      "A class has 31 students.",
+      "16 are boys and the rest are girls.",
+      "How many girls are in the class?",
+    ],
+    values: { partA: 16, partB: 15, total: 31 },
+    labels: { partA: "boys", partB: "girls", total: "total students" },
+    unknownSlot: "partB",
+    difficulty: 2,
+  },
+  {
+    text: "Nina has 14 red beads and 11 blue beads. How many beads does Nina have altogether?",
+    sentences: [
+      "Nina has 14 red beads and 11 blue beads.",
+      "How many beads does Nina have altogether?",
+    ],
+    values: { partA: 14, partB: 11, total: 25 },
+    labels: { partA: "red beads", partB: "blue beads", total: "total beads" },
+    unknownSlot: "total",
+    difficulty: 2,
+  },
+  {
+    text: "A shelf has 40 books. 23 are storybooks and the rest are comics. How many comics are on the shelf?",
+    sentences: [
+      "A shelf has 40 books.",
+      "23 are storybooks and the rest are comics.",
+      "How many comics are on the shelf?",
+    ],
+    values: { partA: 23, partB: 17, total: 40 },
+    labels: { partA: "storybooks", partB: "comics", total: "total books" },
+    unknownSlot: "partB",
+    difficulty: 3,
+  },
+  {
+    text: "A jar has 28 marbles. 10 are glass marbles and the rest are clay marbles. How many clay marbles are in the jar?",
+    sentences: [
+      "A jar has 28 marbles.",
+      "10 are glass marbles and the rest are clay marbles.",
+      "How many clay marbles are in the jar?",
+    ],
+    values: { partA: 10, partB: 18, total: 28 },
+    labels: { partA: "glass marbles", partB: "clay marbles", total: "total marbles" },
+    unknownSlot: "partB",
+    difficulty: 2,
+  },
+  {
+    text: "A team scored 19 points in the first half and 22 points in the second half. How many points did the team score in all?",
+    sentences: [
+      "A team scored 19 points in the first half and 22 points in the second half.",
+      "How many points did the team score in all?",
+    ],
+    values: { partA: 19, partB: 22, total: 41 },
+    labels: { partA: "first half", partB: "second half", total: "total points" },
+    unknownSlot: "total",
+    difficulty: 3,
+  },
+  {
+    text: "A tray has 36 snacks. 14 are chips and the rest are cookies. How many cookies are on the tray?",
+    sentences: [
+      "A tray has 36 snacks.",
+      "14 are chips and the rest are cookies.",
+      "How many cookies are on the tray?",
+    ],
+    values: { partA: 14, partB: 22, total: 36 },
+    labels: { partA: "chips", partB: "cookies", total: "total snacks" },
+    unknownSlot: "partB",
+    difficulty: 3,
+  },
+  {
+    text: "Liam packed 12 pencils and 8 erasers. How many school supplies did Liam pack?",
+    sentences: [
+      "Liam packed 12 pencils and 8 erasers.",
+      "How many school supplies did Liam pack?",
+    ],
+    values: { partA: 12, partB: 8, total: 20 },
+    labels: { partA: "pencils", partB: "erasers", total: "total supplies" },
+    unknownSlot: "total",
+    difficulty: 2,
+  },
+  {
+    text: "There are 27 flowers in a garden. 15 are tulips and the rest are roses. How many roses are in the garden?",
+    sentences: [
+      "There are 27 flowers in a garden.",
+      "15 are tulips and the rest are roses.",
+      "How many roses are in the garden?",
+    ],
+    values: { partA: 15, partB: 12, total: 27 },
+    labels: { partA: "tulips", partB: "roses", total: "total flowers" },
+    unknownSlot: "partB",
+    difficulty: 2,
+  },
+  {
+    text: "A store sold 45 drinks. 18 were juice boxes and the rest were water bottles. How many water bottles were sold?",
+    sentences: [
+      "A store sold 45 drinks.",
+      "18 were juice boxes and the rest were water bottles.",
+      "How many water bottles were sold?",
+    ],
+    values: { partA: 18, partB: 27, total: 45 },
+    labels: { partA: "juice boxes", partB: "water bottles", total: "total drinks" },
+    unknownSlot: "partB",
+    difficulty: 3,
+  },
+  {
+    text: "A desk has 13 markers and 9 crayons. How many art tools are on the desk?",
+    sentences: [
+      "A desk has 13 markers and 9 crayons.",
+      "How many art tools are on the desk?",
+    ],
+    values: { partA: 13, partB: 9, total: 22 },
+    labels: { partA: "markers", partB: "crayons", total: "total art tools" },
+    unknownSlot: "total",
+    difficulty: 2,
+  },
+  {
+    text: "A box has 50 tickets. 32 are adult tickets and the rest are child tickets. How many child tickets are in the box?",
+    sentences: [
+      "A box has 50 tickets.",
+      "32 are adult tickets and the rest are child tickets.",
+      "How many child tickets are in the box?",
+    ],
+    values: { partA: 32, partB: 18, total: 50 },
+    labels: {
+      partA: "adult tickets",
+      partB: "child tickets",
+      total: "total tickets",
+    },
+    unknownSlot: "partB",
+    difficulty: 3,
+  },
+  {
+    text: "Maya saved 26 dollars in March and 14 dollars in April. How much money did Maya save altogether?",
+    sentences: [
+      "Maya saved 26 dollars in March and 14 dollars in April.",
+      "How much money did Maya save altogether?",
+    ],
+    values: { partA: 26, partB: 14, total: 40 },
+    labels: {
+      partA: "March savings",
+      partB: "April savings",
+      total: "total money saved",
+    },
+    unknownSlot: "total",
+    difficulty: 3,
+  },
+  {
+    text: "A bin has 33 blocks. 20 are square blocks and the rest are triangle blocks. How many triangle blocks are in the bin?",
+    sentences: [
+      "A bin has 33 blocks.",
+      "20 are square blocks and the rest are triangle blocks.",
+      "How many triangle blocks are in the bin?",
+    ],
+    values: { partA: 20, partB: 13, total: 33 },
+    labels: {
+      partA: "square blocks",
+      partB: "triangle blocks",
+      total: "total blocks",
+    },
+    unknownSlot: "partB",
+    difficulty: 2,
+  },
+];
+
+const combineMod2Items = [
+  {
+    text: "A bowl has 25 berries. 12 are blueberries and the rest are strawberries. How many strawberries are in the bowl?",
+    values: { partA: 12, partB: 13, total: 25 },
+    labels: { total: "berries", partA: "blueberries", partB: "strawberries" },
+    unknownSlot: "partB",
+    difficulty: 2,
+  },
+  {
+    text: "There are 30 animals at the farm. 18 are sheep and the rest are pigs. How many pigs are at the farm?",
+    values: { partA: 18, partB: 12, total: 30 },
+    labels: { total: "animals", partA: "sheep", partB: "pigs" },
+    unknownSlot: "partB",
+    difficulty: 3,
+  },
+  {
+    text: "A pencil case holds 22 pens. 15 are blue pens and the rest are black pens. How many black pens are in the case?",
+    values: { partA: 15, partB: 7, total: 22 },
+    labels: { total: "pens", partA: "blue pens", partB: "black pens" },
+    unknownSlot: "partB",
+    difficulty: 2,
+  },
+  {
+    text: "Mia baked 36 muffins. 20 are blueberry muffins and the rest are chocolate chip. How many chocolate chip muffins did Mia bake?",
+    values: { partA: 20, partB: 16, total: 36 },
+    labels: { total: "muffins", partA: "blueberry", partB: "chocolate chip" },
+    unknownSlot: "partB",
+    difficulty: 3,
+  },
+  {
+    text: "A sports store sold 45 balls today. 25 were soccer balls and the rest were basketballs. How many basketballs did they sell?",
+    values: { partA: 25, partB: 20, total: 45 },
+    labels: { total: "balls", partA: "soccer balls", partB: "basketballs" },
+    unknownSlot: "partB",
+    difficulty: 3,
+  },
+  {
+    text: "Mia has 4 red and 6 blue marbles. How many marbles does Mia have in total?",
+    values: { partA: 4, partB: 6, total: 10 },
+    labels: { total: "total", partA: "red", partB: "blue" },
+    unknownSlot: "total",
+    difficulty: 1,
+  },
+  {
+    text: "A basket has 15 pieces of fruit. 9 are apples and the rest are bananas. How many bananas are in the basket?",
+    values: { partA: 6, partB: 9, total: 15 },
+    labels: { total: "fruit", partA: "bananas", partB: "apples" },
+    unknownSlot: "partA",
+    difficulty: 2,
+  },
+  {
+    text: "Tara has 18 stickers. 7 are star stickers and the rest are heart stickers. How many heart stickers does Tara have?",
+    values: { partA: 7, partB: 11, total: 18 },
+    labels: { total: "stickers", partA: "stars", partB: "hearts" },
+    unknownSlot: "partB",
+    difficulty: 2,
+  },
+  {
+    text: "A desk has 12 pencils and 5 pens. How many writing tools are on the desk?",
+    values: { partA: 12, partB: 5, total: 17 },
+    labels: { total: "tools", partA: "pencils", partB: "pens" },
+    unknownSlot: "total",
+    difficulty: 2,
+  },
+  {
+    text: "Noah found 20 shells. 8 shells are white and the rest are pink. How many pink shells did Noah find?",
+    values: { partA: 12, partB: 8, total: 20 },
+    labels: { total: "shells", partA: "pink", partB: "white" },
+    unknownSlot: "partA",
+    difficulty: 2,
+  },
+  {
+    text: "There are 14 boys and 13 girls in a club. How many children are in the club?",
+    values: { partA: 14, partB: 13, total: 27 },
+    labels: { total: "children", partA: "boys", partB: "girls" },
+    unknownSlot: "total",
+    difficulty: 2,
+  },
+  {
+    text: "A box has 16 crayons. 10 are red and the rest are blue. How many blue crayons are in the box?",
+    values: { partA: 10, partB: 6, total: 16 },
+    labels: { total: "crayons", partA: "red", partB: "blue" },
+    unknownSlot: "partB",
+    difficulty: 2,
+  },
+  {
+    text: "Leo spent ₹25 on books and ₹15 on toys. How much money did Leo spend in total?",
+    values: { partA: 25, partB: 15, total: 40 },
+    labels: { total: "money", partA: "books", partB: "toys" },
+    unknownSlot: "total",
+    difficulty: 3,
+  },
+  {
+    text: "A jar has 30 marbles. 18 are glass marbles and the rest are clay marbles. How many clay marbles are in the jar?",
+    values: { partA: 12, partB: 18, total: 30 },
+    labels: { total: "marbles", partA: "clay", partB: "glass" },
+    unknownSlot: "partA",
+    difficulty: 3,
+  },
+  {
+    text: "A parking lot has 7 cars and 5 trucks. How many vehicles are there?",
+    values: { partA: 7, partB: 5, total: 12 },
+    labels: { total: "vehicles", partA: "cars", partB: "trucks" },
+    unknownSlot: "total",
+    difficulty: 1,
+  },
+];
+
+const combineMod3Items = [
+  {
+    text: "Sara collected 8 shells and 5 rocks. How many objects did Sara collect?",
+    values: { partA: 8, partB: 5, total: 13 },
+    labels: { total: "objects", partA: "shells", partB: "rocks" },
+    unknownSlot: "total",
+    difficulty: 2,
+  },
+  {
+    text: "There are 16 orange balloons and 7 green balloons. How many balloons are there altogether?",
+    values: { partA: 16, partB: 7, total: 23 },
+    labels: { total: "balloons", partA: "orange", partB: "green" },
+    unknownSlot: "total",
+    difficulty: 2,
+  },
+  {
+    text: "A vase has 22 flowers. 14 are roses and the rest are daisies. How many daisies are in the vase?",
+    values: { partA: 14, partB: 8, total: 22 },
+    labels: { total: "flowers", partA: "roses", partB: "daisies" },
+    unknownSlot: "partB",
+    difficulty: 2,
+  },
+  {
+    text: "A snack tray has 19 snacks. 6 are cookies and the rest are chips. How many chips are on the tray?",
+    values: { partA: 13, partB: 6, total: 19 },
+    labels: { total: "snacks", partA: "chips", partB: "cookies" },
+    unknownSlot: "partA",
+    difficulty: 2,
+  },
+  {
+    text: "Maya has 11 stamps and 9 postcards. How many paper items does Maya have?",
+    values: { partA: 11, partB: 9, total: 20 },
+    labels: { total: "items", partA: "stamps", partB: "postcards" },
+    unknownSlot: "total",
+    difficulty: 2,
+  },
+  {
+    text: "A supply cup has 24 markers. 15 are thick markers and the rest are thin markers. How many thin markers are there?",
+    values: { partA: 15, partB: 9, total: 24 },
+    labels: { total: "markers", partA: "thick", partB: "thin" },
+    unknownSlot: "partB",
+    difficulty: 3,
+  },
+  {
+    text: "A shelf has 28 library books. 17 are fiction and the rest are nonfiction. How many nonfiction books are there?",
+    values: { partA: 11, partB: 17, total: 28 },
+    labels: { total: "books", partA: "nonfiction", partB: "fiction" },
+    unknownSlot: "partA",
+    difficulty: 3,
+  },
+  {
+    text: "A pouch has 21 silver coins and 12 gold coins. How many coins are in the pouch?",
+    values: { partA: 21, partB: 12, total: 33 },
+    labels: { total: "coins", partA: "silver", partB: "gold" },
+    unknownSlot: "total",
+    difficulty: 3,
+  },
+  {
+    text: "A game box has 35 tokens. 20 are red tokens and the rest are blue tokens. How many blue tokens are there?",
+    values: { partA: 20, partB: 15, total: 35 },
+    labels: { total: "tokens", partA: "red", partB: "blue" },
+    unknownSlot: "partB",
+    difficulty: 3,
+  },
+  {
+    text: "A folder has 26 drawings. 10 are pencil drawings and the rest are paint drawings. How many paint drawings are in the folder?",
+    values: { partA: 16, partB: 10, total: 26 },
+    labels: { total: "drawings", partA: "paint", partB: "pencil" },
+    unknownSlot: "partA",
+    difficulty: 3,
+  },
+];
+
+const combineMod4Items = [
+  {
+    text: "Nia has 8 green and 5 yellow beads. How many beads altogether?",
+    values: { partA: 8, partB: 5, total: 13 },
+    labels: { total: "beads", partA: "green", partB: "yellow" },
+    unknownSlot: "total",
+    difficulty: 2,
+  },
+  {
+    text: "Lena packed 20 school supplies. 12 are pencils and the rest are erasers. How many erasers did Lena pack?",
+    values: { partA: 12, partB: 8, total: 20 },
+    labels: { total: "supplies", partA: "pencils", partB: "erasers" },
+    unknownSlot: "partB",
+    difficulty: 2,
+  },
+  {
+    text: "A music club has 15 singers and 14 dancers. How many members are in the club?",
+    values: { partA: 15, partB: 14, total: 29 },
+    labels: { total: "members", partA: "singers", partB: "dancers" },
+    unknownSlot: "total",
+    difficulty: 2,
+  },
+  {
+    text: "Avery saved ₹25 in January and ₹15 in February. How much did Avery save in total?",
+    values: { partA: 25, partB: 15, total: 40 },
+    labels: { total: "savings", partA: "January", partB: "February" },
+    unknownSlot: "total",
+    difficulty: 3,
+  },
+  {
+    text: "A tray has 12 dishes. 5 are plates and the rest are cups. How many cups are on the tray?",
+    values: { partA: 7, partB: 5, total: 12 },
+    labels: { total: "dishes", partA: "cups", partB: "plates" },
+    unknownSlot: "partA",
+    difficulty: 1,
+  },
+  {
+    text: "A toy box has 18 toys. 11 are cars and the rest are trucks. How many trucks are in the toy box?",
+    values: { partA: 11, partB: 7, total: 18 },
+    labels: { total: "toys", partA: "cars", partB: "trucks" },
+    unknownSlot: "partB",
+    difficulty: 2,
+  },
+  {
+    text: "A garden has 27 flowers. 16 are tulips and the rest are roses. How many roses are in the garden?",
+    values: { partA: 11, partB: 16, total: 27 },
+    labels: { total: "flowers", partA: "roses", partB: "tulips" },
+    unknownSlot: "partA",
+    difficulty: 3,
+  },
+  {
+    text: "A shelf has 13 storybooks and 9 comics. How many books are on the shelf?",
+    values: { partA: 13, partB: 9, total: 22 },
+    labels: { total: "books", partA: "storybooks", partB: "comics" },
+    unknownSlot: "total",
+    difficulty: 2,
+  },
+  {
+    text: "An art kit has 31 tools. 18 are brushes and the rest are pencils. How many pencils are in the art kit?",
+    values: { partA: 18, partB: 13, total: 31 },
+    labels: { total: "tools", partA: "brushes", partB: "pencils" },
+    unknownSlot: "partB",
+    difficulty: 3,
+  },
+  {
+    text: "A team scored 24 points in the first half and 17 points in the second half. How many points did the team score?",
+    values: { partA: 24, partB: 17, total: 41 },
+    labels: { total: "points", partA: "first half", partB: "second half" },
+    unknownSlot: "total",
+    difficulty: 3,
+  },
+];
+
+const combineMod5Items = [
+  {
+    text: "A bakery sold 45 chocolate muffins and 38 banana muffins. How many muffins did they sell in total?",
+    values: { partA: 45, partB: 38, total: 83 },
+    unknownSlot: "total",
+    difficulty: 3,
+  },
+  {
+    text: "There are 92 animals on a farm. 54 are chickens and the rest are pigs. How many pigs are on the farm?",
+    values: { partA: 54, partB: 38, total: 92 },
+    unknownSlot: "partB",
+    difficulty: 4,
+  },
+  {
+    text: "A library has 95 books about cats. 68 are about big cats and the rest are about small cats. How many books are about small cats?",
+    values: { partA: 68, partB: 27, total: 95 },
+    unknownSlot: "partB",
+    difficulty: 4,
+  },
+  {
+    text: "Tom collected 46 shells on Saturday and 39 shells on Sunday. How many shells did Tom collect over the weekend?",
+    values: { partA: 46, partB: 39, total: 85 },
+    unknownSlot: "total",
+    difficulty: 3,
+  },
+  {
+    text: "A toy store has 90 puzzles. 45 of them are big puzzles and the rest are small puzzles. How many small puzzles does the store have?",
+    values: { partA: 45, partB: 45, total: 90 },
+    unknownSlot: "partB",
+    difficulty: 4,
+  },
+  {
+    text: "In a garden, there are 54 apple trees and 38 orange trees. How many trees are there in total?",
+    values: { partA: 54, partB: 38, total: 92 },
+    unknownSlot: "total",
+    difficulty: 3,
+  },
+  {
+    text: "A train is carrying 96 people. 52 people are adults and the rest are children. How many children are on the train?",
+    values: { partA: 52, partB: 44, total: 96 },
+    unknownSlot: "partB",
+    difficulty: 4,
+  },
+  {
+    text: "Sarah's book has 95 stickers. 65 are star stickers and the rest are heart stickers. How many heart stickers are in the book?",
+    values: { partA: 65, partB: 30, total: 95 },
+    unknownSlot: "partB",
+    difficulty: 4,
+  },
+  {
+    text: "A school ordered 45 red folders and 37 blue folders. How many folders were ordered in all?",
+    values: { partA: 45, partB: 37, total: 82 },
+    unknownSlot: "total",
+    difficulty: 3,
+  },
+  {
+    text: "The cafeteria served 98 meals. 50 were hot meals and the rest were cold meals. How many cold meals did they serve?",
+    values: { partA: 50, partB: 48, total: 98 },
+    unknownSlot: "partB",
+    difficulty: 4,
+  },
+];
+
+const combineConcepts = [
   {
     id: "combine_mod1",
     title: "Combine: Read and Identify Variables",
     description: "Read the combine story and identify the variables.",
     prerequisites: ["missing_part_hard"],
-    questions: combineVariableItems.map((item) =>
+    questions: combineMod1Items.map((item) =>
       createSchemaVariableQuestionFromItem({
         item,
         concept: "combine_mod1",
@@ -2430,7 +1840,7 @@ const conceptsData = [
     title: "Combine: Word Problem to Bar Model",
     description: "Read the combine story and build the bar model.",
     prerequisites: ["combine_mod1"],
-    questions: combineMod1Items.map((item) =>
+    questions: combineMod2Items.map((item) =>
       createCombineBarModelQuestion({ ...item, concept: "combine_mod2" }),
     ),
   },
@@ -2439,7 +1849,7 @@ const conceptsData = [
     title: "Combine: Bar Model to Equation",
     description: "Translate Combine bar models into equations.",
     prerequisites: ["combine_mod2"],
-    questions: combineMod2Items.map((item) =>
+    questions: combineMod3Items.map((item) =>
       createCombineEquationQuestion({ ...item, concept: "combine_mod3" }),
     ),
   },
@@ -2448,7 +1858,7 @@ const conceptsData = [
     title: "Combine: Full Integration",
     description: "Build the bar model, write the equation, and solve.",
     prerequisites: ["combine_mod3"],
-    questions: combineMod3Items.flatMap((item) =>
+    questions: combineMod4Items.flatMap((item) =>
       createCombineFullBundle(item, "combine_mod4"),
     ),
   },
@@ -2457,7 +1867,7 @@ const conceptsData = [
     title: "Combine: Direct Problem Solving",
     description: "Solve combine story problems directly.",
     prerequisites: ["combine_mod4"],
-    questions: combineVariableItems.map((item) =>
+    questions: combineMod5Items.map((item) =>
       createDirectQuestionFromItem({
         item,
         concept: "combine_mod5",
@@ -2465,16 +1875,1024 @@ const conceptsData = [
       }),
     ),
   },
+];
 
-  // ============================================================================
-  // TRACK 2: THE CHANGE SCHEMA
-  // ============================================================================
+// ============================================================================
+
+// 4. CHANGE SCHEMA (6 MODULES)
+
+// ============================================================================
+
+const createChangeIdentificationQuestion = ({
+  concept,
+  text,
+  values,
+  labels,
+  changeDirection, // "increase" or "decrease"
+  difficulty,
+  stageIndex = null,
+  stageLabel = null,
+  stageTotal = null,
+  itemNoun = null,
+  increaseSubtext = null,
+  decreaseSubtext = null,
+}) => {
+  // The correct bar model follows directly from changeDirection
+  const correctBarModel =
+    changeDirection === "increase" ? "increase_bar" : "decrease_bar";
+
+  const resolvedNoun = itemNoun || extractNounFromQuestion(text);
+  const resolvedIncrease =
+    increaseSubtext ||
+    (resolvedNoun
+      ? `${resolvedNoun} were added or received`
+      : "quantity was added or received");
+  const resolvedDecrease =
+    decreaseSubtext ||
+    (resolvedNoun
+      ? `${resolvedNoun} were removed or given away`
+      : "quantity was removed or given away");
+
+  return createQuestionEnvelope({
+    text,
+    concept,
+    type: "change_identification",
+    difficulty,
+    correctAnswer: `${changeDirection}_${correctBarModel}`,
+    schemaKind: "change",
+    interactionMode: "change_identification",
+    moduleStage: "change_identify",
+    promptTitle: "identify the change",
+    inputMode: "change_identify",
+    stageIndex,
+    stageLabel,
+    stageTotal,
+    helperText:
+      "First decide if the quantity increased or decreased, then pick the matching bar model.",
+    visualData: {
+      labels,
+      values: {
+        start: String(values.start),
+        change: String(values.change),
+        end: String(values.end),
+      },
+      itemNoun: resolvedNoun,
+      increaseSubtext: resolvedIncrease,
+      decreaseSubtext: resolvedDecrease,
+    },
+    validation: {
+      changeDirection,
+      correctBarModel,
+    },
+  });
+};
+
+const createChangeFullBundle = (item, concept = "change_mod5") => {
+  const displayValues = withUnknownSlot(item.values, item.unknownSlot);
+  const validationSlots = withUnknownSlot(item.values, item.unknownSlot);
+  const equationLabels = {
+    ...item.labels,
+    left: item.labels.start,
+    right: item.labels.change,
+    result: item.labels.end,
+  };
+  const equationSlots = {
+    leftTerm: displayValues.start,
+    rightTerm: displayValues.change,
+    result: displayValues.end,
+  };
+  const alternateSlots = {
+    leftTerm: String(item.values.start),
+    rightTerm: String(item.values.change),
+    result: String(item.values.end),
+  };
+  const displayEquation = `${displayValues.start} ${item.operator} ${displayValues.change} = ${displayValues.end}`;
+  const verificationEquation = `${item.values.start} ${item.operator} ${item.values.change} = ${item.values.end}`;
+  const answer = item.values[item.unknownSlot];
+
+  return [
+    createChangeIdentificationQuestion({
+      concept,
+      text: item.text,
+      values: item.values,
+      labels: item.labels,
+      changeDirection:
+        item.values.end > item.values.start ? "increase" : "decrease",
+      difficulty: item.difficulty,
+      stageIndex: 1,
+      stageLabel: "1. Identify",
+      stageTotal: 4,
+      itemNoun: item.itemNoun,
+      increaseSubtext: item.increaseSubtext,
+      decreaseSubtext: item.decreaseSubtext,
+    }),
+    createSchemaBarQuestion({
+      concept,
+      text: item.text,
+      schemaKind: "change",
+      values: item.values,
+      labels: item.labels,
+      displayValues: { start: "?", change: "?", end: "?" },
+      validationSlots,
+      alternateSlots: item.values,
+      unknownSlot: item.unknownSlot,
+      difficulty: item.difficulty,
+      stageIndex: 2,
+      stageLabel: "2. Bar model",
+      stageTotal: 4,
+    }),
+    createSchemaEquationQuestion({
+      concept,
+      text: item.text,
+      schemaKind: "change",
+      values: displayValues,
+      displayBarValues: displayValues,
+      scaleValues: item.values,
+      labels: equationLabels,
+      unknownSlot: item.unknownSlot,
+      equationValues: equationSlots,
+      validationSlots: equationSlots,
+      alternateSlots,
+      operator: item.operator,
+      difficulty: item.difficulty,
+      stageIndex: 3,
+      stageLabel: "3. Equation",
+      stageTotal: 4,
+    }),
+    createSchemaSolveQuestion({
+      concept,
+      text: item.text,
+      schemaKind: "change",
+      answer,
+      displayEquation,
+      verificationEquation,
+      solutionLabel: `? = ${answer}`,
+      difficulty: item.difficulty,
+      stageIndex: 4,
+      stageLabel: "4. Solve",
+      stageTotal: 4,
+    }),
+  ];
+};
+
+const changeMod1Items = [
+  {
+    text: "Leo had 20 cookies. He ate 6 cookies. How many cookies does Leo have left?",
+    sentences: [
+      "Leo had 20 cookies.",
+      "He ate 6 cookies.",
+      "How many cookies does Leo have left?",
+    ],
+    values: { start: 20, change: 6, end: 14 },
+    labels: { start: "cookies at first", change: "cookies eaten", end: "cookies left" },
+    unknownSlot: "end",
+    difficulty: 2,
+  },
+  {
+    text: "A tree had 24 leaves. The wind blew some leaves away. Now there are 15 leaves left. How many leaves blew away?",
+    sentences: [
+      "A tree had 24 leaves.",
+      "The wind blew some leaves away.",
+      "Now there are 15 leaves left.",
+      "How many leaves blew away?",
+    ],
+    values: { start: 24, change: 9, end: 15 },
+    labels: { start: "leaves at first", change: "leaves blown away", end: "leaves left" },
+    unknownSlot: "change",
+    difficulty: 2,
+  },
+  {
+    text: "Sam had some money. He spent ₹18 on a toy. He has ₹32 left. How much money did Sam start with?",
+    sentences: [
+      "Sam had some money.",
+      "He spent ₹18 on a toy.",
+      "He has ₹32 left.",
+      "How much money did Sam start with?",
+    ],
+    values: { start: 50, change: 18, end: 32 },
+    labels: { start: "money at first", change: "money spent", end: "money left" },
+    unknownSlot: "start",
+    difficulty: 3,
+  },
+  {
+    text: "Twelve birds were on a fence. Five birds flew away. How many birds are still on the fence?",
+    sentences: [
+      "Twelve birds were on a fence.",
+      "Five birds flew away.",
+      "How many birds are still on the fence?",
+    ],
+    values: { start: 12, change: 5, end: 7 },
+    labels: { start: "birds at first", change: "birds flew away", end: "birds left" },
+    unknownSlot: "end",
+    difficulty: 1,
+  },
+  {
+    text: "Emma had some candies. She gave 15 candies to her friends. Now she has 20 candies left. How many candies did she start with?",
+    sentences: [
+      "Emma had some candies.",
+      "She gave 15 candies to her friends.",
+      "Now she has 20 candies left.",
+      "How many candies did she start with?",
+    ],
+    values: { start: 35, change: 15, end: 20 },
+    labels: { start: "candies at first", change: "candies given", end: "candies left" },
+    unknownSlot: "start",
+    difficulty: 3,
+  },
+  {
+    text: "Mia had some stickers. She got 4 more stickers. Now Mia has 10 stickers. How many stickers did Mia start with?",
+    sentences: [
+      "Mia had some stickers.",
+      "She got 4 more stickers.",
+      "Now Mia has 10 stickers.",
+      "How many stickers did Mia start with?",
+    ],
+    values: { start: 6, change: 4, end: 10 },
+    labels: { start: "stickers at first", change: "stickers got", end: "stickers now" },
+    unknownSlot: "start",
+    difficulty: 2,
+  },
+  {
+    text: "Jorge had ₹52. He earned ₹16 babysitting. How much money does Jorge have now?",
+    sentences: [
+      "Jorge had ₹52.",
+      "He earned ₹16 babysitting.",
+      "How much money does Jorge have now?",
+    ],
+    values: { start: 52, change: 16, end: 68 },
+    labels: { start: "money at first", change: "money earned", end: "money now" },
+    unknownSlot: "end",
+    difficulty: 2,
+  },
+  {
+    text: "Sam had 20 baseball cards. He bought 15 more cards. How many cards does Sam have now?",
+    sentences: [
+      "Sam had 20 baseball cards.",
+      "He bought 15 more cards.",
+      "How many cards does Sam have now?",
+    ],
+    values: { start: 20, change: 15, end: 35 },
+    labels: { start: "cards at first", change: "cards bought", end: "cards now" },
+    unknownSlot: "end",
+    difficulty: 2,
+  },
+  {
+    text: "Maya had some books. She bought 8 more books. Now she has 20 books. How many books did Maya start with?",
+    sentences: [
+      "Maya had some books.",
+      "She bought 8 more books.",
+      "Now she has 20 books.",
+      "How many books did Maya start with?",
+    ],
+    values: { start: 12, change: 8, end: 20 },
+    labels: { start: "books at first", change: "books bought", end: "books now" },
+    unknownSlot: "start",
+    difficulty: 1,
+  },
+  {
+    text: "The team had 45 points. They scored 10 more points. How many points did the team have then?",
+    sentences: [
+      "The team had 45 points.",
+      "They scored 10 more points.",
+      "How many points did the team have then?",
+    ],
+    values: { start: 45, change: 10, end: 55 },
+    labels: { start: "points at first", change: "points scored", end: "points now" },
+    unknownSlot: "end",
+    difficulty: 3,
+  },
+  {
+    text: "A bus had 38 passengers. Fourteen passengers got off. How many passengers stayed on the bus?",
+    sentences: [
+      "A bus had 38 passengers.",
+      "Fourteen passengers got off.",
+      "How many passengers stayed on the bus?",
+    ],
+    values: { start: 38, change: 14, end: 24 },
+    labels: { start: "passengers at first", change: "passengers got off", end: "passengers left" },
+    unknownSlot: "end",
+    difficulty: 3,
+  },
+  {
+    text: "A box had some pencils. The teacher added 17 pencils. Now the box has 42 pencils. How many pencils were in the box at first?",
+    sentences: [
+      "A box had some pencils.",
+      "The teacher added 17 pencils.",
+      "Now the box has 42 pencils.",
+      "How many pencils were in the box at first?",
+    ],
+    values: { start: 25, change: 17, end: 42 },
+    labels: { start: "pencils at first", change: "pencils added", end: "pencils now" },
+    unknownSlot: "start",
+    difficulty: 3,
+  },
+  {
+    text: "A game had 63 players at noon. Some players left. There were 48 players after lunch. How many players left?",
+    sentences: [
+      "A game had 63 players at noon.",
+      "Some players left.",
+      "There were 48 players after lunch.",
+      "How many players left?",
+    ],
+    values: { start: 63, change: 15, end: 48 },
+    labels: { start: "players at first", change: "players left", end: "players now" },
+    unknownSlot: "change",
+    difficulty: 3,
+  },
+  {
+    text: "A baker had 29 cupcakes. She baked 18 more cupcakes. How many cupcakes does the baker have now?",
+    sentences: [
+      "A baker had 29 cupcakes.",
+      "She baked 18 more cupcakes.",
+      "How many cupcakes does the baker have now?",
+    ],
+    values: { start: 29, change: 18, end: 47 },
+    labels: { start: "cupcakes at first", change: "cupcakes baked", end: "cupcakes now" },
+    unknownSlot: "end",
+    difficulty: 3,
+  },
+  {
+    text: "A library shelf had some books. Students borrowed 21 books. There are 34 books left. How many books were on the shelf at first?",
+    sentences: [
+      "A library shelf had some books.",
+      "Students borrowed 21 books.",
+      "There are 34 books left.",
+      "How many books were on the shelf at first?",
+    ],
+    values: { start: 55, change: 21, end: 34 },
+    labels: { start: "books at first", change: "books borrowed", end: "books left" },
+    unknownSlot: "start",
+    difficulty: 3,
+  },
+];
+
+const changeMod2Items = [
+  {
+    text: "Oliver had 20 apples. He ate 6 apples.",
+    values: { start: 20, change: 6, end: 14 },
+    labels: { start: "apples at first", change: "apples eaten", end: "apples left" },
+    difficulty: 2,
+    itemNoun: "apples",
+    increaseSubtext: "apples were picked or added",
+    decreaseSubtext: "apples were eaten or removed",
+  },
+  {
+    text: "A bush had 24 flowers. The wind blew 9 flowers away.",
+    values: { start: 24, change: 9, end: 15 },
+    labels: { start: "flowers at first", change: "flowers blown away", end: "flowers left" },
+    difficulty: 2,
+    itemNoun: "flowers",
+    increaseSubtext: "flowers bloomed or were added",
+    decreaseSubtext: "flowers blew away or died",
+  },
+  {
+    text: "Sophie had 50 tickets. She spent 18 tickets on a prize.",
+    values: { start: 50, change: 18, end: 32 },
+    labels: { start: "tickets at first", change: "tickets spent", end: "tickets left" },
+    difficulty: 3,
+    itemNoun: "tickets",
+    increaseSubtext: "tickets were won or added",
+    decreaseSubtext: "tickets were spent or lost",
+  },
+  {
+    text: "Twelve bugs were on a leaf. Five bugs flew away.",
+    values: { start: 12, change: 5, end: 7 },
+    labels: { start: "bugs at first", change: "bugs flew away", end: "bugs left" },
+    difficulty: 1,
+    itemNoun: "bugs",
+    increaseSubtext: "bugs landed or were added",
+    decreaseSubtext: "bugs flew away or left",
+  },
+  {
+    text: "Aiden had 35 gems. He gave 15 gems to his brother.",
+    values: { start: 35, change: 15, end: 20 },
+    labels: { start: "gems at first", change: "gems given", end: "gems left" },
+    difficulty: 3,
+    itemNoun: "gems",
+    increaseSubtext: "gems were found or added",
+    decreaseSubtext: "gems were given away or lost",
+  },
+  {
+    text: "Chloe had 6 bracelets. She got 4 more bracelets.",
+    values: { start: 6, change: 4, end: 10 },
+    labels: { start: "bracelets at first", change: "bracelets got", end: "bracelets now" },
+    difficulty: 2,
+    itemNoun: "bracelets",
+    increaseSubtext: "bracelets were received or made",
+    decreaseSubtext: "bracelets were lost or broken",
+  },
+  {
+    text: "Max had 52 tokens. He earned 16 tokens at the arcade.",
+    values: { start: 52, change: 16, end: 68 },
+    labels: { start: "tokens at first", change: "tokens earned", end: "tokens now" },
+    difficulty: 2,
+    itemNoun: "tokens",
+    increaseSubtext: "tokens were earned or added",
+    decreaseSubtext: "tokens were spent or lost",
+  },
+  {
+    text: "A jar had 20 buttons. Someone added 15 more buttons.",
+    values: { start: 20, change: 15, end: 35 },
+    labels: { start: "buttons at first", change: "buttons added", end: "buttons now" },
+    difficulty: 2,
+    itemNoun: "buttons",
+    increaseSubtext: "buttons were bought or added",
+    decreaseSubtext: "buttons were used or lost",
+  },
+  {
+    text: "Lily had already collected 12 pebbles. She collected 8 more pebbles.",
+    values: { start: 12, change: 8, end: 20 },
+    labels: { start: "pebbles at first", change: "pebbles collected", end: "pebbles now" },
+    difficulty: 1,
+    itemNoun: "pebbles",
+    increaseSubtext: "pebbles were collected or added",
+    decreaseSubtext: "pebbles were thrown or removed",
+  },
+  {
+    text: "The game had 45 levels. The creators added 10 more levels.",
+    values: { start: 45, change: 10, end: 55 },
+    labels: { start: "levels at first", change: "levels added", end: "levels now" },
+    difficulty: 3,
+    itemNoun: "levels",
+    increaseSubtext: "levels were created or added",
+    decreaseSubtext: "levels were removed",
+  },
+  {
+    text: "A ship had 38 sailors. Fourteen sailors got off.",
+    values: { start: 38, change: 14, end: 24 },
+    labels: { start: "sailors at first", change: "sailors got off", end: "sailors left" },
+    difficulty: 3,
+    itemNoun: "sailors",
+    increaseSubtext: "sailors boarded or got on",
+    decreaseSubtext: "sailors got off or left",
+  },
+  {
+    text: "A bag had 25 carrots. The farmer added 17 carrots.",
+    values: { start: 25, change: 17, end: 42 },
+    labels: { start: "carrots at first", change: "carrots added", end: "carrots now" },
+    difficulty: 3,
+    itemNoun: "carrots",
+    increaseSubtext: "carrots were grown or added",
+    decreaseSubtext: "carrots were eaten or sold",
+  },
+  {
+    text: "A pond had 63 fish. 15 fish swam away.",
+    values: { start: 63, change: 15, end: 48 },
+    labels: { start: "fish at first", change: "fish swam away", end: "fish left" },
+    difficulty: 3,
+    itemNoun: "fish",
+    increaseSubtext: "fish hatched or joined",
+    decreaseSubtext: "fish swam away or were caught",
+  },
+  {
+    text: "A chef had 29 pizzas. He baked 18 more pizzas.",
+    values: { start: 29, change: 18, end: 47 },
+    labels: { start: "pizzas at first", change: "pizzas baked", end: "pizzas now" },
+    difficulty: 3,
+    itemNoun: "pizzas",
+    increaseSubtext: "pizzas were baked or added",
+    decreaseSubtext: "pizzas were eaten or sold",
+  },
+  {
+    text: "A desk had 55 papers. A student took 21 papers.",
+    values: { start: 55, change: 21, end: 34 },
+    labels: { start: "papers at first", change: "papers taken", end: "papers left" },
+    difficulty: 3,
+    itemNoun: "papers",
+    increaseSubtext: "papers were printed or added",
+    decreaseSubtext: "papers were taken or removed",
+  },
+];
+
+const changeMod3Items = [
+  {
+    concept: "change_mod3",
+    text: "Noah had 20 crackers. He ate 6 of them. How many crackers does Noah have left?",
+    schemaKind: "change",
+    values: { start: 20, change: 6, end: 14 },
+    labels: { end: "crackers left", start: "crackers at first", change: "crackers eaten" },
+    displayValues: { start: "?", change: "?", end: "?" },
+    validationSlots: { end: "?", start: "20", change: "6" },
+    alternateSlots: { end: "14", start: "20", change: "6" },
+    unknownSlot: "end",
+    difficulty: 2,
+  },
+  {
+    concept: "change_mod3",
+    text: "A bush had 24 berries. A bird ate some, and now there are 15 berries left. How many berries did the bird eat?",
+    schemaKind: "change",
+    values: { start: 24, change: 9, end: 15 },
+    labels: { end: "berries left", start: "berries at first", change: "berries eaten" },
+    displayValues: { start: "?", change: "?", end: "?" },
+    validationSlots: { end: "15", start: "24", change: "?" },
+    alternateSlots: { end: "15", start: "24", change: "9" },
+    unknownSlot: "change",
+    difficulty: 2,
+  },
+  {
+    concept: "change_mod3",
+    text: "Ava had some beads. She used 18 beads for a necklace and has 32 beads left. How many beads did Ava start with?",
+    schemaKind: "change",
+    values: { start: 50, change: 18, end: 32 },
+    labels: { end: "beads left", start: "beads at first", change: "beads used" },
+    displayValues: { start: "?", change: "?", end: "?" },
+    validationSlots: { end: "32", start: "?", change: "18" },
+    alternateSlots: { end: "32", start: "50", change: "18" },
+    unknownSlot: "start",
+    difficulty: 3,
+  },
+  {
+    concept: "change_mod3",
+    text: "12 ducks were swimming in a pond. 5 ducks waddled away. How many ducks are still in the pond?",
+    schemaKind: "change",
+    values: { start: 12, change: 5, end: 7 },
+    labels: { end: "ducks left", start: "ducks at first", change: "ducks waddled away" },
+    displayValues: { start: "?", change: "?", end: "?" },
+    validationSlots: { end: "?", start: "12", change: "5" },
+    alternateSlots: { end: "7", start: "12", change: "5" },
+    unknownSlot: "end",
+    difficulty: 1,
+  },
+  {
+    concept: "change_mod3",
+    text: "Liam had some grapes. He gave 15 to his sister and now has 20 left. How many grapes did he start with?",
+    schemaKind: "change",
+    values: { start: 35, change: 15, end: 20 },
+    labels: { end: "grapes left", start: "grapes at first", change: "grapes given" },
+    displayValues: { start: "?", change: "?", end: "?" },
+    validationSlots: { end: "20", start: "?", change: "15" },
+    alternateSlots: { end: "20", start: "35", change: "15" },
+    unknownSlot: "start",
+    difficulty: 3,
+  },
+  {
+    concept: "change_mod3",
+    text: "Zoe had some markers. She found 4 more and now has 10.",
+    schemaKind: "change",
+    values: { start: 6, change: 4, end: 10 },
+    labels: { end: "markers now", start: "markers at first", change: "markers found" },
+    displayValues: { start: "?", change: "?", end: "?" },
+    validationSlots: { end: "10", start: "?", change: "4" },
+    alternateSlots: { end: "10", start: "6", change: "4" },
+    unknownSlot: "start",
+    difficulty: 2,
+  },
+  {
+    concept: "change_mod3",
+    text: "Lucas had some shells. He collected 16 more on the beach. Now Lucas has 68 shells.",
+    schemaKind: "change",
+    values: { start: 52, change: 16, end: 68 },
+    labels: { end: "shells now", start: "shells at first", change: "shells collected" },
+    displayValues: { start: "?", change: "?", end: "?" },
+    validationSlots: { end: "68", start: "?", change: "16" },
+    alternateSlots: { end: "68", start: "52", change: "16" },
+    unknownSlot: "start",
+    difficulty: 2,
+  },
+  {
+    concept: "change_mod3",
+    text: "A jar had some coins. Eli added 15 more, and now the jar has 35 coins.",
+    schemaKind: "change",
+    values: { start: 20, change: 15, end: 35 },
+    labels: { end: "coins now", start: "coins at first", change: "coins added" },
+    displayValues: { start: "?", change: "?", end: "?" },
+    validationSlots: { end: "35", start: "?", change: "15" },
+    alternateSlots: { end: "35", start: "20", change: "15" },
+    unknownSlot: "start",
+    difficulty: 2,
+  },
+  {
+    concept: "change_mod3",
+    text: "Ruby had some stamps. She bought 8 more stamps and now has 20.",
+    schemaKind: "change",
+    values: { start: 12, change: 8, end: 20 },
+    labels: { end: "stamps now", start: "stamps at first", change: "stamps bought" },
+    displayValues: { start: "?", change: "?", end: "?" },
+    validationSlots: { end: "20", start: "?", change: "8" },
+    alternateSlots: { end: "20", start: "12", change: "8" },
+    unknownSlot: "start",
+    difficulty: 1,
+  },
+  {
+    concept: "change_mod3",
+    text: "A game had some players. 10 more players joined to reach a total of 55 players.",
+    schemaKind: "change",
+    values: { start: 45, change: 10, end: 55 },
+    labels: { end: "players now", start: "players at first", change: "players joined" },
+    displayValues: { start: "?", change: "?", end: "?" },
+    validationSlots: { end: "55", start: "?", change: "10" },
+    alternateSlots: { end: "55", start: "45", change: "10" },
+    unknownSlot: "start",
+    difficulty: 3,
+  },
+];
+
+const changeMod4Items = [
+  {
+    concept: "change_mod4",
+    text: "There were 15 butterflies. Some butterflies flew away, and now 11 butterflies are left. How many butterflies flew away?",
+    schemaKind: "change",
+    barValues: { start: "15", change: "?", end: "11" },
+    scaleValues: { start: 15, change: 4, end: 11 },
+    labels: {
+      end: "butterflies left",
+      start: "butterflies at first",
+      change: "butterflies flew away",
+      left: "butterflies at first",
+      right: "butterflies flew away",
+      result: "butterflies left",
+    },
+    equationDisplayValues: { leftTerm: "15", rightTerm: "?", result: "11" },
+    validationSlots: { leftTerm: "15", rightTerm: "?", result: "11" },
+    alternateSlots: { leftTerm: "15", rightTerm: "4", result: "11" },
+    operator: "-",
+    difficulty: 2,
+  },
+  {
+    concept: "change_mod4",
+    text: "Chloe had some seeds. She planted 18 seeds and has 32 seeds left. How many seeds did Chloe start with?",
+    schemaKind: "change",
+    barValues: { start: "?", change: "18", end: "32" },
+    scaleValues: { start: 50, change: 18, end: 32 },
+    labels: {
+      end: "seeds left",
+      start: "seeds at first",
+      change: "seeds planted",
+      left: "seeds at first",
+      right: "seeds planted",
+      result: "seeds left",
+    },
+    equationDisplayValues: { leftTerm: "?", rightTerm: "18", result: "32" },
+    validationSlots: { leftTerm: "?", rightTerm: "18", result: "32" },
+    alternateSlots: { leftTerm: "50", rightTerm: "18", result: "32" },
+    operator: "-",
+    difficulty: 3,
+  },
+  {
+    concept: "change_mod4",
+    text: "12 frogs were sitting on a log. 5 frogs jumped away. How many frogs are still on the log?",
+    schemaKind: "change",
+    barValues: { start: "12", change: "5", end: "?" },
+    scaleValues: { start: 12, change: 5, end: 7 },
+    labels: {
+      end: "frogs left",
+      start: "frogs at first",
+      change: "frogs jumped away",
+      left: "frogs at first",
+      right: "frogs jumped away",
+      result: "frogs left",
+    },
+    equationDisplayValues: { leftTerm: "12", rightTerm: "5", result: "?" },
+    validationSlots: { leftTerm: "12", rightTerm: "5", result: "?" },
+    alternateSlots: { leftTerm: "12", rightTerm: "5", result: "7" },
+    operator: "-",
+    difficulty: 1,
+  },
+  {
+    concept: "change_mod4",
+    text: "Mason had some blocks. He lost 15 blocks and now has 20 left. How many blocks did he start with?",
+    schemaKind: "change",
+    barValues: { start: "?", change: "15", end: "20" },
+    scaleValues: { start: 35, change: 15, end: 20 },
+    labels: {
+      end: "blocks left",
+      start: "blocks at first",
+      change: "blocks lost",
+      left: "blocks at first",
+      right: "blocks lost",
+      result: "blocks left",
+    },
+    equationDisplayValues: { leftTerm: "?", rightTerm: "15", result: "20" },
+    validationSlots: { leftTerm: "?", rightTerm: "15", result: "20" },
+    alternateSlots: { leftTerm: "35", rightTerm: "15", result: "20" },
+    operator: "-",
+    difficulty: 3,
+  },
+  {
+    concept: "change_mod4",
+    text: "There were 8 slices of pie. 3 slices were eaten. How many slices are left?",
+    schemaKind: "change",
+    barValues: { start: "8", change: "3", end: "?" },
+    scaleValues: { start: 8, change: 3, end: 5 },
+    labels: {
+      end: "slices left",
+      start: "slices at first",
+      change: "slices eaten",
+      left: "slices at first",
+      right: "slices eaten",
+      result: "slices left",
+    },
+    equationDisplayValues: { leftTerm: "8", rightTerm: "3", result: "?" },
+    validationSlots: { leftTerm: "8", rightTerm: "3", result: "?" },
+    alternateSlots: { leftTerm: "8", rightTerm: "3", result: "5" },
+    operator: "-",
+    difficulty: 1,
+  },
+  {
+    concept: "change_mod4",
+    text: "Lily had some ribbons. She bought 4 more and now has 10 ribbons. How many ribbons did Lily start with?",
+    schemaKind: "change",
+    barValues: { start: "?", change: "4", end: "10" },
+    scaleValues: { start: 6, change: 4, end: 10 },
+    labels: {
+      end: "ribbons now",
+      start: "ribbons at first",
+      change: "ribbons bought",
+      left: "ribbons at first",
+      right: "ribbons bought",
+      result: "ribbons now",
+    },
+    equationDisplayValues: { leftTerm: "?", rightTerm: "4", result: "10" },
+    validationSlots: { leftTerm: "?", rightTerm: "4", result: "10" },
+    alternateSlots: { leftTerm: "6", rightTerm: "4", result: "10" },
+    operator: "+",
+    difficulty: 2,
+  },
+  {
+    concept: "change_mod4",
+    text: "Ethan had some rocks. He found 16 more. Now Ethan has 68 rocks. How many rocks did Ethan start with?",
+    schemaKind: "change",
+    barValues: { start: "?", change: "16", end: "68" },
+    scaleValues: { start: 52, change: 16, end: 68 },
+    labels: {
+      end: "rocks now",
+      start: "rocks at first",
+      change: "rocks found",
+      left: "rocks at first",
+      right: "rocks found",
+      result: "rocks now",
+    },
+    equationDisplayValues: { leftTerm: "?", rightTerm: "16", result: "68" },
+    validationSlots: { leftTerm: "?", rightTerm: "16", result: "68" },
+    alternateSlots: { leftTerm: "52", rightTerm: "16", result: "68" },
+    operator: "+",
+    difficulty: 2,
+  },
+  {
+    concept: "change_mod4",
+    text: "A store had some toys. They got 15 more, and now they have 35 toys. How many toys did the store start with?",
+    schemaKind: "change",
+    barValues: { start: "?", change: "15", end: "35" },
+    scaleValues: { start: 20, change: 15, end: 35 },
+    labels: {
+      end: "toys now",
+      start: "toys at first",
+      change: "toys got",
+      left: "toys at first",
+      right: "toys got",
+      result: "toys now",
+    },
+    equationDisplayValues: { leftTerm: "?", rightTerm: "15", result: "35" },
+    validationSlots: { leftTerm: "?", rightTerm: "15", result: "35" },
+    alternateSlots: { leftTerm: "20", rightTerm: "15", result: "35" },
+    operator: "+",
+    difficulty: 2,
+  },
+  {
+    concept: "change_mod4",
+    text: "Aria had some crayons. She found 8 more crayons and now has 20. How many crayons did Aria start with?",
+    schemaKind: "change",
+    barValues: { start: "?", change: "8", end: "20" },
+    scaleValues: { start: 12, change: 8, end: 20 },
+    labels: {
+      end: "crayons now",
+      start: "crayons at first",
+      change: "crayons found",
+      left: "crayons at first",
+      right: "crayons found",
+      result: "crayons now",
+    },
+    equationDisplayValues: { leftTerm: "?", rightTerm: "8", result: "20" },
+    validationSlots: { leftTerm: "?", rightTerm: "8", result: "20" },
+    alternateSlots: { leftTerm: "12", rightTerm: "8", result: "20" },
+    operator: "+",
+    difficulty: 1,
+  },
+  {
+    concept: "change_mod4",
+    text: "A team had some medals. They won 10 more to reach a total of 55 medals. How many medals did the team start with?",
+    schemaKind: "change",
+    barValues: { start: "?", change: "10", end: "55" },
+    scaleValues: { start: 45, change: 10, end: 55 },
+    labels: {
+      end: "medals now",
+      start: "medals at first",
+      change: "medals won",
+      left: "medals at first",
+      right: "medals won",
+      result: "medals now",
+    },
+    equationDisplayValues: { leftTerm: "?", rightTerm: "10", result: "55" },
+    validationSlots: { leftTerm: "?", rightTerm: "10", result: "55" },
+    alternateSlots: { leftTerm: "45", rightTerm: "10", result: "55" },
+    operator: "+",
+    difficulty: 3,
+  },
+];
+
+const changeMod5Items = [
+  {
+    text: "Owen had 45 tickets. He used 12 tickets on a ride. How many tickets does he have now?",
+    values: { start: 45, change: 12, end: 33 },
+    labels: { end: "tickets left", start: "tickets at first", change: "tickets used" },
+    unknownSlot: "end",
+    operator: "-",
+    difficulty: 3,
+    itemNoun: "tickets",
+    increaseSubtext: "tickets were earned or added",
+    decreaseSubtext: "tickets were used or lost",
+  },
+  {
+    text: "A bowl had 24 cherries. Someone ate some, and now there are 15 cherries left. How many cherries were eaten?",
+    values: { start: 24, change: 9, end: 15 },
+    labels: { end: "cherries left", start: "cherries at first", change: "cherries eaten" },
+    unknownSlot: "change",
+    operator: "-",
+    difficulty: 2,
+    itemNoun: "cherries",
+    increaseSubtext: "cherries were added",
+    decreaseSubtext: "cherries were eaten or removed",
+  },
+  {
+    text: "Ella had some marbles. She lost 18 marbles and has 32 left. How many marbles did Ella start with?",
+    values: { start: 50, change: 18, end: 32 },
+    labels: { end: "marbles left", start: "marbles at first", change: "marbles lost" },
+    unknownSlot: "start",
+    operator: "-",
+    difficulty: 3,
+    itemNoun: "marbles",
+    increaseSubtext: "marbles were won or found",
+    decreaseSubtext: "marbles were lost or given away",
+  },
+  {
+    text: "12 cars were in a parking lot. 5 cars drove away. How many cars are still in the lot?",
+    values: { start: 12, change: 5, end: 7 },
+    labels: { end: "cars left", start: "cars at first", change: "cars drove away" },
+    unknownSlot: "end",
+    operator: "-",
+    difficulty: 1,
+    itemNoun: "cars",
+    increaseSubtext: "cars arrived",
+    decreaseSubtext: "cars drove away",
+  },
+  {
+    text: "Leo had some photos. He deleted 15 photos and now has 20 left. How many photos did he start with?",
+    values: { start: 35, change: 15, end: 20 },
+    labels: { end: "photos left", start: "photos at first", change: "photos deleted" },
+    unknownSlot: "start",
+    operator: "-",
+    difficulty: 3,
+    itemNoun: "photos",
+    increaseSubtext: "photos were taken",
+    decreaseSubtext: "photos were deleted",
+  },
+  {
+    text: "Nina had some rings. She bought 4 more and now has 10 rings. How many rings did Nina start with?",
+    values: { start: 6, change: 4, end: 10 },
+    labels: { end: "rings now", start: "rings at first", change: "rings bought" },
+    unknownSlot: "start",
+    operator: "+",
+    difficulty: 2,
+    itemNoun: "rings",
+    increaseSubtext: "rings were bought or added",
+    decreaseSubtext: "rings were lost or sold",
+  },
+  {
+    text: "Jack had some cards. He got 16 more and now has 68 cards. How many cards did Jack start with?",
+    values: { start: 52, change: 16, end: 68 },
+    labels: { end: "cards now", start: "cards at first", change: "cards got" },
+    unknownSlot: "start",
+    operator: "+",
+    difficulty: 2,
+    itemNoun: "cards",
+    increaseSubtext: "cards were received or bought",
+    decreaseSubtext: "cards were lost or traded",
+  },
+  {
+    text: "A box had some nails. 15 new nails were added, and now there are 35 nails. How many nails were in the box at first?",
+    values: { start: 20, change: 15, end: 35 },
+    labels: { end: "nails now", start: "nails at first", change: "nails added" },
+    unknownSlot: "start",
+    operator: "+",
+    difficulty: 2,
+    itemNoun: "nails",
+    increaseSubtext: "nails were added",
+    decreaseSubtext: "nails were used or removed",
+  },
+  {
+    text: "Mila had already planted some seeds. She planted 8 more and reached 20 seeds. How many seeds did Mila start with?",
+    values: { start: 12, change: 8, end: 20 },
+    labels: { end: "seeds now", start: "seeds at first", change: "seeds planted" },
+    unknownSlot: "start",
+    operator: "+",
+    difficulty: 1,
+    itemNoun: "seeds",
+    increaseSubtext: "seeds were planted",
+    decreaseSubtext: "seeds were removed",
+  },
+  {
+    text: "A baker had some muffins. They baked 10 more to reach 55 muffins. How many muffins did the baker start with?",
+    values: { start: 45, change: 10, end: 55 },
+    labels: { end: "muffins now", start: "muffins at first", change: "muffins baked" },
+    unknownSlot: "start",
+    operator: "+",
+    difficulty: 3,
+    itemNoun: "muffins",
+    increaseSubtext: "muffins were baked",
+    decreaseSubtext: "muffins were sold or eaten",
+  },
+];
+
+const changeMod6Items = [
+  {
+    text: "A farmer had 45 apples. He sold 12 apples. How many apples does he have now?",
+    values: { start: 45, change: 12, end: 33 },
+    labels: { end: "apples left", start: "apples at first", change: "apples sold" },
+    unknownSlot: "end",
+    operator: "-",
+    difficulty: 3,
+  },
+  {
+    text: "A train had 24 cars. Some detached, and now there are 15 cars left. How many detached?",
+    values: { start: 24, change: 9, end: 15 },
+    labels: { end: "cars left", start: "cars at first", change: "cars detached" },
+    unknownSlot: "change",
+    operator: "-",
+    difficulty: 2,
+  },
+  {
+    text: "A library had some dictionaries. They gave away 18 and have 32 left. How many dictionaries did they start with?",
+    values: { start: 50, change: 18, end: 32 },
+    labels: { end: "dictionaries left", start: "dictionaries at first", change: "dictionaries given away" },
+    unknownSlot: "start",
+    operator: "-",
+    difficulty: 3,
+  },
+  {
+    text: "12 ants were on a leaf. 5 ants fell off. How many ants are still on the leaf?",
+    values: { start: 12, change: 5, end: 7 },
+    labels: { end: "ants left", start: "ants at first", change: "ants fell off" },
+    unknownSlot: "end",
+    operator: "-",
+    difficulty: 1,
+  },
+  {
+    text: "A teacher had some pieces of chalk. She broke 15 pieces and now has 20 whole pieces left. How many pieces did she start with?",
+    values: { start: 35, change: 15, end: 20 },
+    labels: { end: "pieces left", start: "pieces at first", change: "pieces broken" },
+    unknownSlot: "start",
+    operator: "-",
+    difficulty: 3,
+  },
+  {
+    text: "A boy had some gems. He found 4 more and now has 10 gems. How many gems did he start with?",
+    values: { start: 6, change: 4, end: 10 },
+    labels: { end: "gems now", start: "gems at first", change: "gems found" },
+    unknownSlot: "start",
+    operator: "+",
+    difficulty: 2,
+  },
+  {
+    text: "A girl had some seashells. She collected 16 more and now has 68 seashells. How many seashells did she start with?",
+    values: { start: 52, change: 16, end: 68 },
+    labels: { end: "seashells now", start: "seashells at first", change: "seashells collected" },
+    unknownSlot: "start",
+    operator: "+",
+    difficulty: 2,
+  },
+  {
+    text: "A store had some bikes. 15 new bikes arrived, and now there are 35 bikes. How many bikes did the store start with?",
+    values: { start: 20, change: 15, end: 35 },
+    labels: { end: "bikes now", start: "bikes at first", change: "bikes arrived" },
+    unknownSlot: "start",
+    operator: "+",
+    difficulty: 2,
+  },
+  {
+    text: "A worker had some bricks. He bought 8 more and reached 20 bricks. How many bricks did he start with?",
+    values: { start: 12, change: 8, end: 20 },
+    labels: { end: "bricks now", start: "bricks at first", change: "bricks bought" },
+    unknownSlot: "start",
+    operator: "+",
+    difficulty: 1,
+  },
+  {
+    text: "A chef had some potatoes. He peeled 10 more to reach 55 peeled potatoes. How many did he start with?",
+    values: { start: 45, change: 10, end: 55 },
+    labels: { end: "potatoes now", start: "potatoes at first", change: "potatoes peeled" },
+    unknownSlot: "start",
+    operator: "+",
+    difficulty: 3,
+  },
+];
+
+const changeConcepts = [
   {
     id: "change_mod1",
     title: "Change: Read and Identify Variables",
     description: "Read the change story and identify the variables.",
     prerequisites: ["combine_mod5"],
-    questions: changeVariableItems.map((item) =>
+    questions: changeMod1Items.map((item) =>
       createSchemaVariableQuestionFromItem({
         item,
         concept: "change_mod1",
@@ -2509,350 +2927,18 @@ const conceptsData = [
     title: "Change: Word Problem to Bar Model",
     description: "Read the change story and build the bar model.",
     prerequisites: ["change_mod2"],
-    questions: [
-      // -------------------------------Subtraction-------------------------------
-      // Subtraction 1: Cookies
-      createSchemaRecognitionQuestion({
-        concept: "change_mod3",
-        text: "Leo had 20 cookies. He ate 6 of them. How many cookies does Leo have left?",
-        schemaKind: "change",
-        values: { start: 20, change: 6, end: 14 },
-        labels: { end: "left over", start: "start", change: "ate" },
-        displayValues: { start: "?", change: "?", end: "?" },
-        validationSlots: { end: "?", start: "20", change: "6" },
-        alternateSlots: { end: "14", start: "20", change: "6" },
-        unknownSlot: "end",
-        difficulty: 2,
-      }),
-      // Subtraction 2: Finding the change
-      createSchemaRecognitionQuestion({
-        concept: "change_mod3",
-        text: "A tree had 24 leaves. The wind blew some away, and now there are 15 leaves left. How many leaves blew away?",
-        schemaKind: "change",
-        values: { start: 24, change: 9, end: 15 },
-        labels: { end: "left over", start: "start", change: "blew away" },
-        displayValues: { start: "?", change: "?", end: "?" },
-        validationSlots: { end: "15", start: "24", change: "?" },
-        alternateSlots: { end: "15", start: "24", change: "9" },
-        unknownSlot: "change",
-        difficulty: 2,
-      }),
-      // Subtraction 3: Finding the start
-      createSchemaRecognitionQuestion({
-        concept: "change_mod3",
-        text: "Sam had some money. He spent $18 on a toy and has $32 left. How much money did Sam start with?",
-        schemaKind: "change",
-        values: { start: 50, change: 18, end: 32 },
-        labels: { end: "left over", start: "start", change: "spent" },
-        displayValues: { start: "?", change: "?", end: "?" },
-        validationSlots: { end: "32", start: "?", change: "18" },
-        alternateSlots: { end: "32", start: "50", change: "18" },
-        unknownSlot: "start",
-        difficulty: 3,
-      }),
-      // Subtraction 4: Finding the end
-      createSchemaRecognitionQuestion({
-        concept: "change_mod3",
-        text: "12 birds were sitting on a fence. 5 birds flew away. How many birds are still on the fence?",
-        schemaKind: "change",
-        values: { start: 12, change: 5, end: 7 },
-        labels: { end: "remaining", start: "start", change: "flew away" },
-        displayValues: { start: "?", change: "?", end: "?" },
-        validationSlots: { end: "?", start: "12", change: "5" },
-        alternateSlots: { end: "7", start: "12", change: "5" },
-        unknownSlot: "end",
-        difficulty: 1,
-      }),
-      // Subtraction 5: Finding the start
-      createSchemaRecognitionQuestion({
-        concept: "change_mod3",
-        text: "Emma had some candies. She gave 15 to her friends and now has 20 left. How many candies did she start with?",
-        schemaKind: "change",
-        values: { start: 35, change: 15, end: 20 },
-        labels: { end: "left over", start: "start", change: "gave away" },
-        displayValues: { start: "?", change: "?", end: "?" },
-        validationSlots: { end: "20", start: "?", change: "15" },
-        alternateSlots: { end: "20", start: "35", change: "15" },
-        unknownSlot: "start",
-        difficulty: 3,
-      }),
-      //------------------------------- Addition -------------------------------
-      createSchemaRecognitionQuestion({
-        concept: "change_mod3",
-        text: "Mia had some stickers. She got 4 more and now has 10.",
-        schemaKind: "change",
-        values: { start: 6, change: 4, end: 10 },
-        labels: { end: "total", start: "start", change: "added" },
-        displayValues: { start: "?", change: "?", end: "?" },
-        validationSlots: { end: "10", start: "?", change: "4" },
-        alternateSlots: { end: "10", start: "6", change: "4" },
-        unknownSlot: "start",
-        difficulty: 2,
-      }),
-      createSchemaRecognitionQuestion({
-        concept: "change_mod3",
-        text: "Jorge had some money. Then he earned $16 babysitting. Now Jorge has $68.",
-        schemaKind: "change",
-        values: { start: 52, change: 16, end: 68 },
-        labels: { end: "total", start: "start", change: "earned" },
-        displayValues: { start: "?", change: "?", end: "?" },
-        validationSlots: { end: "68", start: "?", change: "16" },
-        alternateSlots: { end: "68", start: "52", change: "16" },
-        unknownSlot: "start",
-        difficulty: 2,
-      }),
-      createSchemaRecognitionQuestion({
-        concept: "change_mod3",
-        text: "Sam had some baseball cards. He bought 15 more, and now he has 35.",
-        schemaKind: "change",
-        values: { start: 20, change: 15, end: 35 },
-        labels: { end: "total", start: "start", change: "bought" },
-        displayValues: { start: "?", change: "?", end: "?" },
-        validationSlots: { end: "35", start: "?", change: "15" },
-        alternateSlots: { end: "35", start: "20", change: "15" },
-        unknownSlot: "start",
-        difficulty: 2,
-      }),
-      createSchemaRecognitionQuestion({
-        concept: "change_mod3",
-        text: "Maya had already read some pages. She read 8 more pages and finished page 20.",
-        schemaKind: "change",
-        values: { start: 12, change: 8, end: 20 },
-        labels: { end: "total", start: "start", change: "read" },
-        displayValues: { start: "?", change: "?", end: "?" },
-        validationSlots: { end: "20", start: "?", change: "8" },
-        alternateSlots: { end: "20", start: "12", change: "8" },
-        unknownSlot: "start",
-        difficulty: 1,
-      }),
-      createSchemaRecognitionQuestion({
-        concept: "change_mod3",
-        text: "The team had some points. They scored 10 more to reach a total of 55 points.",
-        schemaKind: "change",
-        values: { start: 45, change: 10, end: 55 },
-        labels: { end: "total", start: "start", change: "scored" },
-        displayValues: { start: "?", change: "?", end: "?" },
-        validationSlots: { end: "55", start: "?", change: "10" },
-        alternateSlots: { end: "55", start: "45", change: "10" },
-        unknownSlot: "start",
-        difficulty: 3,
-      }),
-    ],
+    questions: changeMod3Items.map((item) =>
+      createSchemaRecognitionQuestion(item)
+    ),
   },
   {
     id: "change_mod4",
     title: "Change: Bar Model to Equation",
     description: "Translate Change bar models into equations.",
     prerequisites: ["change_mod3"],
-    questions: [
-      // -------------------------------Subtraction-------------------------------
-      // Subtraction 1: Ballon flew
-      createEquationFromBarQuestion({
-        concept: "change_mod4",
-        text: "There were 15 balloons. Some balloons flew away, and now 11 balloons are left. How many balloons flew away?",
-        schemaKind: "change",
-        barValues: { start: "15", change: "?", end: "11" },
-        scaleValues: { start: 15, change: 4, end: 11 },
-        labels: {
-          end: "left over",
-          start: "start",
-          change: "flew away",
-          left: "start",
-          right: "flew away",
-          result: "left over",
-        },
-        equationDisplayValues: { leftTerm: "15", rightTerm: "?", result: "11" },
-        validationSlots: { leftTerm: "15", rightTerm: "?", result: "11" },
-        alternateSlots: { leftTerm: "15", rightTerm: "4", result: "11" },
-        operator: "-", // The magic switch!
-        difficulty: 2,
-      }),
-      // Subtraction 2: Finding the start
-      createEquationFromBarQuestion({
-        concept: "change_mod4",
-        text: "Sam had some money. He spent $18 on a toy and has $32 left. How much money did Sam start with?",
-        schemaKind: "change",
-        barValues: { start: "?", change: "18", end: "32" },
-        scaleValues: { start: 50, change: 18, end: 32 },
-        labels: {
-          end: "left over",
-          start: "start",
-          change: "spent",
-          left: "start",
-          right: "spent",
-          result: "left over",
-        },
-        equationDisplayValues: { leftTerm: "?", rightTerm: "18", result: "32" },
-        validationSlots: { leftTerm: "?", rightTerm: "18", result: "32" },
-        alternateSlots: { leftTerm: "50", rightTerm: "18", result: "32" },
-        operator: "-",
-        difficulty: 3,
-      }),
-      // Subtraction 3: Finding the end
-      createEquationFromBarQuestion({
-        concept: "change_mod4",
-        text: "12 birds were sitting on a fence. 5 birds flew away. How many birds are still on the fence?",
-        schemaKind: "change",
-        barValues: { start: "12", change: "5", end: "?" },
-        scaleValues: { start: 12, change: 5, end: 7 },
-        labels: {
-          end: "remaining",
-          start: "start",
-          change: "flew away",
-          left: "start",
-          right: "flew away",
-          result: "remaining",
-        },
-        equationDisplayValues: { leftTerm: "12", rightTerm: "5", result: "?" },
-        validationSlots: { leftTerm: "12", rightTerm: "5", result: "?" },
-        alternateSlots: { leftTerm: "12", rightTerm: "5", result: "7" },
-        operator: "-",
-        difficulty: 1,
-      }),
-      // Subtraction 4: Finding the start
-      createEquationFromBarQuestion({
-        concept: "change_mod4",
-        text: "Emma had some candies. She gave 15 to her friends and now has 20 left. How many candies did she start with?",
-        schemaKind: "change",
-        barValues: { start: "?", change: "15", end: "20" },
-        scaleValues: { start: 35, change: 15, end: 20 },
-        labels: {
-          end: "left over",
-          start: "start",
-          change: "gave away",
-          left: "start",
-          right: "gave away",
-          result: "left over",
-        },
-        equationDisplayValues: { leftTerm: "?", rightTerm: "15", result: "20" },
-        validationSlots: { leftTerm: "?", rightTerm: "15", result: "20" },
-        alternateSlots: { leftTerm: "35", rightTerm: "15", result: "20" },
-        operator: "-",
-        difficulty: 3,
-      }),
-      // Subtraction 5: Finding the end (left over)
-      createEquationFromBarQuestion({
-        concept: "change_mod4",
-        text: "There were 8 slices of pizza. 3 slices were eaten. How many slices are left?",
-        schemaKind: "change",
-        barValues: { start: "8", change: "3", end: "?" },
-        scaleValues: { start: 8, change: 3, end: 5 },
-        labels: {
-          end: "left over",
-          start: "start",
-          change: "eaten",
-          left: "start",
-          right: "eaten",
-          result: "left over",
-        },
-        equationDisplayValues: { leftTerm: "8", rightTerm: "3", result: "?" },
-        validationSlots: { leftTerm: "8", rightTerm: "3", result: "?" },
-        alternateSlots: { leftTerm: "8", rightTerm: "3", result: "5" },
-        operator: "-",
-        difficulty: 1,
-      }),
-      // -------------------------------Addition-------------------------------
-      createEquationFromBarQuestion({
-        concept: "change_mod4",
-        text: "Mia had some stickers. She got 4 more and now has 10 stickers. How many stickers did Mia start with?",
-        schemaKind: "change",
-        barValues: { start: "?", change: "4", end: "10" },
-        scaleValues: { start: 6, change: 4, end: 10 },
-        labels: {
-          end: "total",
-          start: "start",
-          change: "added",
-          left: "start",
-          right: "added",
-          result: "total",
-        },
-        equationDisplayValues: { leftTerm: "?", rightTerm: "4", result: "10" },
-        validationSlots: { leftTerm: "?", rightTerm: "4", result: "10" },
-        alternateSlots: { leftTerm: "6", rightTerm: "4", result: "10" },
-        operator: "+",
-        difficulty: 2,
-      }),
-      createEquationFromBarQuestion({
-        concept: "change_mod4",
-        text: "Jorge had some money. Then he earned $16 babysitting. Now Jorge has $68. How much money did Jorge start with?",
-        schemaKind: "change",
-        barValues: { start: "?", change: "16", end: "68" },
-        scaleValues: { start: 52, change: 16, end: 68 },
-        labels: {
-          end: "total",
-          start: "start",
-          change: "earned",
-          left: "start",
-          right: "earned",
-          result: "total",
-        },
-        equationDisplayValues: { leftTerm: "?", rightTerm: "16", result: "68" },
-        validationSlots: { leftTerm: "?", rightTerm: "16", result: "68" },
-        alternateSlots: { leftTerm: "52", rightTerm: "16", result: "68" },
-        operator: "+",
-        difficulty: 2,
-      }),
-      createEquationFromBarQuestion({
-        concept: "change_mod4",
-        text: "Sam had some baseball cards. He bought 15 more, and now he has 35 cards. How many cards did Sam start with?",
-        schemaKind: "change",
-        barValues: { start: "?", change: "15", end: "35" },
-        scaleValues: { start: 20, change: 15, end: 35 },
-        labels: {
-          end: "total",
-          start: "start",
-          change: "bought",
-          left: "start",
-          right: "bought",
-          result: "total",
-        },
-        equationDisplayValues: { leftTerm: "?", rightTerm: "15", result: "35" },
-        validationSlots: { leftTerm: "?", rightTerm: "15", result: "35" },
-        alternateSlots: { leftTerm: "20", rightTerm: "15", result: "35" },
-        operator: "+",
-        difficulty: 2,
-      }),
-      createEquationFromBarQuestion({
-        concept: "change_mod4",
-        text: "Maya had already read some pages. She read 8 more pages and finished page 20. What page had Maya reached before reading more?",
-        schemaKind: "change",
-        barValues: { start: "?", change: "8", end: "20" },
-        scaleValues: { start: 12, change: 8, end: 20 },
-        labels: {
-          end: "total",
-          start: "start",
-          change: "read",
-          left: "start",
-          right: "read",
-          result: "total",
-        },
-        equationDisplayValues: { leftTerm: "?", rightTerm: "8", result: "20" },
-        validationSlots: { leftTerm: "?", rightTerm: "8", result: "20" },
-        alternateSlots: { leftTerm: "12", rightTerm: "8", result: "20" },
-        operator: "+",
-        difficulty: 1,
-      }),
-      createEquationFromBarQuestion({
-        concept: "change_mod4",
-        text: "The team had some points. They scored 10 more to reach a total of 55 points. How many points did the team have before scoring more?",
-        schemaKind: "change",
-        barValues: { start: "?", change: "10", end: "55" },
-        scaleValues: { start: 45, change: 10, end: 55 },
-        labels: {
-          end: "total",
-          start: "start",
-          change: "scored",
-          left: "start",
-          right: "scored",
-          result: "total",
-        },
-        equationDisplayValues: { leftTerm: "?", rightTerm: "10", result: "55" },
-        validationSlots: { leftTerm: "?", rightTerm: "10", result: "55" },
-        alternateSlots: { leftTerm: "45", rightTerm: "10", result: "55" },
-        operator: "+",
-        difficulty: 3,
-      }),
-    ],
+    questions: changeMod4Items.map((item) =>
+      createEquationFromBarQuestion(item)
+    ),
   },
   {
     id: "change_mod5",
@@ -2869,7 +2955,7 @@ const conceptsData = [
     title: "Change: Direct Problem Solving",
     description: "Solve change story problems directly.",
     prerequisites: ["change_mod5"],
-    questions: changeVariableItems.map((item) =>
+    questions: changeMod6Items.map((item) =>
       createDirectQuestionFromItem({
         item,
         concept: "change_mod6",
@@ -2877,10 +2963,15 @@ const conceptsData = [
       }),
     ),
   },
+];
 
-  // ============================================================================
-  // TRACK 3: THE COMPARE SCHEMA
-  // ============================================================================
+// ============================================================================
+
+// 5. COMPARE SCHEMA 
+
+// ============================================================================
+
+const compareConcepts = [
   {
     id: "compare_mod1",
     title: "Compare: Read and Identify Variables",
@@ -2929,7 +3020,7 @@ const conceptsData = [
       }),
       createSchemaRecognitionQuestion({
         concept: "compare_mod2",
-        text: "Sam has $80. Alex has $30 less than Sam. How much money does Alex have?",
+        text: "Sam has ₹80. Alex has ₹30 less than Sam. How much money does Alex have?",
         schemaKind: "compare",
         values: { bigger: 80, smaller: 50, difference: 30 },
         labels: { bigger: "Sam", smaller: "Alex", difference: "less" },
@@ -3256,7 +3347,7 @@ const conceptsData = [
       // Problem 4 (Maya/Leo Money)
       createSchemaBarQuestion({
         concept: "compare_mod4",
-        text: "Maya has $80. Leo has $30 less than Maya. How much money does Leo have?",
+        text: "Maya has ₹80. Leo has ₹30 less than Maya. How much money does Leo have?",
         schemaKind: "compare",
         values: { bigger: 80, smaller: 50, difference: 30 },
         labels: { bigger: "Maya", smaller: "Leo", difference: "less" },
@@ -3274,7 +3365,7 @@ const conceptsData = [
       }),
       createSchemaEquationQuestion({
         concept: "compare_mod4",
-        text: "Maya has $80. Leo has $30 less than Maya. How much money does Leo have?",
+        text: "Maya has ₹80. Leo has ₹30 less than Maya. How much money does Leo have?",
         schemaKind: "compare",
         values: { bigger: "80", smaller: "?", difference: "30" },
         hideTopBar: true,
@@ -3302,7 +3393,7 @@ const conceptsData = [
       }),
       createSchemaSolveQuestion({
         concept: "compare_mod4",
-        text: "Maya has $80. Leo has $30 less than Maya. How much money does Leo have?",
+        text: "Maya has ₹80. Leo has ₹30 less than Maya. How much money does Leo have?",
         schemaKind: "compare",
         answer: 50,
         displayEquation: "? + 30 = 80",
@@ -3381,6 +3472,17 @@ const conceptsData = [
     prerequisites: ["compare_mod4"],
     questions: [],
   },
+];
+
+// ============================================================================
+// SEEDER EXECUTION
+// ============================================================================
+const conceptsData = [
+  ...arithmeticConcepts,
+  ...missingNumberConcepts,
+  ...combineConcepts,
+  ...changeConcepts,
+  ...compareConcepts,
 ];
 
 // const seedData = async () => {
@@ -3471,7 +3573,7 @@ const seedData = async () => {
       // Change this variable to the ID you want to test right now.
       // Here are some common jump points:
       // ----------------------------------------------867
-      const testStage = "change_mod5"; // CHANGE THIS TO JUMP
+      const testStage = "change_mod3"; // CHANGE THIS TO JUMP
       // const testStage = "change_mod2"; // CHANGE THIS TO JUMP
 
       // 3. Create the test user with ONLY that stage active

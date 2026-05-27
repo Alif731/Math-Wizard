@@ -9,7 +9,6 @@ import {
 
 const express = require("express");
 const cookieParser = require("cookie-parser");
-const lusca = require("lusca");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 const request = require("supertest");
@@ -22,6 +21,7 @@ const Attempt = require("../models/Attempt");
 const Concept = require("../models/Concept");
 const TeacherSignupCode = require("../models/TeacherSignupCode");
 const User = require("../models/User");
+const { csrfGuard } = require("../middleware/csrfMiddleware");
 
 const JWT_SECRET = "test-secret-123456789012345678901234";
 
@@ -38,10 +38,13 @@ const createApp = () => {
 
   testApp.use(express.json());
   testApp.use(cookieParser());
-  testApp.use(lusca.csrf());
+  testApp.use(csrfGuard);
   testApp.use("/api/learning", learningRoutes);
   testApp.use("/api/teacher", teacherRoutes);
   testApp.use("/api/users", userRoutes);
+
+  const { errorHandler } = require("../middleware/errorMiddleware");
+  testApp.use(errorHandler);
 
   return testApp;
 };
@@ -308,5 +311,33 @@ describe("learning submission authorization and validation", () => {
         response: "x".repeat(12_001),
       })
       .expect(400);
+  });
+});
+
+describe("CSRF Origin Validation", () => {
+  it("rejects cross-origin requests from untrusted origins", async () => {
+    const response = await request(app)
+      .post("/api/users/auth")
+      .set("Origin", "http://evil-website.com")
+      .send({
+        username: "student_one",
+        password: "password123",
+      });
+
+    expect(response.status).toBe(403);
+    expect(response.body.message).toMatch(/CSRF Token Validation Failed/i);
+  });
+
+  it("accepts requests from the trusted client origin", async () => {
+    const response = await request(app)
+      .post("/api/users/auth")
+      .set("Origin", "http://localhost:5173")
+      .send({
+        username: "nonexistent_user",
+        password: "password123",
+      });
+
+    // We expect a 401 because the user is not found, NOT a 403 CSRF error
+    expect(response.status).toBe(401);
   });
 });
