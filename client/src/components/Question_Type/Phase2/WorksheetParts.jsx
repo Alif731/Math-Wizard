@@ -445,6 +445,7 @@ export const Keypad = ({
             className="worksheet-keypad__operator"
             onClick={() => onOperator(operator)}
             disabled={disabled}
+            aria-label={`Operator ${operator === "+" ? "plus" : "minus"}`}
           >
             {operator}
           </button>
@@ -459,6 +460,7 @@ export const Keypad = ({
             className="worksheet-keypad__key"
             onClick={() => onDigit(digit)}
             disabled={disabled}
+            aria-label={`Digit ${digit}`}
           >
             {digit}
           </button>
@@ -468,6 +470,7 @@ export const Keypad = ({
           className="worksheet-keypad__key"
           onClick={onBackspace}
           disabled={disabled}
+          aria-label="Backspace"
         >
           {/* ⌫ */}
           <Delete size={28} />
@@ -477,6 +480,7 @@ export const Keypad = ({
           className="worksheet-keypad__key"
           onClick={() => onDigit("0")}
           disabled={disabled}
+          aria-label="Digit 0"
         >
           0
         </button>
@@ -485,6 +489,7 @@ export const Keypad = ({
           className="worksheet-keypad__key"
           onClick={showUnknown ? onUnknown : () => onDigit("?")}
           disabled={disabled}
+          aria-label="Unknown value"
         >
           ?
         </button>

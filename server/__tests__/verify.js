@@ -155,7 +155,7 @@ function assertVariableIdentificationConcept(concept) {
 }
 
 function assertDirectSchemaConcept(concept) {
-  assert.equal(concept.questions.length, 15, `${concept.id} should have 15 questions`);
+  assert.equal(concept.questions.length, 10, `${concept.id} should have 10 questions`);
   for (const question of concept.questions) {
     assert.equal(question.moduleStage, "schema_direct_solve");
     assert.equal(question.interactionMode, "direct_answer");

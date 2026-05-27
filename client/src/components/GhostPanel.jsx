@@ -15,10 +15,8 @@ const GhostPanel = ({ adaptiveData, conceptId, masteryConfig }) => {
   const displayScore = Math.min(score, threshold);
   const ucb = Number(adaptiveData.ucb || 0);
   const status = adaptiveData.status || "unlocked";
-  const sess = adaptiveData.timesPlayed || 0;
   const total = adaptiveData.attemptCount || 0;
   const success = adaptiveData.successCount || 0;
-  const estimate = adaptiveData.estimate || 0;
   const record =
     adaptiveData.lastAttempts || adaptiveData.correctnessRecord || [];
 

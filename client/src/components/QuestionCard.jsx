@@ -1,5 +1,5 @@
 // QuestionCard.jsx
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Confetti from "react-confetti";
 import confetti from "canvas-confetti";
 
@@ -25,20 +25,11 @@ import {
   isWorksheetDrivenQuestion,
 } from "../utils/questionValidation";
 
-const audioSuccess = new Audio("/success1.mp3");
-const audioFailure = new Audio("/failure.mp3");
+// const audioSuccess = new Audio("/success1.mp3");
+// const audioFailure = new Audio("/failure.mp3");
 // const NEXT_PROBLEM_DELAY_MS = 1800;
 
-const getViewportSize = () => {
-  if (typeof window === "undefined") {
-    return { width: 0, height: 0 };
-  }
 
-  return {
-    width: window.innerWidth,
-    height: window.innerHeight,
-  };
-};
 
 const QuestionCard = ({
   problem,
@@ -63,12 +54,10 @@ const QuestionCard = ({
   const [isSuccess, setIsSuccess] = useState(false);
   const [isError, setIsError] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
-  const [viewportSize, setViewportSize] = useState(getViewportSize);
 
   // Dummy Practice for Bar Modal
   const [isDummyMode, setIsDummyMode] = useState(false);
   const [failedFirstTry, setFailedFirstTry] = useState(false);
-  const [hasFeedback, setHasFeedback] = useState(false);
 
   // NEW: Holds our animation state safely
   // const [statAnim, setStatAnim] = useState({ key: 0, colorClass: "" });
@@ -143,14 +132,7 @@ const QuestionCard = ({
       setIsError(false);
     }
   }, [isDummyMode]);
-  useEffect(() => {
-    const handleResize = () => setViewportSize(getViewportSize());
 
-    handleResize();
-    window.addEventListener("resize", handleResize);
-
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
 
   //  ------------------------------ Automatically goes to next question ----------------------
   // --- AUTO-ADVANCE COUNTDOWN LOGIC ---
@@ -226,7 +208,7 @@ const QuestionCard = ({
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [autoNextCountdown]);
+  }, [autoNextCountdown, onNext, setPendingResult]);
   // const playSuccessSound = () => {
   //   audioSuccess.currentTime = 0;
   //   audioSuccess.play().catch(() => {});
@@ -297,7 +279,7 @@ const QuestionCard = ({
   //   // Wiping them here before the network responds is what caused the flicker.
   //   // We will let the useEffect handle wiping them when the new problem actually arrives.
   // };
-  const submitStructuredResponse = async (overrideResponse) => {
+  const submitStructuredResponse = async () => {
     if (!problem?.question || disabled) return;
 
     const responseToSubmit = buildSubmissionResponse(problem.question, answer);
