@@ -1447,7 +1447,7 @@
 // BarModelRenderer.jsx
 import { useEffect } from "react";
 import { useSelector } from "react-redux";
-import { useSchemaProgress } from "../../useSchemaProgress";
+import { useSchemaProgress } from "../../../hooks/useSchemaProgress";
 import React from "react";
 import { getBarValue } from "../../../utils/questionValidation";
 import { BarBox } from "./WorksheetParts";

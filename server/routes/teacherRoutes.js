@@ -5,7 +5,7 @@ const teacherController = require("../controllers/teacherController");
 const {
   protect,
   teacherOnly,
-} = require("../controllers/middleware/authMiddleware");
+} = require("../middleware/authMiddleware");
 
 const teacherRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes

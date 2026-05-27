@@ -1,10 +1,10 @@
 const mongoose = require("mongoose");
 const assert = require("node:assert/strict");
 const { MongoMemoryServer } = require("mongodb-memory-server");
-const seedData = require("./utils/seeder");
-const Concept = require("./models/Concept");
-const User = require("./models/User");
-const { updateMastery, getNextProblem } = require("./utils/learningEngine");
+const seedData = require("../utils/seeder");
+const Concept = require("../models/Concept");
+const User = require("../models/User");
+const { updateMastery, getNextProblem } = require("../utils/learningEngine");
 
 const orderedConcepts = [
   "single_add",

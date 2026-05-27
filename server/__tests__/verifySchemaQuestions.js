@@ -4,7 +4,7 @@ const {
   createBarModelSpec,
   createEquationTemplate,
   validateQuestionResponse,
-} = require("./utils/schemaQuestionUtils");
+} = require("../utils/backendAnswerValidation");
 
 function verifySchemaQuestions() {
   const equationSpec = {

@@ -8,7 +8,7 @@ const {
   createEquationTemplate,
   createQuestionEnvelope,
   extractNounFromQuestion,
-} = require("./schemaQuestionUtils");
+} = require("./backendAnswerValidation");
 
 const DEFAULT_TEACHER_SIGNUP_CODE = "TEACHER2026";
 

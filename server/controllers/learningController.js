@@ -12,7 +12,7 @@ const {
 const {
   serializeResponse,
   validateQuestionResponse,
-} = require("../utils/schemaQuestionUtils");
+} = require("../utils/backendAnswerValidation");
 
 // Shared config object sent to frontend — single source of truth
 const masteryConfig = {

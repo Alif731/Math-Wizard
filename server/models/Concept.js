@@ -5,7 +5,7 @@ const {
   MODULE_STAGES,
   QUESTION_TYPES,
   SCHEMA_KINDS,
-} = require("../utils/schemaQuestionUtils");
+} = require("../utils/backendAnswerValidation");
 
 const questionSchema = new mongoose.Schema({
   text: { type: String, required: true },

@@ -264,3 +264,206 @@ export const getExpectedSlotValue = (question, slotKey) => {
   if (templateItem?.value) return String(templateItem.value).trim();
   return "";
 };
+
+export const getTrueExpectedValue = (questionData, key) => {
+  // 1. Check Equation Template
+  const templateItem = questionData?.equationSpec?.template?.find(
+    (t) => t.key === key,
+  );
+  if (templateItem) return String(templateItem.value || "").trim();
+
+  // 2. Check Bar Model Spec (Finds any bar name: muffins, stamps, toys, etc.)
+  const spec = questionData?.barModelSpec;
+  if (spec) {
+    const match = Object.values(spec).find((v) => v?.key === key);
+    if (match) return String(match.value || "").trim();
+  }
+  return "";
+};
+
+// 🔥 FIX: Perfect Algebraic Solver (Handles both + and - automatically)
+// export const solveMissingValue = (q) => {
+//   const template = q?.equationSpec?.template || [];
+//   const slotItems = template.filter((t) => t.type === "slot");
+//   if (slotItems.length < 3) return null;
+
+//   // 1. Get the true expected values for all slots
+//   const vals = slotItems.map((s) => {
+//     const v = getTrueExpectedValue(q, s.key);
+//     return { key: s.key, num: parseFloat(v), isUnknown: v === "?" || v === "" };
+//   });
+
+//   const unknown = vals.find((v) => v.isUnknown);
+//   const equalIdx = template.findIndex((t) => t.value === "=");
+//   if (!unknown || equalIdx === -1) return null;
+
+//   // 2. Find the operator (Defaults to +, but looks for -)
+//   let operator = "+";
+//   const opItem = template.find((t) => t.type === "operator");
+//   if (opItem && (opItem.value === "+" || opItem.value === "-")) {
+//     operator = opItem.value;
+//   } else if (q?.equationSpec?.operator) {
+//     operator = q.equationSpec.operator;
+//   } else if (q?.operator) {
+//     operator = q.operator;
+//   }
+
+//   // 3. Identify the "Result" side of the "=" sign (the side with only 1 slot)
+//   const resultSlot = vals.find((v) => {
+//     const idx = template.findIndex((t) => t.key === v.key);
+//     const onLeft = idx < equalIdx;
+//     const countOnSide = vals.filter(
+//       (v2) =>
+//         template.findIndex((t2) => t2.key === v2.key) < equalIdx === onLeft,
+//     ).length;
+//     return countOnSide === 1;
+//   });
+
+//   if (!resultSlot) return null;
+
+//   // 4. Identify the two "Terms" on the other side
+//   const terms = vals.filter((v) => v.key !== resultSlot.key);
+//   if (terms.length !== 2) return null;
+
+//   const [term1, term2] = terms; // term1 is left of the operator, term2 is right
+
+//   // --- ALGEBRA SOLVER ---
+//   // Case A: The unknown is the Result (e.g., 12 - 5 = ?)
+//   if (unknown.key === resultSlot.key) {
+//     return operator === "-"
+//       ? String(term1.num - term2.num)
+//       : String(term1.num + term2.num);
+//   }
+
+//   // Case B: The unknown is Term 1 (e.g., ? - 5 = 7)
+//   if (unknown.key === term1.key) {
+//     return operator === "-"
+//       ? String(resultSlot.num + term2.num)
+//       : String(Math.abs(resultSlot.num - term2.num));
+//   }
+
+//   // Case C: The unknown is Term 2 (e.g., 12 - ? = 7)
+//   if (unknown.key === term2.key) {
+//     return operator === "-"
+//       ? String(term1.num - resultSlot.num)
+//       : String(Math.abs(resultSlot.num - term1.num));
+//   }
+
+//   return null;
+// };
+
+export const solveMissingValue = (q) => {
+  // --- 1. EXISTING TEMPLATE SOLVER (For Modules 3 & 4) ---
+  const template = q?.equationSpec?.template || [];
+  const slotItems = template.filter((t) => t.type === "slot");
+
+  // Only run the algebra solver if we actually have an equation template
+  if (slotItems.length >= 3) {
+    // 1. Get the true expected values for all slots
+    const vals = slotItems.map((s) => {
+      const v = getTrueExpectedValue(q, s.key);
+      return {
+        key: s.key,
+        num: parseFloat(v),
+        isUnknown: v === "?" || v === "",
+      };
+    });
+
+    const unknown = vals.find((v) => v.isUnknown);
+    const equalIdx = template.findIndex((t) => t.value === "=");
+
+    if (unknown && equalIdx !== -1) {
+      // 2. Find the operator (Defaults to +, but looks for -)
+      let operator = "+";
+      const opItem = template.find((t) => t.type === "operator");
+      if (opItem && (opItem.value === "+" || opItem.value === "-")) {
+        operator = opItem.value;
+      } else if (q?.equationSpec?.operator) {
+        operator = q.equationSpec.operator;
+      } else if (q?.operator) {
+        operator = q.operator;
+      }
+
+      // 3. Identify the "Result" side of the "=" sign
+      const resultSlot = vals.find((v) => {
+        const idx = template.findIndex((t) => t.key === v.key);
+        const onLeft = idx < equalIdx;
+        const countOnSide = vals.filter(
+          (v2) =>
+            template.findIndex((t2) => t2.key === v2.key) < equalIdx === onLeft,
+        ).length;
+        return countOnSide === 1;
+      });
+
+      if (resultSlot) {
+        // 4. Identify the two "Terms" on the other side
+        const terms = vals.filter((v) => v.key !== resultSlot.key);
+        if (terms.length === 2) {
+          const [term1, term2] = terms; // term1 is left of the operator, term2 is right
+
+          // --- ALGEBRA SOLVER ---
+          if (unknown.key === resultSlot.key) {
+            return operator === "-"
+              ? String(term1.num - term2.num)
+              : String(term1.num + term2.num);
+          }
+          if (unknown.key === term1.key) {
+            return operator === "-"
+              ? String(resultSlot.num + term2.num)
+              : String(Math.abs(resultSlot.num - term2.num));
+          }
+          if (unknown.key === term2.key) {
+            return operator === "-"
+              ? String(term1.num - resultSlot.num)
+              : String(Math.abs(resultSlot.num - term1.num));
+          }
+        }
+      }
+    }
+  }
+
+  // --- 2. FALLBACK SCHEMA SOLVER (For Module 5 - No Template) ---
+  const slots = q?.validation?.slots || {};
+  const schema = q?.schemaKind?.toLowerCase();
+
+  if (schema === "combine") {
+    const l = parseFloat(slots.left || slots.leftTerm);
+    const r = parseFloat(slots.right || slots.rightTerm);
+    const t = parseFloat(slots.total || slots.result);
+
+    if ((slots.total === "?" || isNaN(t)) && !isNaN(l) && !isNaN(r))
+      return String(l + r);
+    if ((slots.left === "?" || isNaN(l)) && !isNaN(t) && !isNaN(r))
+      return String(t - r);
+    if ((slots.right === "?" || isNaN(r)) && !isNaN(t) && !isNaN(l))
+      return String(t - l);
+  }
+
+  if (schema === "change") {
+    const s = parseFloat(slots.start);
+    const c = parseFloat(slots.change);
+    const r = parseFloat(slots.result || slots.end);
+    const op = q?.equationSpec?.operator || q?.operator || "+";
+
+    if (
+      (slots.result === "?" || slots.end === "?" || isNaN(r)) &&
+      !isNaN(s) &&
+      !isNaN(c)
+    ) {
+      return op === "-" ? String(s - c) : String(s + c);
+    }
+    if ((slots.change === "?" || isNaN(c)) && !isNaN(s) && !isNaN(r)) {
+      return op === "-" ? String(s - r) : String(Math.abs(r - s));
+    }
+    if ((slots.start === "?" || isNaN(s)) && !isNaN(c) && !isNaN(r)) {
+      return op === "-" ? String(r + c) : String(Math.abs(r - c));
+    }
+  }
+
+  // --- 3. ABSOLUTE LAST RESORT ---
+  if (q?.validation?.textAnswer !== undefined)
+    return String(q.validation.textAnswer);
+  if (q?.validation?.answer !== undefined) return String(q.validation.answer);
+
+  return null;
+};
