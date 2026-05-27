@@ -7,6 +7,7 @@ const {
   createBarModelSpec,
   createEquationTemplate,
   createQuestionEnvelope,
+  extractNounFromQuestion,
 } = require("./schemaQuestionUtils");
 
 const DEFAULT_TEACHER_SIGNUP_CODE = "TEACHER2026";
@@ -629,10 +630,17 @@ const createChangeIdentificationQuestion = ({
   stageIndex = null,
   stageLabel = null,
   stageTotal = null,
+  itemNoun = null,
+  increaseSubtext = null,
+  decreaseSubtext = null,
 }) => {
   // The correct bar model follows directly from changeDirection
   const correctBarModel =
     changeDirection === "increase" ? "increase_bar" : "decrease_bar";
+
+  const resolvedNoun = itemNoun || extractNounFromQuestion(text);
+  const resolvedIncrease = increaseSubtext || (resolvedNoun ? `${resolvedNoun} were added or received` : "quantity was added or received");
+  const resolvedDecrease = decreaseSubtext || (resolvedNoun ? `${resolvedNoun} were removed or given away` : "quantity was removed or given away");
 
   return createQuestionEnvelope({
     text,
@@ -657,6 +665,9 @@ const createChangeIdentificationQuestion = ({
         change: String(values.change),
         end: String(values.end),
       },
+      itemNoun: resolvedNoun,
+      increaseSubtext: resolvedIncrease,
+      decreaseSubtext: resolvedDecrease,
     },
     validation: {
       changeDirection,
@@ -859,6 +870,9 @@ const createChangeFullBundle = (item, concept = "change_mod5") => {
       stageIndex: 1,
       stageLabel: "1. Identify",
       stageTotal: 4,
+      itemNoun: item.itemNoun,
+      increaseSubtext: item.increaseSubtext,
+      decreaseSubtext: item.decreaseSubtext,
     }),
     createSchemaBarQuestion({
       concept,
@@ -1626,6 +1640,257 @@ const changeFullIntegrationItems = [
   },
 ];
 
+const changeMod2Items = [
+  {
+    text: "Leo had 20 cookies. He ate 6 cookies. Now Leo has 14 cookies left.",
+    values: { start: 20, change: 6, end: 14 },
+    labels: { start: "start", change: "ate", end: "left" },
+    difficulty: 2,
+    itemNoun: "cookies",
+    increaseSubtext: "cookies were baked or added",
+    decreaseSubtext: "cookies were eaten or removed",
+  },
+  {
+    text: "A tree had 24 leaves. The wind blew 9 leaves away. Now there are 15 leaves left.",
+    values: { start: 24, change: 9, end: 15 },
+    labels: { start: "start", change: "blew away", end: "left" },
+    difficulty: 2,
+    itemNoun: "leaves",
+    increaseSubtext: "leaves grew or were added",
+    decreaseSubtext: "leaves blew away or fell",
+  },
+  {
+    text: "Sam had 50 dollars. He spent 18 dollars on a toy. Now Sam has 32 dollars.",
+    values: { start: 50, change: 18, end: 32 },
+    labels: { start: "start", change: "spent", end: "left" },
+    difficulty: 3,
+    itemNoun: "money",
+    increaseSubtext: "money was earned or added",
+    decreaseSubtext: "money was spent or lost",
+  },
+  {
+    text: "Twelve birds were on a fence. Five birds flew away. Now there are 7 birds still on the fence.",
+    values: { start: 12, change: 5, end: 7 },
+    labels: { start: "start", change: "flew away", end: "still on fence" },
+    difficulty: 1,
+    itemNoun: "birds",
+    increaseSubtext: "birds landed or were added",
+    decreaseSubtext: "birds flew away or left",
+  },
+  {
+    text: "Emma had 35 candies. She gave 15 candies to her friends. Now Emma has 20 candies left.",
+    values: { start: 35, change: 15, end: 20 },
+    labels: { start: "start", change: "gave", end: "left" },
+    difficulty: 3,
+    itemNoun: "candies",
+    increaseSubtext: "candies were bought or added",
+    decreaseSubtext: "candies were given away or eaten",
+  },
+  {
+    text: "Mia had 6 stickers. She got 4 more stickers. Now Mia has 10 stickers.",
+    values: { start: 6, change: 4, end: 10 },
+    labels: { start: "start", change: "got", end: "now" },
+    difficulty: 2,
+    itemNoun: "stickers",
+    increaseSubtext: "stickers were received or got",
+    decreaseSubtext: "stickers were lost or used",
+  },
+  {
+    text: "Jorge had 52 dollars. He earned 16 dollars babysitting. Now Jorge has 68 dollars.",
+    values: { start: 52, change: 16, end: 68 },
+    labels: { start: "start", change: "earned", end: "now" },
+    difficulty: 2,
+    itemNoun: "money",
+    increaseSubtext: "money was earned or babysat",
+    decreaseSubtext: "money was spent or lost",
+  },
+  {
+    text: "Sam had 20 baseball cards. He bought 15 more cards. Now Sam has 35 baseball cards.",
+    values: { start: 20, change: 15, end: 35 },
+    labels: { start: "start", change: "bought", end: "now" },
+    difficulty: 2,
+    itemNoun: "baseball cards",
+    increaseSubtext: "cards were bought or added",
+    decreaseSubtext: "cards were sold or lost",
+  },
+  {
+    text: "Maya had already read 12 pages. She read 8 more pages. Now Maya has finished page 20.",
+    values: { start: 12, change: 8, end: 20 },
+    labels: { start: "before", change: "read more", end: "finished" },
+    difficulty: 1,
+    itemNoun: "pages",
+    increaseSubtext: "pages were read or added",
+    decreaseSubtext: "pages were skipped or removed",
+  },
+  {
+    text: "The team had 45 points. They scored 10 more points. Now the team has 55 points.",
+    values: { start: 45, change: 10, end: 55 },
+    labels: { start: "start", change: "scored", end: "then" },
+    difficulty: 3,
+    itemNoun: "points",
+    increaseSubtext: "points were scored or gained",
+    decreaseSubtext: "points were lost or penalized",
+  },
+  {
+    text: "A bus had 38 passengers. Fourteen passengers got off. Now 24 passengers stayed on the bus.",
+    values: { start: 38, change: 14, end: 24 },
+    labels: { start: "start", change: "got off", end: "stayed" },
+    difficulty: 3,
+    itemNoun: "passengers",
+    increaseSubtext: "passengers boarded or got on",
+    decreaseSubtext: "passengers got off or left",
+  },
+  {
+    text: "A box had 25 pencils. The teacher added 17 pencils. Now the box has 42 pencils.",
+    values: { start: 25, change: 17, end: 42 },
+    labels: { start: "at first", change: "added", end: "now" },
+    difficulty: 3,
+    itemNoun: "pencils",
+    increaseSubtext: "pencils were added or bought",
+    decreaseSubtext: "pencils were lost or given away",
+  },
+  {
+    text: "A game had 63 players at noon. Some players left. Now there are 48 players remaining.",
+    values: { start: 63, change: 15, end: 48 },
+    labels: { start: "at noon", change: "left", end: "after lunch" },
+    difficulty: 3,
+    itemNoun: "players",
+    increaseSubtext: "players joined the game",
+    decreaseSubtext: "players left the game",
+  },
+  {
+    text: "A baker had 29 cupcakes. She baked 18 more cupcakes. Now the baker has 47 cupcakes.",
+    values: { start: 29, change: 18, end: 47 },
+    labels: { start: "start", change: "baked", end: "now" },
+    difficulty: 3,
+    itemNoun: "cupcakes",
+    increaseSubtext: "cupcakes were baked or added",
+    decreaseSubtext: "cupcakes were eaten or sold",
+  },
+  {
+    text: "A library shelf had 55 books. Students borrowed 21 books. Now there are 34 books left.",
+    values: { start: 55, change: 21, end: 34 },
+    labels: { start: "at first", change: "borrowed", end: "left" },
+    difficulty: 3,
+    itemNoun: "books",
+    increaseSubtext: "books were returned or added",
+    decreaseSubtext: "books were borrowed or removed",
+  },
+];
+
+const changeMod5Items = [
+  {
+    text: "Sarah had $45. She spent $12 on a new book. How much money does she have now?",
+    values: { start: 45, change: 12, end: 33 },
+    labels: { end: "left over", start: "start", change: "spent" },
+    unknownSlot: "end",
+    operator: "-",
+    difficulty: 3,
+    itemNoun: "money",
+    increaseSubtext: "money was earned or added",
+    decreaseSubtext: "money was spent or lost",
+  },
+  {
+    text: "A tree had 24 leaves. The wind blew some away, and now there are 15 leaves left. How many leaves blew away?",
+    values: { start: 24, change: 9, end: 15 },
+    labels: { end: "left over", start: "start", change: "blew away" },
+    unknownSlot: "change",
+    operator: "-",
+    difficulty: 2,
+    itemNoun: "leaves",
+    increaseSubtext: "leaves grew or were added",
+    decreaseSubtext: "leaves blew away or fell",
+  },
+  {
+    text: "Sam had $50. He spent $18 on a toy. How much money does Sam have left?",
+    values: { start: 50, change: 18, end: 32 },
+    labels: { end: "left over", start: "start", change: "spent" },
+    unknownSlot: "end",
+    operator: "-",
+    difficulty: 3,
+    itemNoun: "money",
+    increaseSubtext: "money was earned or added",
+    decreaseSubtext: "money was spent or lost",
+  },
+  {
+    text: "12 birds were sitting on a fence. 5 birds flew away. How many birds are still on the fence?",
+    values: { start: 12, change: 5, end: 7 },
+    labels: { end: "remaining", start: "start", change: "flew away" },
+    unknownSlot: "end",
+    operator: "-",
+    difficulty: 1,
+    itemNoun: "birds",
+    increaseSubtext: "birds landed or were added",
+    decreaseSubtext: "birds flew away or left",
+  },
+  {
+    text: "Emma had 35 candies. She gave 15 to her friends. How many candies does Emma have left?",
+    values: { start: 35, change: 15, end: 20 },
+    labels: { end: "left over", start: "start", change: "gave away" },
+    unknownSlot: "end",
+    operator: "-",
+    difficulty: 3,
+    itemNoun: "candies",
+    increaseSubtext: "candies were bought or added",
+    decreaseSubtext: "candies were given away or eaten",
+  },
+  {
+    text: "Lina had 6 stamps. She found 4 more. How many stamps does she have now?",
+    values: { start: 6, change: 4, end: 10 },
+    labels: { end: "total", start: "start", change: "found" },
+    unknownSlot: "end",
+    operator: "+",
+    difficulty: 3,
+    itemNoun: "stamps",
+    increaseSubtext: "stamps were found or added",
+    decreaseSubtext: "stamps were lost or used",
+  },
+  {
+    text: "Tara had 52 points. She earned 16 bonus points. How many points does she have now?",
+    values: { start: 52, change: 16, end: 68 },
+    labels: { end: "total", start: "start", change: "bonus" },
+    unknownSlot: "end",
+    operator: "+",
+    difficulty: 3,
+    itemNoun: "points",
+    increaseSubtext: "points were earned or gained",
+    decreaseSubtext: "points were lost or penalized",
+  },
+  {
+    text: "A club had 20 members. 15 new members joined. How many members are in the club now?",
+    values: { start: 20, change: 15, end: 35 },
+    labels: { end: "total", start: "start", change: "joined" },
+    unknownSlot: "end",
+    operator: "+",
+    difficulty: 2,
+    itemNoun: "members",
+    increaseSubtext: "members joined or were added",
+    decreaseSubtext: "members left or resigned",
+  },
+  {
+    text: "Rina had already solved 12 puzzles. She solved 8 more. How many puzzles has she solved in total?",
+    values: { start: 12, change: 8, end: 20 },
+    labels: { end: "total", start: "start", change: "solved" },
+    unknownSlot: "end",
+    operator: "+",
+    difficulty: 1,
+    itemNoun: "puzzles solved",
+    increaseSubtext: "more puzzles were solved",
+    decreaseSubtext: "fewer puzzles were solved",
+  },
+  {
+    text: "A class had 45 tokens. They earned 10 more. How many tokens does the class have now?",
+    values: { start: 45, change: 10, end: 55 },
+    labels: { end: "total", start: "start", change: "earned" },
+    unknownSlot: "end",
+    operator: "+",
+    difficulty: 3,
+    itemNoun: "tokens",
+    increaseSubtext: "tokens were earned or added",
+    decreaseSubtext: "tokens were spent or lost",
+  },
+];
+
 const conceptsData = [
   // ---------------------------a, Standard Arithmetic (Prerequisite)--------------------
   {
@@ -2224,7 +2489,7 @@ const conceptsData = [
     description:
       "Identify whether the quantity increased or decreased, then pick the correct bar model.",
     prerequisites: ["change_mod1"],
-    questions: changeVariableItems.map((item) =>
+    questions: changeMod2Items.map((item) =>
       createChangeIdentificationQuestion({
         concept: "change_mod2",
         text: item.text,
@@ -2233,6 +2498,9 @@ const conceptsData = [
         changeDirection:
           item.values.end > item.values.start ? "increase" : "decrease",
         difficulty: item.difficulty,
+        itemNoun: item.itemNoun,
+        increaseSubtext: item.increaseSubtext,
+        decreaseSubtext: item.decreaseSubtext,
       }),
     ),
   },
@@ -2592,7 +2860,7 @@ const conceptsData = [
     description:
       "Identify the change, build the bar model, write the equation, and solve.",
     prerequisites: ["change_mod4"],
-    questions: changeFullIntegrationItems.flatMap((item) =>
+    questions: changeMod5Items.flatMap((item) =>
       createChangeFullBundle(item, "change_mod5"),
     ),
   },
@@ -3203,7 +3471,7 @@ const seedData = async () => {
       // Change this variable to the ID you want to test right now.
       // Here are some common jump points:
       // ----------------------------------------------867
-      const testStage = "combine_mod3"; // CHANGE THIS TO JUMP
+      const testStage = "change_mod5"; // CHANGE THIS TO JUMP
       // const testStage = "change_mod2"; // CHANGE THIS TO JUMP
 
       // 3. Create the test user with ONLY that stage active

@@ -1149,7 +1149,7 @@ $worksheet-shadow:
 /* ======================================================== */
 .change-identify {
   width: 100%;
-  max-width: 600px;
+  max-width: 800px;
   margin: 0 auto;
   padding: 1rem 0;
 }
@@ -1249,12 +1249,28 @@ $worksheet-shadow:
   letter-spacing: 0.05em;
 }
 
+.change-identify__option-subtext {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+  margin-top: 0.2rem;
+  text-align: center;
+  text-transform: none;
+  line-height: 1.25;
+  max-width: 220px;
+}
+
 /* --- Step 2b: Bar Model Option Cards --- */
 .change-identify__bar-options {
   display: flex;
   gap: 1.5rem;
   justify-content: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap; /* Keep cards side-by-side always */
+
+  /* Keep left and right blocks in the bottom row perfectly inline and equal height */
+  .static-bar-model__bottom {
+    align-items: stretch;
+  }
 }
 
 .change-identify__bar-option {
@@ -1262,13 +1278,15 @@ $worksheet-shadow:
   flex-direction: column;
   align-items: center;
   gap: 0.8rem;
-  padding: 1.2rem;
+  padding: 0.8rem;
   border-radius: 16px;
   border: 2.5px solid #e0e0e0;
   background: #fff;
   cursor: pointer;
   transition: all 0.2s ease;
-  min-width: 220px;
+  flex: 1 1 380px; /* Allow growing and shrinking down from a wide 380px base */
+  max-width: 380px;
+  min-width: 0; /* Bulletproof shrinking */
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 
   &:hover:not(:disabled) {
@@ -1325,14 +1343,15 @@ $worksheet-shadow:
 
 .static-bar__block {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 0.5rem 0.3rem;
-  border-radius: 8px;
+  padding: 0.7rem 0.5rem;
+  border-radius: 12px;
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: capitalize;
-  min-height: 36px;
+  min-height: 54px;
   text-align: center;
 }
 

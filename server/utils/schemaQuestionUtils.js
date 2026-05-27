@@ -802,12 +802,100 @@ const createQuestionEnvelope = ({
   moduleStage,
   practiceMode,
   promptTitle,
+  practiceMode,
+  promptTitle,
   inputMode,
   stageIndex,
   stageLabel,
   stageTotal,
   helperText,
 });
+
+const extractNounFromQuestion = (text) => {
+  if (!text) return "items";
+  const t = text.toLowerCase();
+  
+  const mapping = [
+    { key: "cookie", value: "cookies" },
+    { key: "leave", value: "leaves" },
+    { key: "cand", value: "candies" },
+    { key: "sticker", value: "stickers" },
+    { key: "money", value: "money" },
+    { key: "dollar", value: "money" },
+    { key: "card", value: "baseball cards" },
+    { key: "page", value: "pages" },
+    { key: "point", value: "points" },
+    { key: "passenger", value: "passengers" },
+    { key: "pencil", value: "pencils" },
+    { key: "player", value: "players" },
+    { key: "cupcake", value: "cupcakes" },
+    { key: "book", value: "books" },
+    { key: "bird", value: "birds" },
+    { key: "stamp", value: "stamps" },
+    { key: "member", value: "members" },
+    { key: "puzzle", value: "puzzles solved" },
+    { key: "token", value: "tokens" },
+    { key: "apple", value: "apples" },
+    { key: "berry", value: "berries" },
+    { key: "fruit", value: "fruits" },
+    { key: "toy", value: "toys" },
+    { key: "ball", value: "balls" },
+  ];
+  
+  for (const item of mapping) {
+    if (t.includes(item.key)) {
+      return item.value;
+    }
+  }
+  
+  const match = text.match(/had\s+(?:some\s+|already\s+|)?(?:\d+\s+)?([a-zA-Z]+)/i);
+  if (match && match[1]) {
+    const word = match[1].toLowerCase();
+    if (!["some", "a", "an", "the", "already"].includes(word)) {
+      return word;
+    }
+  }
+  
+  return "items";
+};
+
+const isUncountableNoun = (noun) => {
+  if (!noun) return false;
+  const n = noun.toLowerCase().trim();
+  const uncountables = ["money", "water", "juice", "milk", "sand", "time", "cash", "gold", "flour", "sugar", "salt", "bread", "cheese", "butter", "rice", "homework", "music"];
+  if (uncountables.includes(n)) return true;
+  
+  // Plural countable nouns in math stories typically end in 's'
+  if (!n.endsWith("s")) {
+    return true; // assume singular/uncountable (e.g. money, cash, water)
+  }
+  
+  return false;
+};
+
+const getChangeIdentifyDynamicData = (text, itemNoun, increaseSubtext, decreaseSubtext) => {
+  const resolvedNoun = itemNoun || extractNounFromQuestion(text);
+  
+  let resolvedIncrease = increaseSubtext;
+  let resolvedDecrease = decreaseSubtext;
+  
+  const isUncountable = isUncountableNoun(resolvedNoun);
+  const verb = isUncountable ? "was" : "were";
+  
+  if (!resolvedIncrease) {
+    resolvedIncrease = resolvedNoun ? `${resolvedNoun} ${verb} added or received` : "quantity was added or received";
+  }
+  if (!resolvedDecrease) {
+    resolvedDecrease = resolvedNoun ? `${resolvedNoun} ${verb} removed or given away` : "quantity was removed or given away";
+  }
+  
+  return {
+    itemNoun: resolvedNoun,
+    increaseSubtext: resolvedIncrease,
+    decreaseSubtext: resolvedDecrease,
+    isUncountable,
+  };
+};
 
 module.exports = {
   QUESTION_TYPES,
@@ -821,5 +909,7 @@ module.exports = {
   createQuestionEnvelope,
   serializeResponse,
   validateQuestionResponse,
+  extractNounFromQuestion,
+  isUncountableNoun,
+  getChangeIdentifyDynamicData,
 };
-

@@ -7,6 +7,8 @@ import {
   isQuestionResponseReady,
   isVariableIdentificationQuestion,
   isChangeIdentificationQuestion,
+  extractNounFromQuestion,
+  getChangeIdentifyDynamicData,
 } from "../../../utils/questionValidation";
 import {
   joinSlotValue,
@@ -242,6 +244,39 @@ const ChangeIdentificationPanel = ({
 }) => {
   const subStep = response?.subStep || "2a";
   const labels = question?.visualData?.labels || {};
+  
+  const {
+    itemNoun: resolvedNoun,
+    increaseSubtext: resolvedIncrease,
+    decreaseSubtext: resolvedDecrease,
+    isUncountable,
+  } = getChangeIdentifyDynamicData(
+    question?.text,
+    question?.visualData?.itemNoun,
+    question?.visualData?.increaseSubtext,
+    question?.visualData?.decreaseSubtext
+  );
+
+  const cleanActionVerb = (fullSubtext, noun) => {
+    if (!fullSubtext) return "";
+    let clean = fullSubtext.trim();
+    if (noun && clean.toLowerCase().startsWith(noun.toLowerCase())) {
+      clean = clean.substring(noun.length).trim();
+    }
+    if (clean.toLowerCase().startsWith("quantity")) {
+      clean = clean.substring(8).trim();
+    }
+    if (clean.toLowerCase().startsWith("was ")) {
+      clean = clean.substring(4).trim();
+    } else if (clean.toLowerCase().startsWith("were ")) {
+      clean = clean.substring(5).trim();
+    }
+    return clean;
+  };
+
+  const increaseAction = cleanActionVerb(resolvedIncrease, resolvedNoun) || "added";
+  const decreaseAction = cleanActionVerb(resolvedDecrease, resolvedNoun) || "removed";
+
   const changeFeedback = getChangeIdentificationFeedback(question, response);
   const hasDirectionFeedback =
     hasFeedback &&
@@ -324,8 +359,16 @@ const ChangeIdentificationPanel = ({
       {subStep === "2a" && (
         <div className="change-identify__step">
           <h3 className="change-identify__title">
-            Is the quantity <strong>increasing</strong> or{" "}
-            <strong>decreasing</strong>?
+            {resolvedNoun ? (
+              <>
+                What happened to the {isUncountable ? "amount of" : "number of"}{" "}
+                <strong>{resolvedNoun}</strong> from Start to End?
+              </>
+            ) : (
+              <>
+                Is the quantity <strong>increasing</strong> or <strong>decreasing</strong>?
+              </>
+            )}
           </h3>
           <div className="change-identify__options">
             <button
@@ -336,6 +379,11 @@ const ChangeIdentificationPanel = ({
             >
               <span className="change-identify__option-icon">📈</span>
               <span className="change-identify__option-label">Increase</span>
+              {resolvedIncrease && (
+                <span className="change-identify__option-subtext">
+                  {resolvedIncrease}
+                </span>
+              )}
             </button>
             <button
               type="button"
@@ -345,6 +393,11 @@ const ChangeIdentificationPanel = ({
             >
               <span className="change-identify__option-icon">📉</span>
               <span className="change-identify__option-label">Decrease</span>
+              {resolvedDecrease && (
+                <span className="change-identify__option-subtext">
+                  {resolvedDecrease}
+                </span>
+              )}
             </button>
           </div>
           {step2aCorrect && (
@@ -380,19 +433,27 @@ const ChangeIdentificationPanel = ({
               onClick={() => handleBarModelSelect("increase_bar")}
               disabled={disabled}
             >
-              <div className="change-identify__bar-label">Increase Model</div>
               <div className="static-bar-model static-bar-model--increase">
                 <div className="static-bar-model__top">
-                  <div className="static-bar__block static-bar__block--end">
-                    {labels.end || "End"}
+                  <div className="static-bar__block static-bar__block--end" style={{ flexDirection: "column", gap: "3px" }}>
+                    <span style={{ fontSize: "1rem", fontWeight: "800", textTransform: "capitalize" }}>End</span>
+                    <span style={{ fontSize: "0.78rem", fontWeight: "600", opacity: 0.88, textTransform: "lowercase" }}>
+                      total {resolvedNoun || "items"}
+                    </span>
                   </div>
                 </div>
                 <div className="static-bar-model__bottom">
-                  <div className="static-bar__block static-bar__block--start">
-                    {labels.start || "Start"}
+                  <div className="static-bar__block static-bar__block--start" style={{ flexDirection: "column", gap: "3px" }}>
+                    <span style={{ fontSize: "1rem", fontWeight: "800", textTransform: "capitalize" }}>Start</span>
+                    <span style={{ fontSize: "0.78rem", fontWeight: "600", opacity: 0.88, textTransform: "lowercase" }}>
+                      {resolvedNoun || "items"} before
+                    </span>
                   </div>
-                  <div className="static-bar__block static-bar__block--change">
-                    {labels.change || "Change"}
+                  <div className="static-bar__block static-bar__block--change" style={{ flexDirection: "column", gap: "3px" }}>
+                    <span style={{ fontSize: "1rem", fontWeight: "800", textTransform: "capitalize" }}>Change</span>
+                    <span style={{ fontSize: "0.78rem", fontWeight: "600", opacity: 0.88, textTransform: "lowercase" }}>
+                      {increaseAction} (+)
+                    </span>
                   </div>
                 </div>
               </div>
@@ -405,19 +466,27 @@ const ChangeIdentificationPanel = ({
               onClick={() => handleBarModelSelect("decrease_bar")}
               disabled={disabled}
             >
-              <div className="change-identify__bar-label">Decrease Model</div>
               <div className="static-bar-model static-bar-model--decrease">
                 <div className="static-bar-model__top">
-                  <div className="static-bar__block static-bar__block--start">
-                    {labels.start || "Start"}
+                  <div className="static-bar__block static-bar__block--start" style={{ flexDirection: "column", gap: "3px" }}>
+                    <span style={{ fontSize: "1rem", fontWeight: "800", textTransform: "capitalize" }}>Start</span>
+                    <span style={{ fontSize: "0.78rem", fontWeight: "600", opacity: 0.88, textTransform: "lowercase" }}>
+                      total {resolvedNoun || "items"}
+                    </span>
                   </div>
                 </div>
                 <div className="static-bar-model__bottom">
-                  <div className="static-bar__block static-bar__block--end">
-                    {labels.end || "End"}
+                  <div className="static-bar__block static-bar__block--end" style={{ flexDirection: "column", gap: "3px" }}>
+                    <span style={{ fontSize: "1rem", fontWeight: "800", textTransform: "capitalize" }}>End</span>
+                    <span style={{ fontSize: "0.78rem", fontWeight: "600", opacity: 0.88, textTransform: "lowercase" }}>
+                      {resolvedNoun || "items"} remaining
+                    </span>
                   </div>
-                  <div className="static-bar__block static-bar__block--change">
-                    {labels.change || "Change"}
+                  <div className="static-bar__block static-bar__block--change" style={{ flexDirection: "column", gap: "3px" }}>
+                    <span style={{ fontSize: "1rem", fontWeight: "800", textTransform: "capitalize" }}>Change</span>
+                    <span style={{ fontSize: "0.78rem", fontWeight: "600", opacity: 0.88, textTransform: "lowercase" }}>
+                      {decreaseAction} (-)
+                    </span>
                   </div>
                 </div>
               </div>
