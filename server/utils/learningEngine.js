@@ -1,8 +1,8 @@
 const Concept = require("../models/Concept");
 
 const WINDOW_SIZE = 5;
-const MASTERY_MIN_ATTEMPTS = 4;
-const MASTERY_SCORE_THRESHOLD = 4;
+const MASTERY_MIN_ATTEMPTS = 5;
+const MASTERY_SCORE_THRESHOLD = 5;
 const MASTERY_SUCCESS_RATE = 0.8; // 80% — student must get 4/5, 8/10, etc.
 
 // const WINDOW_SIZE = 5;
@@ -605,22 +605,26 @@ function getQuestionForConcept(concept, masteryEntry, user) {
     const finalIndex = randomizedBundle * BUNDLE_SIZE + stepInsideBundle;
 
     return questions[finalIndex];
-  } else if (concept.id === "missing_part_easy" || concept.id === "missing_part_hard") {
+  } else if (
+    concept.id === "missing_part_easy" ||
+    concept.id === "missing_part_hard"
+  ) {
     // ==========================================
     // MISSING PART EQUATIONS: Balanced Alternating Selector Logic
     // 50% Add, 50% Sub
     // ==========================================
-    const addPool = questions.filter(
-      (q) => q.equationSpec?.operator === "+",
-    );
-    const subPool = questions.filter(
-      (q) => q.equationSpec?.operator === "-",
-    );
+    const addPool = questions.filter((q) => q.equationSpec?.operator === "+");
+    const subPool = questions.filter((q) => q.equationSpec?.operator === "-");
 
     const cycleIndex = timesPlayed % 2;
-    const selectedPool = cycleIndex === 0
-      ? (addPool.length ? addPool : questions)
-      : (subPool.length ? subPool : questions);
+    const selectedPool =
+      cycleIndex === 0
+        ? addPool.length
+          ? addPool
+          : questions
+        : subPool.length
+          ? subPool
+          : questions;
 
     let step = 3;
     if (selectedPool.length % step === 0) step = 5;

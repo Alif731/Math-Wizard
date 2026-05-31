@@ -1512,6 +1512,7 @@ const solveMath = (q, spec, forceSub = null) => {
   return ans && ans !== "?" ? ans : "";
 };
 
+// Combine Bar Modal
 const TotalPartsBarModel = ({
   spec,
   response,
@@ -1789,6 +1790,7 @@ const TotalPartsBarModel = ({
   );
 };
 
+// Change Bar Modal
 const ChangeBarModel = ({
   spec,
   response,
@@ -1831,10 +1833,32 @@ const ChangeBarModel = ({
     return false;
   })();
 
-  const isMod1 = question?.moduleStage === "word_to_bar";
+  // const isMod1 = question?.moduleStage === "word_to_bar";
+  const isEquationStage =
+    question?.moduleStage === "bar_to_equation" ||
+    question?.moduleStage === "schema_equation" ||
+    question?.moduleStage === "equation" ||
+    question?.moduleStage === "solve" ||
+    isReadOnly; // If the parent locked it, push it to the background!
+  const isPillTheme =
+    question?.moduleStage === "word_to_bar" ||
+    question?.moduleStage === "schema_bar_model" ||
+    question?.moduleStage === "bar_to_equation" ||
+    question?.moduleStage === "schema_equation" ||
+    question?.schemaKind === "change";
+
+  // -----------------------Helper for generating start,end change FOR CHANGE MODELS:
   const startBox = spec.start || spec.left;
   const changeBox = spec.change || spec.right;
   const endBox = spec.end || spec.total || spec.result;
+
+  const getBoxKey = (box) => {
+    if (box === startBox) return "start";
+    if (box === changeBox) return "change";
+    if (box === endBox) return "end";
+    return null;
+  };
+  // -----------------------//////////////////////////////
 
   let topBox, b1, b2;
   if (isSubtraction) {
@@ -1948,149 +1972,207 @@ const ChangeBarModel = ({
     const expected = getExpectedVal(question, boxSpec);
     return expected === "?" || expected === "" ? "e.g: ?" : `e.g: ${expected}`;
   };
+
   return (
     <div
-      className={`bar-model bar-model--change ${isMod1 ? "is-pill-model" : "is-solid-classic"}`}
+      className={`bar-model bar-model--change ${isPillTheme ? "is-pill-model" : "is-solid-classic"} ${isEquationStage ? "is-reference-mode" : ""}`}
+      // className={`bar-model bar-model--change ${isPillTheme ? "is-pill-model" : "is-solid-classic"}`}
     >
-      <div className="bar-model__top">
-        <BarBox
-          box={{
-            ...topBox,
-            editable: !(
-              isReadOnly ||
-              (isDummyMode && (isBoxUnknown(topBox) || isAttempted))
-            ),
-          }}
-          label={getBarLabel(topBox, spec)}
-          value={
-            isGhostHint && (!valTop || valTop === "?")
-              ? getGhostPlaceholder(topBox)
-              : getDisplayValue(topBox, valTop)
-          }
-          // value={getDisplayValue(topBox, valTop)}
-          active={
-            !isReadOnly &&
-            !isRevealed &&
-            !isCorrect &&
-            !isGhostHint && // disable auto-select for ghost ui
-            (!isAttempted || isDummyMode) &&
-            activeField === topBox.key
-          }
-          onClick={() => {
-            if (isReadOnly) return;
-            if (isGhostHint) {
-              markCompleted();
+      {/* <div className="bar-model__top"> */}
+      <div
+        className={isPillTheme ? "bar-model__top-wrapper" : "bar-model__top"}
+      >
+        <div className="changeBar__wrapper">
+          {question?.schemaKind === "change" && (
+            <span className={`variable-tag variable-tag--${getBoxKey(topBox)}`}>
+              {getBoxKey(topBox)?.charAt(0).toUpperCase() +
+                getBoxKey(topBox)?.slice(1)}
+            </span>
+          )}
+
+          <BarBox
+            box={{
+              ...topBox,
+              editable: !(
+                isReadOnly ||
+                (isDummyMode && (isBoxUnknown(topBox) || isAttempted))
+              ),
+            }}
+            tag={question?.schemaKind === "change" ? getBoxKey(topBox) : null}
+            label={getBarLabel(topBox, spec)}
+            value={
+              isGhostHint && (!valTop || valTop === "?")
+                ? getGhostPlaceholder(topBox)
+                : getDisplayValue(topBox, valTop)
             }
-            if (!(isDummyMode && (isBoxUnknown(topBox) || isAttempted)))
-              setActiveField(topBox.key);
-          }}
-          className={`bar-box--wide 
+            // value={getDisplayValue(topBox, valTop)}
+            active={
+              !isReadOnly &&
+              !isRevealed &&
+              !isCorrect &&
+              !isGhostHint && // disable auto-select for ghost ui
+              (!isAttempted || isDummyMode) &&
+              activeField === topBox.key
+            }
+            onClick={() => {
+              if (isReadOnly) return;
+              if (isGhostHint) {
+                markCompleted();
+              }
+              if (!(isDummyMode && (isBoxUnknown(topBox) || isAttempted)))
+                setActiveField(topBox.key);
+            }}
+            // className={`bar-box--wide
+            //   ${!isReadOnly && isBoxUnknown(topBox) && isDummyMode && !isRevealed && !isCorrect ? "is-missing-value" : ""}
+            //   ${getFeedbackStatus(topBox.key, topBox) === "correct" ? "is-correct" : getFeedbackStatus(topBox.key, topBox) === "wrong" ? "is-wrong" : ""}
+            //   ${isGhostHint && (!valTop || valTop === "?") ? "ghost-input bar-box--ghost" : ""}
+            // `}
+            className={`
+            ${isPillTheme ? "bar-box--top-pill" : "bar-box--wide"} 
             ${!isReadOnly && isBoxUnknown(topBox) && isDummyMode && !isRevealed && !isCorrect ? "is-missing-value" : ""} 
             ${getFeedbackStatus(topBox.key, topBox) === "correct" ? "is-correct" : getFeedbackStatus(topBox.key, topBox) === "wrong" ? "is-wrong" : ""} 
             ${isGhostHint && (!valTop || valTop === "?") ? "ghost-input bar-box--ghost" : ""}
           `}
-          // className={`bar-box--wide ${!isReadOnly && isBoxUnknown(topBox) && isDummyMode && !isRevealed && !isCorrect ? "is-missing-value" : ""} ${getFeedbackStatus(topBox.key, topBox) === "correct" ? "is-correct" : getFeedbackStatus(topBox.key, topBox) === "wrong" ? "is-wrong" : ""}`}
-          style={getBoxStyle(
-            topBox,
-            isReadOnly ? false : isBoxUnknown(topBox),
-            null,
-            getFeedbackStatus(topBox.key, topBox),
-          )}
-        />
+            // className={`bar-box--wide ${!isReadOnly && isBoxUnknown(topBox) && isDummyMode && !isRevealed && !isCorrect ? "is-missing-value" : ""} ${getFeedbackStatus(topBox.key, topBox) === "correct" ? "is-correct" : getFeedbackStatus(topBox.key, topBox) === "wrong" ? "is-wrong" : ""}`}
+            style={getBoxStyle(
+              topBox,
+              isReadOnly ? false : isBoxUnknown(topBox),
+              null,
+              getFeedbackStatus(topBox.key, topBox),
+            )}
+          />
+        </div>
       </div>
       <div className="bar-model__bottom">
         {b1 && (
-          <BarBox
-            box={{
-              ...b1,
-              editable: !(
-                isReadOnly ||
-                (isDummyMode && (isBoxUnknown(b1) || isAttempted))
-              ),
-            }}
-            label={getBarLabel(b1, spec)}
-            // value={getDisplayValue(b1, valB1)}
-            value={
-              isGhostHint && (!valB1 || valB1 === "?")
-                ? getGhostPlaceholder(b1)
-                : getDisplayValue(b1, valB1)
-            }
-            active={
-              !isReadOnly &&
-              !isRevealed &&
-              !isGhostHint &&
-              !isCorrect &&
-              (!isAttempted || isDummyMode) &&
-              activeField === b1.key
-            }
-            onClick={() => {
-              if (isReadOnly) return;
-              if (isGhostHint) {
-                markCompleted();
+          <div
+            className="changeBar__wrapper"
+            style={{ width: `${((b1?.magnitude || 50) / totalMag) * 100}%` }}
+          >
+            {question?.schemaKind === "change" && (
+              <span className={`variable-tag variable-tag--${getBoxKey(b1)}`}>
+                {getBoxKey(b1)?.charAt(0).toUpperCase() +
+                  getBoxKey(b1)?.slice(1)}
+              </span>
+            )}
+            <BarBox
+              box={{
+                ...b1,
+                editable: !(
+                  isReadOnly ||
+                  (isDummyMode && (isBoxUnknown(b1) || isAttempted))
+                ),
+              }}
+              tag={question?.schemaKind === "change" ? getBoxKey(b1) : null}
+              label={getBarLabel(b1, spec)}
+              // value={getDisplayValue(b1, valB1)}
+              value={
+                isGhostHint && (!valB1 || valB1 === "?")
+                  ? getGhostPlaceholder(b1)
+                  : getDisplayValue(b1, valB1)
               }
-              if (!(isDummyMode && (isBoxUnknown(b1) || isAttempted)))
-                setActiveField(b1.key);
-            }}
-            className={`bar-box--segment 
+              active={
+                !isReadOnly &&
+                !isRevealed &&
+                !isGhostHint &&
+                !isCorrect &&
+                (!isAttempted || isDummyMode) &&
+                activeField === b1.key
+              }
+              onClick={() => {
+                if (isReadOnly) return;
+                if (isGhostHint) {
+                  markCompleted();
+                }
+                if (!(isDummyMode && (isBoxUnknown(b1) || isAttempted)))
+                  setActiveField(b1.key);
+              }}
+              // className={`bar-box--segment
+              //   ${!isReadOnly && isBoxUnknown(b1) && isDummyMode && !isRevealed && !isCorrect ? "is-missing-value" : ""}
+              //   ${getFeedbackStatus(b1.key, b1) === "correct" ? "is-correct" : getFeedbackStatus(b1.key, b1) === "wrong" ? "is-wrong" : ""}
+              //   ${isGhostHint && (!valB1 || valB1 === "?") ? "ghost-input bar-box--ghost" : ""}
+              // `}
+              className={`bar-box--segment 
+              ${isPillTheme ? "bar-box--tray-pill token-1" : ""} 
               ${!isReadOnly && isBoxUnknown(b1) && isDummyMode && !isRevealed && !isCorrect ? "is-missing-value" : ""} 
               ${getFeedbackStatus(b1.key, b1) === "correct" ? "is-correct" : getFeedbackStatus(b1.key, b1) === "wrong" ? "is-wrong" : ""} 
               ${isGhostHint && (!valB1 || valB1 === "?") ? "ghost-input bar-box--ghost" : ""}
             `}
-            // className={`bar-box--segment ${!isReadOnly && isBoxUnknown(b1) && isDummyMode && !isRevealed && !isCorrect ? "is-missing-value" : ""} ${getFeedbackStatus(b1.key, b1) === "correct" ? "is-correct" : getFeedbackStatus(b1.key, b1) === "wrong" ? "is-wrong" : ""}`}
-            style={getBoxStyle(
-              b1,
-              isReadOnly ? false : isBoxUnknown(b1),
-              ((b1?.magnitude || 50) / totalMag) * 100,
-              getFeedbackStatus(b1.key, b1),
-            )}
-          />
+              // className={`bar-box--segment ${!isReadOnly && isBoxUnknown(b1) && isDummyMode && !isRevealed && !isCorrect ? "is-missing-value" : ""} ${getFeedbackStatus(b1.key, b1) === "correct" ? "is-correct" : getFeedbackStatus(b1.key, b1) === "wrong" ? "is-wrong" : ""}`}
+              style={getBoxStyle(
+                b1,
+                isReadOnly ? false : isBoxUnknown(b1),
+                null,
+                getFeedbackStatus(b1.key, b1),
+              )}
+            />
+          </div>
         )}
         {b2 && (
-          <BarBox
-            box={{
-              ...b2,
-              editable: !(
-                isReadOnly ||
-                (isDummyMode && (isBoxUnknown(b2) || isAttempted))
-              ),
-            }}
-            label={getBarLabel(b2, spec)}
-            // value={getDisplayValue(b2, valB2)}
-            value={
-              isGhostHint && (!valB2 || valB2 === "?")
-                ? getGhostPlaceholder(b2)
-                : getDisplayValue(b2, valB2)
-            }
-            active={
-              !isReadOnly &&
-              !isRevealed &&
-              !isGhostHint &&
-              !isCorrect &&
-              (!isAttempted || isDummyMode) &&
-              activeField === b2.key
-            }
-            onClick={() => {
-              if (isReadOnly) return;
-              if (isGhostHint) {
-                markCompleted();
+          <div
+            className="changeBar__wrapper"
+            style={{ width: `${((b2?.magnitude || 50) / totalMag) * 100}%` }}
+          >
+            {question?.schemaKind === "change" && (
+              <span className={`variable-tag variable-tag--${getBoxKey(b2)}`}>
+                {getBoxKey(b2)?.charAt(0).toUpperCase() +
+                  getBoxKey(b2)?.slice(1)}
+              </span>
+            )}
+            <BarBox
+              box={{
+                ...b2,
+                editable: !(
+                  isReadOnly ||
+                  (isDummyMode && (isBoxUnknown(b2) || isAttempted))
+                ),
+              }}
+              tag={question?.schemaKind === "change" ? getBoxKey(b2) : null}
+              label={getBarLabel(b2, spec)}
+              // value={getDisplayValue(b2, valB2)}
+              value={
+                isGhostHint && (!valB2 || valB2 === "?")
+                  ? getGhostPlaceholder(b2)
+                  : getDisplayValue(b2, valB2)
               }
-              if (!(isDummyMode && (isBoxUnknown(b2) || isAttempted)))
-                setActiveField(b2.key);
-            }}
-            className={`bar-box--segment 
-              ${isMod1 ? "bar-box--tray-pill token-2" : ""} 
+              active={
+                !isReadOnly &&
+                !isRevealed &&
+                !isGhostHint &&
+                !isCorrect &&
+                (!isAttempted || isDummyMode) &&
+                activeField === b2.key
+              }
+              onClick={() => {
+                if (isReadOnly) return;
+                if (isGhostHint) {
+                  markCompleted();
+                }
+                if (!(isDummyMode && (isBoxUnknown(b2) || isAttempted)))
+                  setActiveField(b2.key);
+              }}
+              // className={`bar-box--segment
+              //   ${isPillTheme ? "bar-box--tray-pill token-2" : ""}
+              //   ${isPillTheme && isSubtraction ? "is-subtraction" : ""}
+              //   ${!isReadOnly && isBoxUnknown(b2) && isDummyMode && !isRevealed && !isCorrect ? "is-missing-value" : ""}
+              //   ${getFeedbackStatus(b2.key, b2) === "correct" ? "is-correct" : getFeedbackStatus(b2.key, b2) === "wrong" ? "is-wrong" : ""}
+              //   ${isGhostHint && (!valB2 || valB2 === "?") ? "ghost-input bar-box--ghost" : ""}
+              // `}
+              className={`bar-box--segment 
+              ${isPillTheme ? "bar-box--tray-pill token-2" : ""} 
               ${!isReadOnly && isBoxUnknown(b2) && isDummyMode && !isRevealed && !isCorrect ? "is-missing-value" : ""} 
               ${getFeedbackStatus(b2.key, b2) === "correct" ? "is-correct" : getFeedbackStatus(b2.key, b2) === "wrong" ? "is-wrong" : ""} 
               ${isGhostHint && (!valB2 || valB2 === "?") ? "ghost-input bar-box--ghost" : ""}
             `}
-            // className={`bar-box--segment ${isMod1 ? "bar-box--tray-pill token-2" : ""} ${!isReadOnly && isBoxUnknown(b2) && isDummyMode && !isRevealed && !isCorrect ? "is-missing-value" : ""} ${getFeedbackStatus(b2.key, b2) === "correct" ? "is-correct" : getFeedbackStatus(b2.key, b2) === "wrong" ? "is-wrong" : ""}`}
-            style={getBoxStyle(
-              b2,
-              isReadOnly ? false : isBoxUnknown(b2),
-              ((b2?.magnitude || 50) / totalMag) * 100,
-              getFeedbackStatus(b2.key, b2),
-            )}
-          />
+              // className={`bar-box--segment ${isMod1 ? "bar-box--tray-pill token-2" : ""} ${!isReadOnly && isBoxUnknown(b2) && isDummyMode && !isRevealed && !isCorrect ? "is-missing-value" : ""} ${getFeedbackStatus(b2.key, b2) === "correct" ? "is-correct" : getFeedbackStatus(b2.key, b2) === "wrong" ? "is-wrong" : ""}`}
+              style={getBoxStyle(
+                b2,
+                isReadOnly ? false : isBoxUnknown(b2),
+                null,
+                getFeedbackStatus(b2.key, b2),
+              )}
+            />
+          </div>
         )}
       </div>
     </div>

@@ -193,15 +193,24 @@ $ghost-text: #94a3b8; // slate-400 – faded text
   // font-style: italic !important;
   opacity: 0.8;
   background-color: transparent !important;
-  background-image: linear-gradient(
-    90deg,
-    $ghost-bg-start 0%,
-    $ghost-bg-mid 50%,
-    $ghost-bg-start 100%
+  // background-image: linear-gradient(
+  //   90deg,
+  //   $ghost-bg-start 0%,
+  //   $ghost-bg-mid 50%,
+  //   $ghost-bg-start 100%
+  // ) !important;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 10px,
+    rgba(148, 163, 184, 0.08) 10px,
+    rgba(148, 163, 184, 0.08) 14px
   ) !important;
+  border: 2px dashed rgba(148, 163, 184, 0.4) !important;
+  box-shadow: inset 0 6px 12px rgba(0, 0, 0, 0.06) !important;
+  transform: translateY(0) !important;
   background-size: 200% 100% !important;
   background-repeat: no-repeat !important;
-  border: 1.5px dashed $ghost-border !important;
   animation: ghost-shimmer 2s ease-in-out infinite !important;
 
   // Ensure the text content (strong, span) is not affected
@@ -254,15 +263,26 @@ $ghost-text: #94a3b8; // slate-400 – faded text
   .bar-box.ghost-input {
     font-family: "ActualComicSans", cursive;
     background-color: transparent !important;
-    background-image: linear-gradient(
-      90deg,
-      $ghost-bg-start 0%,
-      $ghost-bg-mid 50%,
-      $ghost-bg-start 100%
+    // background-image: linear-gradient(
+    //   90deg,
+    //   $ghost-bg-start 0%,
+    //   $ghost-bg-mid 50%,
+    //   $ghost-bg-start 100%
+    // ) !important;
+    background-image: repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 10px,
+      rgba(148, 163, 184, 0.08) 10px,
+      rgba(148, 163, 184, 0.08) 14px
     ) !important;
+    border: 2px dashed rgba(148, 163, 184, 0.4) !important;
+    box-shadow: inset 0 6px 12px rgba(0, 0, 0, 0.06) !important;
+    transform: translateY(0) !important;
+
     background-size: 200% 100% !important;
     background-repeat: no-repeat !important;
-    border: 1.5px dashed $ghost-border !important;
+    // border: 1.5px dashed $ghost-border !important;
     animation: ghost-shimmer 2s ease-in-out infinite !important;
 
     // Style the inner number and label
@@ -271,7 +291,7 @@ $ghost-text: #94a3b8; // slate-400 – faded text
       color: $ghost-text !important;
       font-weight: 400 !important;
       font-style: normal !important;
-      font-size: 1.4rem;
+      font-size: 1.1rem;
       letter-spacing: 0.02em;
       background: none !important;
       opacity: 0.8;
@@ -381,5 +401,39 @@ $ghost-text: #94a3b8; // slate-400 – faded text
 .equation-box--operator.ghost-input {
   strong {
     color: $ghost-text !important;
+  }
+}
+/* ======================================================== */
+/* GHOST HINT / BLUEPRINT STATE (Empty Mold Effect)         */
+/* ======================================================== */
+
+.bar-model.is-pill-model {
+  /* Target both the ghost hint and the standard missing value blocks */
+  .bar-box--ghost,
+  .is-missing-value {
+    /* 1. Glassy, sunken background */
+    background-color: rgba(241, 245, 249, 0.6) !important;
+    background-image: repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 10px,
+      rgba(148, 163, 184, 0.08) 10px,
+      rgba(148, 163, 184, 0.08) 14px
+    ) !important;
+
+    /* 2. Chunky, soft dashed border */
+    border: 2px dashed rgba(148, 163, 184, 0.4) !important;
+    /* 3. The secret sauce: An inner shadow makes it look physically hollow/empty */
+    box-shadow: inset 0 6px 12px rgba(0, 0, 0, 0.06) !important;
+
+    /* 4. Keep it flat in the tray (no bouncing) */
+    transform: translateY(0) !important;
+
+    /* 5. Soften the text so the actual answer feels much stronger when typed */
+    strong,
+    span {
+      opacity: 0.65;
+      color: #64748b !important;
+    }
   }
 }

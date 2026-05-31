@@ -1381,7 +1381,11 @@ const combineMod1Items = [
       "How many clay marbles are in the jar?",
     ],
     values: { partA: 10, partB: 18, total: 28 },
-    labels: { partA: "glass marbles", partB: "clay marbles", total: "total marbles" },
+    labels: {
+      partA: "glass marbles",
+      partB: "clay marbles",
+      total: "total marbles",
+    },
     unknownSlot: "partB",
     difficulty: 2,
   },
@@ -1392,7 +1396,11 @@ const combineMod1Items = [
       "How many points did the team score in all?",
     ],
     values: { partA: 19, partB: 22, total: 41 },
-    labels: { partA: "first half", partB: "second half", total: "total points" },
+    labels: {
+      partA: "first half",
+      partB: "second half",
+      total: "total points",
+    },
     unknownSlot: "total",
     difficulty: 3,
   },
@@ -1439,7 +1447,11 @@ const combineMod1Items = [
       "How many water bottles were sold?",
     ],
     values: { partA: 18, partB: 27, total: 45 },
-    labels: { partA: "juice boxes", partB: "water bottles", total: "total drinks" },
+    labels: {
+      partA: "juice boxes",
+      partB: "water bottles",
+      total: "total drinks",
+    },
     unknownSlot: "partB",
     difficulty: 3,
   },
@@ -2044,7 +2056,11 @@ const changeMod1Items = [
       "How many cookies does Leo have left?",
     ],
     values: { start: 20, change: 6, end: 14 },
-    labels: { start: "cookies at first", change: "cookies eaten", end: "cookies left" },
+    labels: {
+      start: "cookies at first",
+      change: "cookies eaten",
+      end: "cookies left",
+    },
     unknownSlot: "end",
     difficulty: 2,
   },
@@ -2057,7 +2073,11 @@ const changeMod1Items = [
       "How many leaves blew away?",
     ],
     values: { start: 24, change: 9, end: 15 },
-    labels: { start: "leaves at first", change: "leaves blown away", end: "leaves left" },
+    labels: {
+      start: "leaves at first",
+      change: "leaves blown away",
+      end: "leaves left",
+    },
     unknownSlot: "change",
     difficulty: 2,
   },
@@ -2070,7 +2090,11 @@ const changeMod1Items = [
       "How much money did Sam start with?",
     ],
     values: { start: 50, change: 18, end: 32 },
-    labels: { start: "money at first", change: "money spent", end: "money left" },
+    labels: {
+      start: "money at first",
+      change: "money spent",
+      end: "money left",
+    },
     unknownSlot: "start",
     difficulty: 3,
   },
@@ -2082,7 +2106,11 @@ const changeMod1Items = [
       "How many birds are still on the fence?",
     ],
     values: { start: 12, change: 5, end: 7 },
-    labels: { start: "birds at first", change: "birds flew away", end: "birds left" },
+    labels: {
+      start: "birds at first",
+      change: "birds flew away",
+      end: "birds left",
+    },
     unknownSlot: "end",
     difficulty: 1,
   },
@@ -2095,7 +2123,11 @@ const changeMod1Items = [
       "How many candies did she start with?",
     ],
     values: { start: 35, change: 15, end: 20 },
-    labels: { start: "candies at first", change: "candies given", end: "candies left" },
+    labels: {
+      start: "candies at first",
+      change: "candies given",
+      end: "candies left",
+    },
     unknownSlot: "start",
     difficulty: 3,
   },
@@ -2108,7 +2140,11 @@ const changeMod1Items = [
       "How many stickers did Mia start with?",
     ],
     values: { start: 6, change: 4, end: 10 },
-    labels: { start: "stickers at first", change: "stickers got", end: "stickers now" },
+    labels: {
+      start: "stickers at first",
+      change: "stickers got",
+      end: "stickers now",
+    },
     unknownSlot: "start",
     difficulty: 2,
   },
@@ -2120,7 +2156,11 @@ const changeMod1Items = [
       "How much money does Jorge have now?",
     ],
     values: { start: 52, change: 16, end: 68 },
-    labels: { start: "money at first", change: "money earned", end: "money now" },
+    labels: {
+      start: "money at first",
+      change: "money earned",
+      end: "money now",
+    },
     unknownSlot: "end",
     difficulty: 2,
   },
@@ -2132,7 +2172,11 @@ const changeMod1Items = [
       "How many cards does Sam have now?",
     ],
     values: { start: 20, change: 15, end: 35 },
-    labels: { start: "cards at first", change: "cards bought", end: "cards now" },
+    labels: {
+      start: "cards at first",
+      change: "cards bought",
+      end: "cards now",
+    },
     unknownSlot: "end",
     difficulty: 2,
   },
@@ -2145,7 +2189,11 @@ const changeMod1Items = [
       "How many books did Maya start with?",
     ],
     values: { start: 12, change: 8, end: 20 },
-    labels: { start: "books at first", change: "books bought", end: "books now" },
+    labels: {
+      start: "books at first",
+      change: "books bought",
+      end: "books now",
+    },
     unknownSlot: "start",
     difficulty: 1,
   },
@@ -2157,7 +2205,11 @@ const changeMod1Items = [
       "How many points did the team have then?",
     ],
     values: { start: 45, change: 10, end: 55 },
-    labels: { start: "points at first", change: "points scored", end: "points now" },
+    labels: {
+      start: "points at first",
+      change: "points scored",
+      end: "points now",
+    },
     unknownSlot: "end",
     difficulty: 3,
   },
@@ -2169,7 +2221,11 @@ const changeMod1Items = [
       "How many passengers stayed on the bus?",
     ],
     values: { start: 38, change: 14, end: 24 },
-    labels: { start: "passengers at first", change: "passengers got off", end: "passengers left" },
+    labels: {
+      start: "passengers at first",
+      change: "passengers got off",
+      end: "passengers left",
+    },
     unknownSlot: "end",
     difficulty: 3,
   },
@@ -2182,7 +2238,11 @@ const changeMod1Items = [
       "How many pencils were in the box at first?",
     ],
     values: { start: 25, change: 17, end: 42 },
-    labels: { start: "pencils at first", change: "pencils added", end: "pencils now" },
+    labels: {
+      start: "pencils at first",
+      change: "pencils added",
+      end: "pencils now",
+    },
     unknownSlot: "start",
     difficulty: 3,
   },
@@ -2195,7 +2255,11 @@ const changeMod1Items = [
       "How many players left?",
     ],
     values: { start: 63, change: 15, end: 48 },
-    labels: { start: "players at first", change: "players left", end: "players now" },
+    labels: {
+      start: "players at first",
+      change: "players left",
+      end: "players now",
+    },
     unknownSlot: "change",
     difficulty: 3,
   },
@@ -2207,7 +2271,11 @@ const changeMod1Items = [
       "How many cupcakes does the baker have now?",
     ],
     values: { start: 29, change: 18, end: 47 },
-    labels: { start: "cupcakes at first", change: "cupcakes baked", end: "cupcakes now" },
+    labels: {
+      start: "cupcakes at first",
+      change: "cupcakes baked",
+      end: "cupcakes now",
+    },
     unknownSlot: "end",
     difficulty: 3,
   },
@@ -2220,7 +2288,11 @@ const changeMod1Items = [
       "How many books were on the shelf at first?",
     ],
     values: { start: 55, change: 21, end: 34 },
-    labels: { start: "books at first", change: "books borrowed", end: "books left" },
+    labels: {
+      start: "books at first",
+      change: "books borrowed",
+      end: "books left",
+    },
     unknownSlot: "start",
     difficulty: 3,
   },
@@ -2230,7 +2302,11 @@ const changeMod2Items = [
   {
     text: "Oliver had 20 apples. He ate 6 apples.",
     values: { start: 20, change: 6, end: 14 },
-    labels: { start: "apples at first", change: "apples eaten", end: "apples left" },
+    labels: {
+      start: "apples at first",
+      change: "apples eaten",
+      end: "apples left",
+    },
     difficulty: 2,
     itemNoun: "apples",
     increaseSubtext: "apples were picked or added",
@@ -2239,7 +2315,11 @@ const changeMod2Items = [
   {
     text: "A bush had 24 flowers. The wind blew 9 flowers away.",
     values: { start: 24, change: 9, end: 15 },
-    labels: { start: "flowers at first", change: "flowers blown away", end: "flowers left" },
+    labels: {
+      start: "flowers at first",
+      change: "flowers blown away",
+      end: "flowers left",
+    },
     difficulty: 2,
     itemNoun: "flowers",
     increaseSubtext: "flowers bloomed or were added",
@@ -2248,7 +2328,11 @@ const changeMod2Items = [
   {
     text: "Sophie had 50 tickets. She spent 18 tickets on a prize.",
     values: { start: 50, change: 18, end: 32 },
-    labels: { start: "tickets at first", change: "tickets spent", end: "tickets left" },
+    labels: {
+      start: "tickets at first",
+      change: "tickets spent",
+      end: "tickets left",
+    },
     difficulty: 3,
     itemNoun: "tickets",
     increaseSubtext: "tickets were won or added",
@@ -2257,7 +2341,11 @@ const changeMod2Items = [
   {
     text: "Twelve bugs were on a leaf. Five bugs flew away.",
     values: { start: 12, change: 5, end: 7 },
-    labels: { start: "bugs at first", change: "bugs flew away", end: "bugs left" },
+    labels: {
+      start: "bugs at first",
+      change: "bugs flew away",
+      end: "bugs left",
+    },
     difficulty: 1,
     itemNoun: "bugs",
     increaseSubtext: "bugs landed or were added",
@@ -2275,7 +2363,11 @@ const changeMod2Items = [
   {
     text: "Chloe had 6 bracelets. She got 4 more bracelets.",
     values: { start: 6, change: 4, end: 10 },
-    labels: { start: "bracelets at first", change: "bracelets got", end: "bracelets now" },
+    labels: {
+      start: "bracelets at first",
+      change: "bracelets got",
+      end: "bracelets now",
+    },
     difficulty: 2,
     itemNoun: "bracelets",
     increaseSubtext: "bracelets were received or made",
@@ -2284,7 +2376,11 @@ const changeMod2Items = [
   {
     text: "Max had 52 tokens. He earned 16 tokens at the arcade.",
     values: { start: 52, change: 16, end: 68 },
-    labels: { start: "tokens at first", change: "tokens earned", end: "tokens now" },
+    labels: {
+      start: "tokens at first",
+      change: "tokens earned",
+      end: "tokens now",
+    },
     difficulty: 2,
     itemNoun: "tokens",
     increaseSubtext: "tokens were earned or added",
@@ -2293,7 +2389,11 @@ const changeMod2Items = [
   {
     text: "A jar had 20 buttons. Someone added 15 more buttons.",
     values: { start: 20, change: 15, end: 35 },
-    labels: { start: "buttons at first", change: "buttons added", end: "buttons now" },
+    labels: {
+      start: "buttons at first",
+      change: "buttons added",
+      end: "buttons now",
+    },
     difficulty: 2,
     itemNoun: "buttons",
     increaseSubtext: "buttons were bought or added",
@@ -2302,7 +2402,11 @@ const changeMod2Items = [
   {
     text: "Lily had already collected 12 pebbles. She collected 8 more pebbles.",
     values: { start: 12, change: 8, end: 20 },
-    labels: { start: "pebbles at first", change: "pebbles collected", end: "pebbles now" },
+    labels: {
+      start: "pebbles at first",
+      change: "pebbles collected",
+      end: "pebbles now",
+    },
     difficulty: 1,
     itemNoun: "pebbles",
     increaseSubtext: "pebbles were collected or added",
@@ -2311,7 +2415,11 @@ const changeMod2Items = [
   {
     text: "The game had 45 levels. The creators added 10 more levels.",
     values: { start: 45, change: 10, end: 55 },
-    labels: { start: "levels at first", change: "levels added", end: "levels now" },
+    labels: {
+      start: "levels at first",
+      change: "levels added",
+      end: "levels now",
+    },
     difficulty: 3,
     itemNoun: "levels",
     increaseSubtext: "levels were created or added",
@@ -2320,7 +2428,11 @@ const changeMod2Items = [
   {
     text: "A ship had 38 sailors. Fourteen sailors got off.",
     values: { start: 38, change: 14, end: 24 },
-    labels: { start: "sailors at first", change: "sailors got off", end: "sailors left" },
+    labels: {
+      start: "sailors at first",
+      change: "sailors got off",
+      end: "sailors left",
+    },
     difficulty: 3,
     itemNoun: "sailors",
     increaseSubtext: "sailors boarded or got on",
@@ -2329,7 +2441,11 @@ const changeMod2Items = [
   {
     text: "A bag had 25 carrots. The farmer added 17 carrots.",
     values: { start: 25, change: 17, end: 42 },
-    labels: { start: "carrots at first", change: "carrots added", end: "carrots now" },
+    labels: {
+      start: "carrots at first",
+      change: "carrots added",
+      end: "carrots now",
+    },
     difficulty: 3,
     itemNoun: "carrots",
     increaseSubtext: "carrots were grown or added",
@@ -2338,7 +2454,11 @@ const changeMod2Items = [
   {
     text: "A pond had 63 fish. 15 fish swam away.",
     values: { start: 63, change: 15, end: 48 },
-    labels: { start: "fish at first", change: "fish swam away", end: "fish left" },
+    labels: {
+      start: "fish at first",
+      change: "fish swam away",
+      end: "fish left",
+    },
     difficulty: 3,
     itemNoun: "fish",
     increaseSubtext: "fish hatched or joined",
@@ -2347,7 +2467,11 @@ const changeMod2Items = [
   {
     text: "A chef had 29 pizzas. He baked 18 more pizzas.",
     values: { start: 29, change: 18, end: 47 },
-    labels: { start: "pizzas at first", change: "pizzas baked", end: "pizzas now" },
+    labels: {
+      start: "pizzas at first",
+      change: "pizzas baked",
+      end: "pizzas now",
+    },
     difficulty: 3,
     itemNoun: "pizzas",
     increaseSubtext: "pizzas were baked or added",
@@ -2356,7 +2480,11 @@ const changeMod2Items = [
   {
     text: "A desk had 55 papers. A student took 21 papers.",
     values: { start: 55, change: 21, end: 34 },
-    labels: { start: "papers at first", change: "papers taken", end: "papers left" },
+    labels: {
+      start: "papers at first",
+      change: "papers taken",
+      end: "papers left",
+    },
     difficulty: 3,
     itemNoun: "papers",
     increaseSubtext: "papers were printed or added",
@@ -2370,7 +2498,11 @@ const changeMod3Items = [
     text: "Noah had 20 crackers. He ate 6 of them. How many crackers does Noah have left?",
     schemaKind: "change",
     values: { start: 20, change: 6, end: 14 },
-    labels: { end: "crackers left", start: "crackers at first", change: "crackers eaten" },
+    labels: {
+      end: "crackers left",
+      start: "crackers at first",
+      change: "crackers eaten",
+    },
     displayValues: { start: "?", change: "?", end: "?" },
     validationSlots: { end: "?", start: "20", change: "6" },
     alternateSlots: { end: "14", start: "20", change: "6" },
@@ -2382,7 +2514,11 @@ const changeMod3Items = [
     text: "A bush had 24 berries. A bird ate some, and now there are 15 berries left. How many berries did the bird eat?",
     schemaKind: "change",
     values: { start: 24, change: 9, end: 15 },
-    labels: { end: "berries left", start: "berries at first", change: "berries eaten" },
+    labels: {
+      end: "berries left",
+      start: "berries at first",
+      change: "berries eaten",
+    },
     displayValues: { start: "?", change: "?", end: "?" },
     validationSlots: { end: "15", start: "24", change: "?" },
     alternateSlots: { end: "15", start: "24", change: "9" },
@@ -2394,7 +2530,11 @@ const changeMod3Items = [
     text: "Ava had some beads. She used 18 beads for a necklace and has 32 beads left. How many beads did Ava start with?",
     schemaKind: "change",
     values: { start: 50, change: 18, end: 32 },
-    labels: { end: "beads left", start: "beads at first", change: "beads used" },
+    labels: {
+      end: "beads left",
+      start: "beads at first",
+      change: "beads used",
+    },
     displayValues: { start: "?", change: "?", end: "?" },
     validationSlots: { end: "32", start: "?", change: "18" },
     alternateSlots: { end: "32", start: "50", change: "18" },
@@ -2406,7 +2546,11 @@ const changeMod3Items = [
     text: "12 ducks were swimming in a pond. 5 ducks waddled away. How many ducks are still in the pond?",
     schemaKind: "change",
     values: { start: 12, change: 5, end: 7 },
-    labels: { end: "ducks left", start: "ducks at first", change: "ducks waddled away" },
+    labels: {
+      end: "ducks left",
+      start: "ducks at first",
+      change: "ducks waddled away",
+    },
     displayValues: { start: "?", change: "?", end: "?" },
     validationSlots: { end: "?", start: "12", change: "5" },
     alternateSlots: { end: "7", start: "12", change: "5" },
@@ -2418,7 +2562,11 @@ const changeMod3Items = [
     text: "Liam had some grapes. He gave 15 to his sister and now has 20 left. How many grapes did he start with?",
     schemaKind: "change",
     values: { start: 35, change: 15, end: 20 },
-    labels: { end: "grapes left", start: "grapes at first", change: "grapes given" },
+    labels: {
+      end: "grapes left",
+      start: "grapes at first",
+      change: "grapes given",
+    },
     displayValues: { start: "?", change: "?", end: "?" },
     validationSlots: { end: "20", start: "?", change: "15" },
     alternateSlots: { end: "20", start: "35", change: "15" },
@@ -2430,7 +2578,11 @@ const changeMod3Items = [
     text: "Zoe had some markers. She found 4 more and now has 10.",
     schemaKind: "change",
     values: { start: 6, change: 4, end: 10 },
-    labels: { end: "markers now", start: "markers at first", change: "markers found" },
+    labels: {
+      end: "markers now",
+      start: "markers at first",
+      change: "markers found",
+    },
     displayValues: { start: "?", change: "?", end: "?" },
     validationSlots: { end: "10", start: "?", change: "4" },
     alternateSlots: { end: "10", start: "6", change: "4" },
@@ -2442,7 +2594,11 @@ const changeMod3Items = [
     text: "Lucas had some shells. He collected 16 more on the beach. Now Lucas has 68 shells.",
     schemaKind: "change",
     values: { start: 52, change: 16, end: 68 },
-    labels: { end: "shells now", start: "shells at first", change: "shells collected" },
+    labels: {
+      end: "shells now",
+      start: "shells at first",
+      change: "shells collected",
+    },
     displayValues: { start: "?", change: "?", end: "?" },
     validationSlots: { end: "68", start: "?", change: "16" },
     alternateSlots: { end: "68", start: "52", change: "16" },
@@ -2454,7 +2610,11 @@ const changeMod3Items = [
     text: "A jar had some coins. Eli added 15 more, and now the jar has 35 coins.",
     schemaKind: "change",
     values: { start: 20, change: 15, end: 35 },
-    labels: { end: "coins now", start: "coins at first", change: "coins added" },
+    labels: {
+      end: "coins now",
+      start: "coins at first",
+      change: "coins added",
+    },
     displayValues: { start: "?", change: "?", end: "?" },
     validationSlots: { end: "35", start: "?", change: "15" },
     alternateSlots: { end: "35", start: "20", change: "15" },
@@ -2466,7 +2626,11 @@ const changeMod3Items = [
     text: "Ruby had some stamps. She bought 8 more stamps and now has 20.",
     schemaKind: "change",
     values: { start: 12, change: 8, end: 20 },
-    labels: { end: "stamps now", start: "stamps at first", change: "stamps bought" },
+    labels: {
+      end: "stamps now",
+      start: "stamps at first",
+      change: "stamps bought",
+    },
     displayValues: { start: "?", change: "?", end: "?" },
     validationSlots: { end: "20", start: "?", change: "8" },
     alternateSlots: { end: "20", start: "12", change: "8" },
@@ -2478,7 +2642,11 @@ const changeMod3Items = [
     text: "A game had some players. 10 more players joined to reach a total of 55 players.",
     schemaKind: "change",
     values: { start: 45, change: 10, end: 55 },
-    labels: { end: "players now", start: "players at first", change: "players joined" },
+    labels: {
+      end: "players now",
+      start: "players at first",
+      change: "players joined",
+    },
     displayValues: { start: "?", change: "?", end: "?" },
     validationSlots: { end: "55", start: "?", change: "10" },
     alternateSlots: { end: "55", start: "45", change: "10" },
@@ -2694,7 +2862,11 @@ const changeMod5Items = [
   {
     text: "Owen had 45 tickets. He used 12 tickets on a ride. How many tickets does he have now?",
     values: { start: 45, change: 12, end: 33 },
-    labels: { end: "tickets left", start: "tickets at first", change: "tickets used" },
+    labels: {
+      end: "tickets left",
+      start: "tickets at first",
+      change: "tickets used",
+    },
     unknownSlot: "end",
     operator: "-",
     difficulty: 3,
@@ -2705,7 +2877,11 @@ const changeMod5Items = [
   {
     text: "A bowl had 24 cherries. Someone ate some, and now there are 15 cherries left. How many cherries were eaten?",
     values: { start: 24, change: 9, end: 15 },
-    labels: { end: "cherries left", start: "cherries at first", change: "cherries eaten" },
+    labels: {
+      end: "cherries left",
+      start: "cherries at first",
+      change: "cherries eaten",
+    },
     unknownSlot: "change",
     operator: "-",
     difficulty: 2,
@@ -2716,7 +2892,11 @@ const changeMod5Items = [
   {
     text: "Ella had some marbles. She lost 18 marbles and has 32 left. How many marbles did Ella start with?",
     values: { start: 50, change: 18, end: 32 },
-    labels: { end: "marbles left", start: "marbles at first", change: "marbles lost" },
+    labels: {
+      end: "marbles left",
+      start: "marbles at first",
+      change: "marbles lost",
+    },
     unknownSlot: "start",
     operator: "-",
     difficulty: 3,
@@ -2727,7 +2907,11 @@ const changeMod5Items = [
   {
     text: "12 cars were in a parking lot. 5 cars drove away. How many cars are still in the lot?",
     values: { start: 12, change: 5, end: 7 },
-    labels: { end: "cars left", start: "cars at first", change: "cars drove away" },
+    labels: {
+      end: "cars left",
+      start: "cars at first",
+      change: "cars drove away",
+    },
     unknownSlot: "end",
     operator: "-",
     difficulty: 1,
@@ -2738,7 +2922,11 @@ const changeMod5Items = [
   {
     text: "Leo had some photos. He deleted 15 photos and now has 20 left. How many photos did he start with?",
     values: { start: 35, change: 15, end: 20 },
-    labels: { end: "photos left", start: "photos at first", change: "photos deleted" },
+    labels: {
+      end: "photos left",
+      start: "photos at first",
+      change: "photos deleted",
+    },
     unknownSlot: "start",
     operator: "-",
     difficulty: 3,
@@ -2749,7 +2937,11 @@ const changeMod5Items = [
   {
     text: "Nina had some rings. She bought 4 more and now has 10 rings. How many rings did Nina start with?",
     values: { start: 6, change: 4, end: 10 },
-    labels: { end: "rings now", start: "rings at first", change: "rings bought" },
+    labels: {
+      end: "rings now",
+      start: "rings at first",
+      change: "rings bought",
+    },
     unknownSlot: "start",
     operator: "+",
     difficulty: 2,
@@ -2771,7 +2963,11 @@ const changeMod5Items = [
   {
     text: "A box had some nails. 15 new nails were added, and now there are 35 nails. How many nails were in the box at first?",
     values: { start: 20, change: 15, end: 35 },
-    labels: { end: "nails now", start: "nails at first", change: "nails added" },
+    labels: {
+      end: "nails now",
+      start: "nails at first",
+      change: "nails added",
+    },
     unknownSlot: "start",
     operator: "+",
     difficulty: 2,
@@ -2782,7 +2978,11 @@ const changeMod5Items = [
   {
     text: "Mila had already planted some seeds. She planted 8 more and reached 20 seeds. How many seeds did Mila start with?",
     values: { start: 12, change: 8, end: 20 },
-    labels: { end: "seeds now", start: "seeds at first", change: "seeds planted" },
+    labels: {
+      end: "seeds now",
+      start: "seeds at first",
+      change: "seeds planted",
+    },
     unknownSlot: "start",
     operator: "+",
     difficulty: 1,
@@ -2793,7 +2993,11 @@ const changeMod5Items = [
   {
     text: "A baker had some muffins. They baked 10 more to reach 55 muffins. How many muffins did the baker start with?",
     values: { start: 45, change: 10, end: 55 },
-    labels: { end: "muffins now", start: "muffins at first", change: "muffins baked" },
+    labels: {
+      end: "muffins now",
+      start: "muffins at first",
+      change: "muffins baked",
+    },
     unknownSlot: "start",
     operator: "+",
     difficulty: 3,
@@ -2807,7 +3011,11 @@ const changeMod6Items = [
   {
     text: "A farmer had 45 apples. He sold 12 apples. How many apples does he have now?",
     values: { start: 45, change: 12, end: 33 },
-    labels: { end: "apples left", start: "apples at first", change: "apples sold" },
+    labels: {
+      end: "apples left",
+      start: "apples at first",
+      change: "apples sold",
+    },
     unknownSlot: "end",
     operator: "-",
     difficulty: 3,
@@ -2815,7 +3023,11 @@ const changeMod6Items = [
   {
     text: "A train had 24 cars. Some detached, and now there are 15 cars left. How many detached?",
     values: { start: 24, change: 9, end: 15 },
-    labels: { end: "cars left", start: "cars at first", change: "cars detached" },
+    labels: {
+      end: "cars left",
+      start: "cars at first",
+      change: "cars detached",
+    },
     unknownSlot: "change",
     operator: "-",
     difficulty: 2,
@@ -2823,7 +3035,11 @@ const changeMod6Items = [
   {
     text: "A library had some dictionaries. They gave away 18 and have 32 left. How many dictionaries did they start with?",
     values: { start: 50, change: 18, end: 32 },
-    labels: { end: "dictionaries left", start: "dictionaries at first", change: "dictionaries given away" },
+    labels: {
+      end: "dictionaries left",
+      start: "dictionaries at first",
+      change: "dictionaries given away",
+    },
     unknownSlot: "start",
     operator: "-",
     difficulty: 3,
@@ -2831,7 +3047,11 @@ const changeMod6Items = [
   {
     text: "12 ants were on a leaf. 5 ants fell off. How many ants are still on the leaf?",
     values: { start: 12, change: 5, end: 7 },
-    labels: { end: "ants left", start: "ants at first", change: "ants fell off" },
+    labels: {
+      end: "ants left",
+      start: "ants at first",
+      change: "ants fell off",
+    },
     unknownSlot: "end",
     operator: "-",
     difficulty: 1,
@@ -2839,7 +3059,11 @@ const changeMod6Items = [
   {
     text: "A teacher had some pieces of chalk. She broke 15 pieces and now has 20 whole pieces left. How many pieces did she start with?",
     values: { start: 35, change: 15, end: 20 },
-    labels: { end: "pieces left", start: "pieces at first", change: "pieces broken" },
+    labels: {
+      end: "pieces left",
+      start: "pieces at first",
+      change: "pieces broken",
+    },
     unknownSlot: "start",
     operator: "-",
     difficulty: 3,
@@ -2855,7 +3079,11 @@ const changeMod6Items = [
   {
     text: "A girl had some seashells. She collected 16 more and now has 68 seashells. How many seashells did she start with?",
     values: { start: 52, change: 16, end: 68 },
-    labels: { end: "seashells now", start: "seashells at first", change: "seashells collected" },
+    labels: {
+      end: "seashells now",
+      start: "seashells at first",
+      change: "seashells collected",
+    },
     unknownSlot: "start",
     operator: "+",
     difficulty: 2,
@@ -2863,7 +3091,11 @@ const changeMod6Items = [
   {
     text: "A store had some bikes. 15 new bikes arrived, and now there are 35 bikes. How many bikes did the store start with?",
     values: { start: 20, change: 15, end: 35 },
-    labels: { end: "bikes now", start: "bikes at first", change: "bikes arrived" },
+    labels: {
+      end: "bikes now",
+      start: "bikes at first",
+      change: "bikes arrived",
+    },
     unknownSlot: "start",
     operator: "+",
     difficulty: 2,
@@ -2871,7 +3103,11 @@ const changeMod6Items = [
   {
     text: "A worker had some bricks. He bought 8 more and reached 20 bricks. How many bricks did he start with?",
     values: { start: 12, change: 8, end: 20 },
-    labels: { end: "bricks now", start: "bricks at first", change: "bricks bought" },
+    labels: {
+      end: "bricks now",
+      start: "bricks at first",
+      change: "bricks bought",
+    },
     unknownSlot: "start",
     operator: "+",
     difficulty: 1,
@@ -2879,7 +3115,11 @@ const changeMod6Items = [
   {
     text: "A chef had some potatoes. He peeled 10 more to reach 55 peeled potatoes. How many did he start with?",
     values: { start: 45, change: 10, end: 55 },
-    labels: { end: "potatoes now", start: "potatoes at first", change: "potatoes peeled" },
+    labels: {
+      end: "potatoes now",
+      start: "potatoes at first",
+      change: "potatoes peeled",
+    },
     unknownSlot: "start",
     operator: "+",
     difficulty: 3,
@@ -2928,7 +3168,7 @@ const changeConcepts = [
     description: "Read the change story and build the bar model.",
     prerequisites: ["change_mod2"],
     questions: changeMod3Items.map((item) =>
-      createSchemaRecognitionQuestion(item)
+      createSchemaRecognitionQuestion(item),
     ),
   },
   {
@@ -2937,7 +3177,7 @@ const changeConcepts = [
     description: "Translate Change bar models into equations.",
     prerequisites: ["change_mod3"],
     questions: changeMod4Items.map((item) =>
-      createEquationFromBarQuestion(item)
+      createEquationFromBarQuestion(item),
     ),
   },
   {
@@ -2967,7 +3207,7 @@ const changeConcepts = [
 
 // ============================================================================
 
-// 5. COMPARE SCHEMA 
+// 5. COMPARE SCHEMA
 
 // ============================================================================
 
@@ -3573,8 +3813,8 @@ const seedData = async () => {
       // Change this variable to the ID you want to test right now.
       // Here are some common jump points:
       // ----------------------------------------------867
-      const testStage = "change_mod2"; // CHANGE THIS TO JUMP
-      // const testStage = "change_mod2"; // CHANGE THIS TO JUMP
+      // const testStage = "combine_mod3"; // CHANGE THIS TO JUMP
+      const testStage = "change_mod1"; // CHANGE THIS TO JUMP
 
       // 3. Create the test user with ONLY that stage active
       const testUser = new User({
@@ -3596,8 +3836,28 @@ const seedData = async () => {
           },
         },
       });
+      const testUser1 = new User({
+        username: "goku",
+        password: "asdasd@1",
+        role: "student",
+        streak: 0,
+        avatar: "beam",
+
+        // Forces this specific node to be the ONLY one the student sees
+        zpdNodes: [testStage],
+
+        mastery: {
+          [testStage]: {
+            status: "unlocked",
+            successCount: 0,
+            attemptCount: 0,
+            lastAttempts: [],
+          },
+        },
+      });
 
       await testUser.save();
+      await testUser1.save();
       console.log(
         `🚀 TEST READY: 'student1' is jumped directly to [${testStage}]`,
       );

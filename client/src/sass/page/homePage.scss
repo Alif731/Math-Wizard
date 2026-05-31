@@ -119,6 +119,11 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     //   cursor: pointer;
     // }
 
+    &__name {
+      margin-left: 6px;
+      // color: #e07a5f;
+      // text-transform: capitalize;
+    }
     // --- THE HOVER LOGIC ---
     strong {
       // 1. Hidden State (Default)
@@ -182,27 +187,146 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     }
   }
 
-  .loading-next-overlay {
-    position: absolute;
-    inset: 0;
+  // .loading-next-overlay {
+  //   position: absolute;
+  //   inset: 0;
+  //   display: flex;
+  //   align-items: center;
+  //   justify-content: center;
+  //   background: rgba(255, 255, 255, 0.7); // already present
+  //   z-index: 10;
+
+  //   // Remove default card margins so it sits perfectly in the center
+  //   .status-card {
+  //     margin: 0;
+  //     background: transparent;
+  //     box-shadow: none;
+  //   }
+  // }
+
+  .status-card.error-msg {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.7); // already present
-    z-index: 10;
+    text-align: center;
+    padding: 2.5rem 2rem;
+    margin: 2rem auto;
+    max-width: 420px;
 
-    // Remove default card margins so it sits perfectly in the center
-    .status-card {
-      margin: 0;
-      background: transparent;
-      box-shadow: none;
+    /* Soft Coral / Red Palette */
+    background-color: #fef2f2;
+    border-radius: 24px;
+    border: 4px solid #fecaca;
+
+    /* Chunky Jelly Physics for Errors */
+    box-shadow:
+      inset 0 4px 0 rgba(255, 255, 255, 1),
+      /* Top glass highlight */ 0 8px 0 #fca5a5,
+      /* Chunky 3D bottom */ 0 15px 30px rgba(239, 68, 68, 0.15); /* Soft glowing shadow */
+
+    /* Bounces in aggressively so the user notices it */
+    animation: errorPopIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  /* The Warning Icon */
+  .error-msg__icon {
+    width: 64px;
+    height: 64px;
+    color: #ef4444;
+    background: #ffffff;
+    border-radius: 50%;
+    padding: 12px;
+    margin-bottom: 1rem;
+
+    /* Gives the icon its own mini 3D block feel */
+    border: 3px solid #fecaca;
+    box-shadow:
+      inset 0 -3px 0 rgba(239, 68, 68, 0.1),
+      0 4px 0 #fca5a5;
+
+    svg {
+      width: 100%;
+      height: 100%;
     }
   }
 
-  &.error-msg {
-    background: linear-gradient(180deg, #fff5f2 0%, #fde9e4 100%);
-    border-color: rgba(199, 104, 79, 0.34);
-    color: #b65a4f;
+  /* Typography */
+  .error-msg__content {
+    margin-bottom: 1.5rem;
+  }
+
+  .error-msg__title {
+    font-family: "ActualComicSans", "Comic Sans MS", cursive;
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #991b1b;
+    margin: 0 0 0.5rem 0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-shadow: 0 1.5px 0 rgba(255, 255, 255, 0.8);
+  }
+
+  .error-msg__text {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #b91c1c;
+    margin: 0;
+    line-height: 1.4;
+    opacity: 0.9;
+  }
+
+  /* The Actionable Reload Button */
+  .error-msg__button {
+    font-family: "ActualComicSans", "Comic Sans MS", cursive;
+    font-size: 1.1rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    padding: 0.8rem 1.5rem;
+    border-radius: 16px;
+    cursor: pointer;
+    outline: none;
+
+    /* Matches the button physics of the rest of the game */
+    background-color: #ef4444;
+    color: #ffffff;
+    border: 2px solid #b91c1c;
+    box-shadow:
+      inset 0 3px 0 rgba(255, 255, 255, 0.4),
+      0 6px 0 #991b1b;
+
+    transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &:hover {
+      background-color: #dc2626;
+      transform: translateY(2px);
+      box-shadow:
+        inset 0 3px 0 rgba(255, 255, 255, 0.4),
+        0 4px 0 #991b1b;
+    }
+
+    &:active {
+      transform: translateY(6px);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.4),
+        0 0px 0 transparent;
+    }
+  }
+
+  /* Entrance Animation */
+  @keyframes errorPopIn {
+    0% {
+      opacity: 0;
+      transform: translateY(40px) scale(0.9);
+    }
+    50% {
+      opacity: 1;
+      transform: translateY(-10px) scale(1.02);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
   }
 }
 
@@ -604,7 +728,7 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   }
 }
 
-// ---------------------------------------- Game Over Screen
+// ---------------------------------------- Game Over Screen -------------------------------------------
 .mastery-complete-banner {
   position: relative;
   display: flex;

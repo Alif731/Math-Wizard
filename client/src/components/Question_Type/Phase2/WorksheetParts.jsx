@@ -1,12 +1,11 @@
 // WorksheetPart.jsx
-import React from "react";
 import { Delete, Check, Lock, X } from "lucide-react";
-import {
-  getSlotDisplayValue,
-  getEquationFixedValue,
-} from "../../../utils/questionValidation";
-import { getLearnerFacingLabel } from "./SchemaUtils";
-import { getExpectedSlotValue } from "./SchemaUtils";
+// import {
+//   getSlotDisplayValue,
+//   getEquationFixedValue,
+// } from "../../../utils/questionValidation";
+// import { getLearnerFacingLabel } from "./SchemaUtils";
+// import { getExpectedSlotValue } from "./SchemaUtils";
 
 const PRACTICE_PILLS = [
   { key: "single_add", label: "Single +" },
@@ -96,7 +95,11 @@ export const EquationTabs = ({ activeKey }) => {
   );
 };
 
-export const StageTabs = ({ currentStage, stageResults = {}, stageTotal = 3 }) => {
+export const StageTabs = ({
+  currentStage,
+  stageResults = {},
+  stageTotal = 3,
+}) => {
   const stages = stageTotal === 4 ? CHANGE_FULL_STAGES : SCHEMA_STAGES;
   // console.log("StageTabs render", { currentStage, stageResults });
   return (
@@ -328,6 +331,36 @@ export const EquationBoard = ({
     return !val || val === "" || val === "?";
   };
 
+  // 🔥 UPGRADED HELPER: Checks keys, but falls back to reading the actual label text!
+  const getTagKey = (item) => {
+    if (!item) return null;
+
+    const k = String(item.key || "").toLowerCase();
+    const label = String(item.label || "").toLowerCase();
+
+    // 1. Try standard math keys first
+    if (["start", "left", "part1", "addend1", "minuend"].includes(k))
+      return "start";
+    if (["change", "right", "part2", "addend2", "subtrahend"].includes(k))
+      return "change";
+    if (["end", "result", "total", "sum", "difference"].includes(k))
+      return "end";
+
+    // 2. BULLETPROOF FALLBACK: Read the text label displayed under the box
+    if (label.includes("first") || label.includes("start")) return "start";
+    if (
+      label.includes("now") ||
+      label.includes("total") ||
+      label.includes("left")
+    )
+      return "end";
+
+    // 3. If it has a label and wasn't start/end, it must be the change!
+    if (label !== "") return "change";
+
+    return null;
+  };
+
   return (
     <div className="equation-board">
       {(question?.equationSpec?.template || []).map((item, index) => {
@@ -395,6 +428,9 @@ export const EquationBoard = ({
             slotClass = globalValidationClass;
           }
 
+          const tagKey =
+            question?.schemaKind === "change" ? getTagKey(item) : null;
+
           return (
             <button
               type="button"
@@ -409,8 +445,19 @@ export const EquationBoard = ({
               }}
               disabled={locked || !isEditable}
             >
+              {tagKey && (
+                <span className={`variable-tag variable-tag--${tagKey}`}>
+                  {tagKey.charAt(0).toUpperCase() + tagKey.slice(1)}
+                </span>
+              )}
               <strong>{displayValue}</strong>
-              <span>{displayLabel}</span>
+              {/* {question?.schemaKind === "change" &&
+                ["start", "change", "end"].includes(item.key) && (
+                  <span className={`variable-tag variable-tag--${item.key}`}>
+                    {item.key.charAt(0).toUpperCase() + item.key.slice(1)}
+                  </span>
+                )} */}
+              <span className="variable-tag-span">{displayLabel}</span>
             </button>
           );
         }

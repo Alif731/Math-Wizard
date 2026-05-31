@@ -44,7 +44,7 @@ const TeacherDashboard = () => {
 
   // 1. User & Role Context
   const { userInfo } = useSelector((state) => state.auth);
-  const isTeacher = userInfo?.role === "teacher";
+  // const isTeacher = userInfo?.role === "teacher";
   const displayUsername = userInfo?.username || "Teacher";
 
   // 2. Data Fetching - Activity Feed (Polls every 3s)
@@ -54,9 +54,9 @@ const TeacherDashboard = () => {
   // 3. Data Fetching - Leaderboard Status
   const {
     data: statusData,
-    isLoading: isStatusLoading,
-    isError: isStatusError,
-    error: statusError,
+    // isLoading: isStatusLoading,
+    // isError: isStatusError,
+    // error: statusError,
   } = useGetLeaderboardStatusQuery(undefined, {
     pollingInterval: 30000,
   });
@@ -70,11 +70,11 @@ const TeacherDashboard = () => {
   const [updateLeaderboardStatus, { isLoading: isToggling }] =
     useUpdateLeaderboardStatusMutation();
 
-  const { data: leaderboardData, isLoading: isLeaderboardLoading } =
-    useGetLeaderboardQuery(5, {
-      skip: !statusData,
-      pollingInterval: 3000, // live refresh
-    });
+  // const { data: leaderboardData, isLoading: isLeaderboardLoading } =
+  const { data: leaderboardData } = useGetLeaderboardQuery(5, {
+    skip: !statusData,
+    pollingInterval: 3000, // live refresh
+  });
 
   // --- Logic & Calculations ---
   const isEnabled = Boolean(statusData?.enabled);
@@ -84,10 +84,10 @@ const TeacherDashboard = () => {
     (sum, entry) => sum + (entry.totalAttempts || 0),
     0,
   );
-  const totalCorrect = entries.reduce(
-    (sum, entry) => sum + (entry.correctAttempts || 0),
-    0,
-  );
+  // const totalCorrect = entries.reduce(
+  //   (sum, entry) => sum + (entry.correctAttempts || 0),
+  //   0,
+  // );
   const averageAccuracy = entries.length
     ? Number(
         (
@@ -109,10 +109,10 @@ const TeacherDashboard = () => {
     }
   };
 
-  const { data: classroomRaw, isLoading: isLoadingStats } =
-    useGetClassroomStatsQuery(undefined, {
-      pollingInterval: 20000, //  Add this to sync every 3 seconds
-    });
+  // const { data: classroomRaw, isLoading: isLoadingStats } =
+  const { data: classroomRaw } = useGetClassroomStatsQuery(undefined, {
+    pollingInterval: 20000, //  Add this to sync every 3 seconds
+  });
 
   // API now returns { classroomData, masteryConfig }
   const classroomData = classroomRaw?.classroomData;

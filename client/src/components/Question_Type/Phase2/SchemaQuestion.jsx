@@ -1,5 +1,6 @@
 // SchemaQuestion.jsx
-import React, { useEffect, useMemo, useState, useRef } from "react";
+import { createPortal } from "react-dom";
+import { useEffect, useMemo, useState, useRef } from "react";
 import {
   getDisplayedTextAnswer,
   getChangeIdentificationFeedback,
@@ -7,14 +8,12 @@ import {
   isQuestionResponseReady,
   isVariableIdentificationQuestion,
   isChangeIdentificationQuestion,
-  extractNounFromQuestion,
   getChangeIdentifyDynamicData,
 } from "../../../utils/questionValidation";
 import {
   joinSlotValue,
   buildCompareAnswerPrompt,
-  getActiveInputLabel,
-  getDefaultActiveField,
+  // getActiveInputLabel,
   getBarLabel,
   getTrueExpectedValue,
   solveMissingValue,
@@ -24,13 +23,15 @@ import {
   EquationTabs,
   StageTabs,
   Keypad,
-  VerificationPanel,
   EquationBoard,
 } from "./WorksheetParts";
+import { MiniBarModelIcon } from "../../MiniBarModelIcon";
 import BarModel, { CompareGuidedAnswerModel } from "./BarModelRenderer";
 import CustomSelect from "../../CustomSelect";
 import { useSchemaProgress } from "../../../hooks/useSchemaProgress";
 import { useSelector } from "react-redux";
+import { HelpCircle } from "lucide-react";
+// import { LayoutTemplate, Lightbulb } from "lucide-react";
 
 // Deterministic shuffle
 const seededShuffle = (array, seed) => {
@@ -47,190 +48,6 @@ const seededShuffle = (array, seed) => {
 const hashString = (str) =>
   (str || "").split("").reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
 
-// Helper: highlight numbers in sentence text
-const highlightNumbers = (text) => {
-  const parts = text.split(/(\d+)/);
-  return parts.map((part, i) =>
-    /^\d+$/.test(part) ? (
-      <span key={i} className="variable-sentence__number">
-        {part}
-      </span>
-    ) : (
-      part
-    ),
-  );
-};
-
-// Without Ghost
-// const VariableIdentificationPanel = ({
-//   question,
-//   response,
-//   setResponse,
-//   disabled,
-//   hasFeedback,
-//   isDummyMode,
-//   isRevealed,
-// }) => {
-//   const sentences = question?.visualData?.sentences || [];
-//   const variables = question?.visualData?.variables || [];
-//   const expectedVars = question?.validation?.variables || {};
-
-//   const shuffledVariables = useMemo(
-//     () => seededShuffle(variables, hashString(question?.text)),
-//     [variables, question?.text],
-//   );
-
-//   const updateVariable = (key, field, value) => {
-//     if (disabled && !isDummyMode) return;
-//     setResponse((current) => ({
-//       ...(current || {}),
-//       variables: {
-//         ...(current?.variables || {}),
-//         [key]: {
-//           ...(current?.variables?.[key] || {}),
-//           [field]: value,
-//           // When switching to "find", clear the value
-//           ...(field === "role" && value === "find" ? { value: "" } : {}),
-//         },
-//       },
-//     }));
-//   };
-
-//   // Determine per-card feedback state
-//   const getCardState = (variable) => {
-//     const answer = response?.variables?.[variable.key] || {};
-//     const expected = expectedVars[variable.key];
-//     if (!expected) return "";
-
-//     if (isRevealed) return "is-revealed";
-
-//     if (!hasFeedback) return "";
-
-//     // Check role correctness
-//     const isRoleCorrect = answer.role === expected.role;
-//     // For "given" variables, also check value
-//     const isValueCorrect =
-//       expected.role === "find" ||
-//       String(answer.value) === String(expected.value);
-
-//     if (isRoleCorrect && isValueCorrect) return "is-correct";
-//     return "is-wrong";
-//   };
-
-//   // Options for the Custom Select Dropdown
-//   const roleOptions = [
-//     { value: "given", label: "✓ Given Value" },
-//     { value: "find", label: "? Unknown Value " },
-//   ];
-
-//   return (
-//     <div className="variable-identification">
-//       {/* Sentences at top */}
-//       <div className="variable-identification__sentences">
-//         {sentences.map((sentence, index) => (
-//           <div className="variable-sentence" key={`${index}-${sentence}`}>
-//             <span>{index + 1}</span>
-//             <p>{sentence}</p>
-//           </div>
-//         ))}
-//       </div>
-
-//       {/* Variable cards */}
-//       <div className="variable-cards">
-//         {shuffledVariables.map((variable) => {
-//           const answer = response?.variables?.[variable.key] || {};
-//           const expected = expectedVars[variable.key];
-//           const cardState = getCardState(variable);
-//           const isCardLocked =
-//             cardState === "is-correct" || cardState === "is-revealed";
-//           // const isCardLocked =
-//           //   cardState === "is-correct" ||
-//           //   cardState === "is-revealed" ||
-//           //   (isDummyMode && expected?.role === "find");
-
-//           const displayRole = isRevealed ? expected?.role : answer.role;
-//           // const displayRole = isRevealed
-//           //   ? expected?.role
-//           //   : isDummyMode && expected?.role === "find"
-//           //     ? "find"
-//           //     : answer.role;
-
-//           const displayValue = isRevealed ? expected?.value : answer.value;
-
-//           return (
-//             <div
-//               className={`variable-row-horizontal ${cardState}`}
-//               key={variable.key}
-//             >
-//               {/* Left Side: Variable Name with Yellow Accent */}
-//               <div className="variable-row-horizontal__name">
-//                 {variable.label}
-//               </div>
-
-//               {/* Right Side: Split Controls */}
-//               <div className="variable-row-horizontal__controls">
-//                 {/* Control 1: Role Selection */}
-//                 <div className="control-group">
-//                   <span className="control-label">ROLE</span>
-//                   <CustomSelect
-//                     options={roleOptions}
-//                     value={displayRole || ""}
-//                     onChange={(val) =>
-//                       updateVariable(variable.key, "role", val)
-//                     }
-//                     placeholder="Select"
-//                     disabled={isCardLocked}
-//                   />
-//                 </div>
-
-//                 {/* Control 2: Value Input or Placeholder */}
-//                 <div className="control-group">
-//                   <span className="control-label">VALUE</span>
-//                   {displayRole === "find" ? (
-//                     <div className="find-placeholder">?</div>
-//                   ) : (
-//                     <input
-//                       type="text"
-//                       inputMode="numeric"
-//                       value={displayValue || ""}
-//                       disabled={isCardLocked || displayRole !== "given"}
-//                       placeholder="?"
-//                       onChange={(e) =>
-//                         updateVariable(variable.key, "value", e.target.value)
-//                       }
-//                     />
-//                   )}
-//                 </div>
-//               </div>
-//             </div>
-//           );
-//         })}
-//       </div>
-
-//       {/* Feedback bar */}
-//       {/* {hasFeedback && !isDummyMode && (
-//         <div
-//           className={`variable-feedback-bar ${
-//             shuffledVariables.every((v) => getCardState(v) === "is-correct")
-//               ? "variable-feedback-bar--success"
-//               : "variable-feedback-bar--error"
-//           }`}
-//         >
-//           {shuffledVariables.every((v) => getCardState(v) === "is-correct")
-//             ? "Correct! You have identified all given and unknown variables."
-//             : "Some classifications or values are wrong — check the highlighted cards."}
-//         </div>
-//       )} */}
-//       {/*
-//       {isRevealed && (
-//         <div className="variable-feedback-bar variable-feedback-bar--success">
-//           Correct answers have been revealed above.
-//         </div>
-//       )} */}
-//     </div>
-//   );
-// };
-
 // ===========================================
 // Change Module 2: Two-Step Identification
 // Step 2a: Is the quantity increasing or decreasing?
@@ -243,10 +60,12 @@ const ChangeIdentificationPanel = ({
   disabled,
   hasFeedback,
   feedbackData,
+  animate = false,
+  userId,
 }) => {
   const subStep = response?.subStep || "2a";
-  const labels = question?.visualData?.labels || {};
-  
+  // const labels = question?.visualData?.labels || {};
+
   const {
     itemNoun: resolvedNoun,
     increaseSubtext: resolvedIncrease,
@@ -256,7 +75,7 @@ const ChangeIdentificationPanel = ({
     question?.text,
     question?.visualData?.itemNoun,
     question?.visualData?.increaseSubtext,
-    question?.visualData?.decreaseSubtext
+    question?.visualData?.decreaseSubtext,
   );
 
   const cleanActionVerb = (fullSubtext, noun) => {
@@ -276,8 +95,10 @@ const ChangeIdentificationPanel = ({
     return clean;
   };
 
-  const increaseAction = cleanActionVerb(resolvedIncrease, resolvedNoun) || "added";
-  const decreaseAction = cleanActionVerb(resolvedDecrease, resolvedNoun) || "removed";
+  const increaseAction =
+    cleanActionVerb(resolvedIncrease, resolvedNoun) || "added";
+  const decreaseAction =
+    cleanActionVerb(resolvedDecrease, resolvedNoun) || "removed";
 
   const changeFeedback = getChangeIdentificationFeedback(question, response);
   const hasDirectionFeedback =
@@ -289,25 +110,27 @@ const ChangeIdentificationPanel = ({
     subStep === "2b" &&
     feedbackData?.barModelCorrect !== undefined;
 
-  // Step 2a feedback
-  const step2aCorrect =
-    hasFeedback &&
-    subStep === "2a" &&
-    feedbackData?.changeDirectionCorrect;
-  const step2aWrong =
-    hasFeedback &&
-    subStep === "2a" &&
-    feedbackData?.changeDirectionCorrect === false;
+  // Put this near your other const definitions at the top of the panel
+  const [showBarModelHint, setShowBarModelHint] = useState(false);
 
-  // Step 2b feedback
-  const step2bCorrect =
-    hasFeedback &&
-    subStep === "2b" &&
-    feedbackData?.barModelCorrect;
-  const step2bWrong =
-    hasFeedback &&
-    subStep === "2b" &&
-    feedbackData?.barModelCorrect === false;
+  useEffect(() => {
+    // 🔥 1. Add `animate` to the check: Wait until the unfolding animation triggers!
+    if (subStep === "2b" && userId && animate) {
+      const storageKey = `hasSeenBarModelHint_${userId}`;
+      const hasSeenHint = localStorage.getItem(storageKey);
+
+      if (!hasSeenHint) {
+        // 🔥 2. Add a slight delay (e.g., 400ms) so the cards finish unfolding BEFORE the modal pops
+        const timer = setTimeout(() => {
+          setShowBarModelHint(true);
+          localStorage.setItem(storageKey, "true");
+        }, 600);
+
+        // Cleanup the timer just in case the user navigates away super fast
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [subStep, userId, animate]); // 🔥 3. Make sure `animate` is in this array!
 
   const handleDirectionSelect = (dir) => {
     if (disabled) return;
@@ -325,42 +148,53 @@ const ChangeIdentificationPanel = ({
     }));
   };
 
-  const getDirectionClass = (direction) =>
-    [
-      response?.changeDirection === direction ? "is-selected" : "",
-      hasDirectionFeedback && changeFeedback.correctDirection === direction
-        ? "is-correct"
-        : "",
-      hasDirectionFeedback &&
-      changeFeedback.selectedDirection === direction &&
-      changeFeedback.correctDirection !== direction
-        ? "is-wrong"
-        : "",
-    ]
-      .filter(Boolean)
-      .join(" ");
+  const getDirectionClass = (direction) => {
+    const isSelected = response?.changeDirection === direction;
+    const isActuallyCorrect = changeFeedback?.correctDirection === direction;
 
-  const getBarModelClass = (model) =>
-    [
-      response?.barModel === model ? "is-selected" : "",
-      hasBarModelFeedback && changeFeedback.correctBarModel === model
-        ? "is-correct"
-        : "",
-      hasBarModelFeedback &&
-      changeFeedback.selectedBarModel === model &&
-      changeFeedback.correctBarModel !== model
-        ? "is-wrong"
-        : "",
-    ]
-      .filter(Boolean)
-      .join(" ");
+    let classes = [];
+
+    // Show standard blue selection before submitting
+    if (isSelected && !hasDirectionFeedback) classes.push("is-selected");
+
+    // Once submitted, ONLY style the button the user actually clicked
+    if (hasDirectionFeedback && isSelected) {
+      if (isActuallyCorrect) {
+        classes.push("is-correct");
+      } else {
+        classes.push("is-wrong");
+      }
+    }
+
+    return classes.join(" ");
+  };
+  const getBarModelClass = (model) => {
+    const isSelected = response?.barModel === model;
+    const isActuallyCorrect = changeFeedback?.correctBarModel === model;
+
+    let classes = [];
+
+    // Show standard blue selection before submitting
+    if (isSelected && !hasBarModelFeedback) classes.push("is-selected");
+
+    // Once submitted, ONLY style the button the user actually clicked
+    if (hasBarModelFeedback && isSelected) {
+      if (isActuallyCorrect) {
+        classes.push("is-correct");
+      } else {
+        classes.push("is-wrong");
+      }
+    }
+
+    return classes.join(" ");
+  };
 
   return (
     <div className="change-identify">
       {/* Step 2a: Increase or Decrease? */}
       {subStep === "2a" && (
         <div className="change-identify__step">
-          <h3 className="change-identify__title">
+          {/* <h3 className="change-identify__title">
             {resolvedNoun ? (
               <>
                 What happened to the {isUncountable ? "amount of" : "number of"}{" "}
@@ -368,44 +202,172 @@ const ChangeIdentificationPanel = ({
               </>
             ) : (
               <>
-                Is the quantity <strong>increasing</strong> or <strong>decreasing</strong>?
+                Is the quantity <strong>increasing</strong> or{" "}
+                <strong>decreasing</strong>?
               </>
             )}
-          </h3>
-          <div className="change-identify__options">
+          </h3> */}
+
+          <div className="change-identify__title">
+            <div className="v-action-tag v-action-tag--step2a">
+              Select the Direction of Change
+            </div>
+            <div className="change-identify__title-icon">
+              <HelpCircle size={29} />
+            </div>
+            <p>
+              {resolvedNoun ? (
+                <>
+                  What happened to the{" "}
+                  {isUncountable ? "amount of" : "number of"}{" "}
+                  <strong>{resolvedNoun}</strong> from Start to End?
+                </>
+              ) : (
+                <>
+                  Is the quantity <strong>increasing</strong> or{" "}
+                  <strong>decreasing</strong>?
+                </>
+              )}
+            </p>
+          </div>
+
+          {/* Step 2a: Component Style */}
+          <div
+            className={`change-identify__options ${animate ? "animate-unfold" : ""}`}
+          >
+            {/* <div className="change-identify__options animate-unfold"> */}
+            {/* --- EXPANDING MORPH CARD: INCREASE --- */}
             <button
               type="button"
-              className={`change-identify__option change-identify__option--increase ${getDirectionClass("increase")}`}
+              className={`change-identify__option expand-card ${getDirectionClass("increase")}`}
               onClick={() => handleDirectionSelect("increase")}
               disabled={disabled}
             >
-              <span className="change-identify__option-icon">📈</span>
-              <span className="change-identify__option-label">Increase</span>
-              {resolvedIncrease && (
-                <span className="change-identify__option-subtext">
-                  {resolvedIncrease}
-                </span>
-              )}
+              {/* 1. Default State: Tactile Circle + Label */}
+              <div className="expand-card__container-image">
+                <div className="expand-card__circle expand-card__circle--increase">
+                  <svg
+                    width="56"
+                    height="56"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <line x1="7" y1="17" x2="17" y2="7"></line>
+                    <polyline points="7 7 17 7 17 17"></polyline>
+                  </svg>
+                </div>
+                {/* 🔥 NEW: Default State Label */}
+                <span className="expand-card__default-label">Increase</span>
+              </div>
+
+              {/* 2. Expanded State: The Card */}
+              <div className="expand-card__content">
+                <div className="expand-card__detail">
+                  <span className="expand-card__title">Increase</span>
+                  {resolvedIncrease && (
+                    <span className="expand-card__subtext expand-card__subtext__increase">
+                      {resolvedIncrease}
+                    </span>
+                  )}
+                </div>
+                {/* Popped out Mini Icon */}
+                <div className="expand-card__product-image">
+                  <div className="expand-card__box-image">
+                    <div className="expand-card__circle expand-card__circle--increase">
+                      <svg
+                        width="32"
+                        height="32"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="6"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <line x1="7" y1="17" x2="17" y2="7"></line>
+                        <polyline points="7 7 17 7 17 17"></polyline>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </button>
+
+            {/* --- EXPANDING MORPH CARD: DECREASE --- */}
             <button
               type="button"
-              className={`change-identify__option change-identify__option--decrease ${getDirectionClass("decrease")}`}
+              className={`change-identify__option expand-card ${getDirectionClass("decrease")}`}
               onClick={() => handleDirectionSelect("decrease")}
               disabled={disabled}
             >
-              <span className="change-identify__option-icon">📉</span>
-              <span className="change-identify__option-label">Decrease</span>
-              {resolvedDecrease && (
-                <span className="change-identify__option-subtext">
-                  {resolvedDecrease}
-                </span>
-              )}
+              {/* 1. Default State: Tactile Circle + Label */}
+              <div className="expand-card__container-image">
+                <div className="expand-card__circle expand-card__circle--decrease">
+                  <svg
+                    width="56"
+                    height="56"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <line x1="7" y1="7" x2="17" y2="17"></line>
+                    <polyline points="17 7 17 17 7 17"></polyline>
+                  </svg>
+                </div>
+                {/* 🔥 NEW: Default State Label */}
+                <span className="expand-card__default-label">Decrease</span>
+              </div>
+
+              {/* 2. Expanded State: The Card */}
+              <div className="expand-card__content">
+                <div className="expand-card__detail">
+                  <span className="expand-card__title">Decrease</span>
+                  {resolvedDecrease && (
+                    <span className="expand-card__subtext expand-card__subtext__decrease">
+                      {resolvedDecrease}
+                    </span>
+                  )}
+                </div>
+                {/* Popped out Mini Icon */}
+                <div className="expand-card__product-image">
+                  <div className="expand-card__box-image">
+                    <div className="expand-card__circle expand-card__circle--decrease">
+                      <svg
+                        width="32"
+                        height="32"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="6"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <line x1="7" y1="7" x2="17" y2="17"></line>
+                        <polyline points="17 7 17 17 7 17"></polyline>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </button>
           </div>
+          {/* 
           {step2aCorrect && (
             <div className="change-identify__feedback change-identify__feedback--correct">
               ✓ Correct! The quantity is{" "}
-              <strong>{response?.changeDirection === "increase" ? "increasing" : "decreasing"}</strong>.
+              <strong>
+                {response?.changeDirection === "increase"
+                  ? "increasing"
+                  : "decreasing"}
+              </strong>
+              .
             </div>
           )}
           {step2aWrong && (
@@ -415,86 +377,341 @@ const ChangeIdentificationPanel = ({
                 {question?.validation?.changeDirection === "increase"
                   ? "Increase"
                   : "Decrease"}
-              </strong>.
+              </strong>
+              .
             </div>
-          )}
+          )} */}
         </div>
       )}
 
       {/* Step 2b: Pick the bar model */}
       {subStep === "2b" && (
         <div className="change-identify__step">
-          <h3 className="change-identify__title">
-            Pick the correct bar model for this problem:
-          </h3>
-          <div className="change-identify__bar-options">
-            {/* Increase bar: End on top (bigger), Start + Change on bottom */}
+          {/* Type 1 */}
+          {/* <div className="change-identify__title">
+            <div className="change-identify__title-icon">
+              <LayoutTemplate size={22} />
+            </div>
+            {response?.changeDirection && (
+              <div className="change-identify__carry-hint">
+                <span className="change-identify__carry-hint__top">
+                  You said the {resolvedNoun || "quantity"}{" "}
+                  <strong style={{ textTransform: "capitalize" }}>
+                    {response.changeDirection === "increase"
+                      ? "increased ↗"
+                      : "decreased ↘"}
+                  </strong>
+                </span>
+                <span className="change-identify__carry-hint__bottom">
+                  Now pick the bar model that shows{" "}
+                  <strong>
+                    {response.changeDirection === "increase"
+                      ? "an increase"
+                      : "a decrease"}
+                  </strong>
+                  .
+                </span>
+              </div>
+            )}
+          </div> */}
+
+          {/*Type 2 */}
+          <div className="change-identify__title__2b">
+            {/* The Floating Absolute Tag */}{" "}
+            {response?.changeDirection && (
+              <div
+                className={`v-action-tag ${
+                  response.changeDirection === "increase"
+                    ? "v-action-tag--end"
+                    : "v-action-tag--start"
+                }`}
+              >
+                {response.changeDirection === "increase" ? (
+                  <>
+                    Choose the model where <strong>END</strong> is biggest.
+                  </>
+                ) : (
+                  <>
+                    Choose the model where <strong>START</strong> is biggest.
+                  </>
+                )}
+                {/* THE RE-OPEN BUTTON (Stays on the page) */}
+                {!showBarModelHint && (
+                  <button
+                    type="button"
+                    className="change-identify__hint-reopen"
+                    onClick={() => setShowBarModelHint(true)}
+                  >
+                    <HelpCircle size={16} />
+                    {/* How do I choose? */}
+                  </button>
+                )}
+              </div>
+            )}
+            {/* The Icon */}
+            <div className="change-identify__title-icon">
+              <MiniBarModelIcon /> {/* Or your LayoutTemplate icon */}
+            </div>
+            {response?.changeDirection && (
+              <div className="change-identify__carry-hint">
+                {/* 1. The Ultra-Short Recap */}
+                <p className="v-hint-text">
+                  You said the {resolvedNoun || "quantity"}{" "}
+                  <strong style={{ textTransform: "capitalize" }}>
+                    {response.changeDirection === "increase"
+                      ? "increased ↗"
+                      : "decreased ↘"}
+                  </strong>
+                  .
+                </p>
+
+                {/* 2. The Integrated Visual Bridge Blocks */}
+                <div className="change-identify__visual-blocks animate-unfold">
+                  {response.changeDirection === "increase" ? (
+                    <div className="v-math-row">
+                      <div className="v-block v-block--start v-block--small">
+                        START
+                      </div>
+                      <span className="v-operator">+</span>
+                      <div className="v-block v-block--change v-block--small">
+                        CHANGE
+                      </div>
+                      <span className="v-operator">=</span>
+                      <div className="v-block v-block--end v-block--large v-block--pulse">
+                        END
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="v-math-row">
+                      <div className="v-block v-block--start v-block--large v-block--pulse">
+                        START
+                      </div>
+                      <span className="v-operator">-</span>
+                      <div className="v-block v-block--change v-block--small">
+                        CHANGE
+                      </div>
+                      <span className="v-operator">=</span>
+                      <div className="v-block v-block--end v-block--small">
+                        END
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/*  Modal Hint */}
+          {showBarModelHint &&
+            createPortal(
+              <div
+                className="hint-modal-overlay"
+                onClick={() => setShowBarModelHint(false)}
+              >
+                <div
+                  className="change-identify__hint"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="hint-header">
+                    <strong>
+                      How to choose{" "}
+                      <h2 className="hint-header__main">bar model</h2>
+                    </strong>
+                  </div>
+
+                  <div className="hint-text">
+                    {/* 🔥 The floating tag now holds the golden rule */}
+                    <div className="hint-text-tag">
+                      The top bar is always the total.
+                    </div>
+
+                    <p className="hint-question">
+                      To choose your model, ask yourself:{" "}
+                      <em>When did we have the most?</em>
+                    </p>
+
+                    <ul className="hint-list">
+                      <li className="hint-list__end">
+                        If we added things, the{" "}
+                        <strong className="hl-end">END</strong> is the biggest.
+                      </li>
+                      <li className="hint-list__start">
+                        If we lost things, the{" "}
+                        <strong className="hl-start">START</strong> was the
+                        biggest.
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="hint-models">
+                    {/* Increase model preview */}
+                    <div className="hint-model">
+                      <div className="static-bar-model static-bar-model--increase hint-bar-model">
+                        <div className="static-bar-model__top">
+                          <div className="static-bar__block static-bar__block--end hint-bar-block">
+                            <span className="static-bar__title hint-bar-title">
+                              End (total)
+                            </span>
+                          </div>
+                        </div>
+                        <div className="static-bar-model__bottom hint-bar-bottom">
+                          <div className="static-bar__block static-bar__block--start hint-bar-block hint-bar-start">
+                            <span className="static-bar__title hint-bar-title">
+                              Start
+                            </span>
+                          </div>
+                          <div className="static-bar__block static-bar__block--change hint-bar-block hint-bar-change">
+                            <span className="static-bar__title hint-bar-title">
+                              + Change
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <span className="hint-label increase">Increase</span>
+                      <span className="hint-desc">something was added ➕</span>
+                    </div>
+
+                    <div
+                      className="hint-model"
+                      style={{
+                        borderRight: "2px dashed #F2CC8F",
+                      }}
+                    ></div>
+
+                    {/* Decrease model preview */}
+                    <div className="hint-model">
+                      <div className="static-bar-model static-bar-model--decrease hint-bar-model">
+                        <div className="static-bar-model__top">
+                          <div className="static-bar__block static-bar__block--start hint-bar-block">
+                            <span className="static-bar__title hint-bar-title">
+                              Start (total)
+                            </span>
+                          </div>
+                        </div>
+                        <div className="static-bar-model__bottom hint-bar-bottom">
+                          <div className="static-bar__block static-bar__block--end hint-bar-block hint-bar-end">
+                            <span className="static-bar__title hint-bar-title">
+                              End
+                            </span>
+                          </div>
+                          <div className="static-bar__block static-bar__block--change hint-bar-block hint-bar-change">
+                            <span className="static-bar__title hint-bar-title">
+                              − Change
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <span className="hint-label decrease">Decrease</span>
+                      <span className="hint-desc">
+                        something was removed ➖
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="worksheet-button worksheet-button--primary hint-dismiss-btn"
+                    onClick={() => setShowBarModelHint(false)}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>,
+              document.body,
+            )}
+
+          {/* ----------------------------- */}
+
+          {/* <div className="change-identify__bar-options animate-unfold "> */}
+
+          <div
+            className={`change-identify__bar-options ${animate ? "animate-unfold" : ""}`}
+          >
+            {/* --- INCREASE BAR MODEL (WITH WAVES) --- */}
             <button
               type="button"
-              className={`change-identify__bar-option ${getBarModelClass("increase_bar")}`}
+              className={`change-identify__bar-option wave-card ${getBarModelClass("increase_bar")}`}
               onClick={() => handleBarModelSelect("increase_bar")}
               disabled={disabled}
             >
-              <div className="static-bar-model static-bar-model--increase">
-                <div className="static-bar-model__top">
-                  <div className="static-bar__block static-bar__block--end" style={{ flexDirection: "column", gap: "3px" }}>
-                    <span style={{ fontSize: "1rem", fontWeight: "800", textTransform: "capitalize" }}>End</span>
-                    <span style={{ fontSize: "0.78rem", fontWeight: "600", opacity: 0.88, textTransform: "lowercase" }}>
-                      total {resolvedNoun || "items"}
-                    </span>
+              {/* The Liquid Waves */}
+              <div className="wave"></div>
+              <div className="wave"></div>
+              <div className="wave"></div>
+
+              {/* The Frosted Glass Content */}
+              <div className="wave-card__content">
+                <div className="static-bar-model static-bar-model--increase">
+                  <div className="static-bar-model__top">
+                    <div className="static-bar__block static-bar__block--end">
+                      <span className="static-bar__title">End</span>
+                      <span className="static-bar__subtext">
+                        total {resolvedNoun || "items"}
+                      </span>
+                    </div>
                   </div>
-                </div>
-                <div className="static-bar-model__bottom">
-                  <div className="static-bar__block static-bar__block--start" style={{ flexDirection: "column", gap: "3px" }}>
-                    <span style={{ fontSize: "1rem", fontWeight: "800", textTransform: "capitalize" }}>Start</span>
-                    <span style={{ fontSize: "0.78rem", fontWeight: "600", opacity: 0.88, textTransform: "lowercase" }}>
-                      {resolvedNoun || "items"} before
-                    </span>
-                  </div>
-                  <div className="static-bar__block static-bar__block--change" style={{ flexDirection: "column", gap: "3px" }}>
-                    <span style={{ fontSize: "1rem", fontWeight: "800", textTransform: "capitalize" }}>Change</span>
-                    <span style={{ fontSize: "0.78rem", fontWeight: "600", opacity: 0.88, textTransform: "lowercase" }}>
-                      {increaseAction} (+)
-                    </span>
+                  <div className="static-bar-model__bottom">
+                    <div className="static-bar__block static-bar__block--start">
+                      <span className="static-bar__title">Start</span>
+                      <span className="static-bar__subtext">
+                        {resolvedNoun || "items"} before
+                      </span>
+                    </div>
+                    <div className="static-bar__block static-bar__block--change">
+                      <span className="static-bar__title">Change</span>
+                      <span className="static-bar__subtext">
+                        {increaseAction} (+)
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
             </button>
 
-            {/* Decrease bar: Start on top (bigger), End + Change on bottom */}
+            {/* --- DECREASE BAR MODEL (WITH WAVES) --- */}
             <button
               type="button"
-              className={`change-identify__bar-option ${getBarModelClass("decrease_bar")}`}
+              className={`change-identify__bar-option wave-card ${getBarModelClass("decrease_bar")}`}
               onClick={() => handleBarModelSelect("decrease_bar")}
               disabled={disabled}
             >
-              <div className="static-bar-model static-bar-model--decrease">
-                <div className="static-bar-model__top">
-                  <div className="static-bar__block static-bar__block--start" style={{ flexDirection: "column", gap: "3px" }}>
-                    <span style={{ fontSize: "1rem", fontWeight: "800", textTransform: "capitalize" }}>Start</span>
-                    <span style={{ fontSize: "0.78rem", fontWeight: "600", opacity: 0.88, textTransform: "lowercase" }}>
-                      total {resolvedNoun || "items"}
-                    </span>
+              {/* The Liquid Waves */}
+              <div className="wave"></div>
+              <div className="wave"></div>
+              <div className="wave"></div>
+
+              {/* The Frosted Glass Content */}
+              <div className="wave-card__content">
+                <div className="static-bar-model static-bar-model--decrease">
+                  <div className="static-bar-model__top">
+                    <div className="static-bar__block static-bar__block--start">
+                      <span className="static-bar__title">Start</span>
+                      <span className="static-bar__subtext">
+                        total {resolvedNoun || "items"}
+                      </span>
+                    </div>
                   </div>
-                </div>
-                <div className="static-bar-model__bottom">
-                  <div className="static-bar__block static-bar__block--end" style={{ flexDirection: "column", gap: "3px" }}>
-                    <span style={{ fontSize: "1rem", fontWeight: "800", textTransform: "capitalize" }}>End</span>
-                    <span style={{ fontSize: "0.78rem", fontWeight: "600", opacity: 0.88, textTransform: "lowercase" }}>
-                      {resolvedNoun || "items"} remaining
-                    </span>
-                  </div>
-                  <div className="static-bar__block static-bar__block--change" style={{ flexDirection: "column", gap: "3px" }}>
-                    <span style={{ fontSize: "1rem", fontWeight: "800", textTransform: "capitalize" }}>Change</span>
-                    <span style={{ fontSize: "0.78rem", fontWeight: "600", opacity: 0.88, textTransform: "lowercase" }}>
-                      {decreaseAction} (-)
-                    </span>
+                  <div className="static-bar-model__bottom">
+                    <div className="static-bar__block static-bar__block--end">
+                      <span className="static-bar__title">End</span>
+                      <span className="static-bar__subtext">
+                        {resolvedNoun || "items"} remaining
+                      </span>
+                    </div>
+                    <div className="static-bar__block static-bar__block--change">
+                      <span className="static-bar__title">Change</span>
+                      <span className="static-bar__subtext">
+                        {decreaseAction} (-)
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
             </button>
           </div>
-          {step2bCorrect && (
+
+          {/* Feedback Messages */}
+          {/* {step2bCorrect && (
             <div className="change-identify__feedback change-identify__feedback--correct">
               ✓ Correct! That is the right bar model.
             </div>
@@ -509,7 +726,7 @@ const ChangeIdentificationPanel = ({
               </strong>{" "}
               model.
             </div>
-          )}
+          )} */}
         </div>
       )}
     </div>
@@ -551,7 +768,10 @@ const VariableIdentificationPanel = ({
         (a, b) => order.indexOf(a.key) - order.indexOf(b.key),
       );
       // Only use sorted if all 3 keys matched; else fall through to shuffle
-      if (sorted.length === variables.length && sorted.every((v, i) => order.indexOf(v.key) === i)) {
+      if (
+        sorted.length === variables.length &&
+        sorted.every((v, i) => order.indexOf(v.key) === i)
+      ) {
         return sorted;
       }
     }
@@ -564,27 +784,7 @@ const VariableIdentificationPanel = ({
     (v) => v?.role || v?.value,
   );
 
-  // const updateVariable = (key, field, value) => {
-  //   if (disabled && !isDummyMode) return;
-  //   if (!hasStarted) {
-  //     markCompleted();
-  //   }
-  //   setResponse((current) => ({
-  //     ...(current || {}),
-  //     variables: {
-  //       ...(current?.variables || {}),
-  //       [key]: {
-  //         ...(current?.variables?.[key] || {}),
-  //         [field]: value,
-  //         // When switching to "find", automatically clear the value field
-  //         ...(field === "role" && value === "find" ? { value: "" } : {}),
-  //       },
-  //     },
-  //   }));
-  // };
-
   // Determine per-card feedback state
-
   const updateVariable = (key, field, value) => {
     if (disabled && !isDummyMode) return;
 
@@ -651,8 +851,12 @@ const VariableIdentificationPanel = ({
           const answer = response?.variables?.[variable.key] || {};
           const expected = expectedVars[variable.key];
           const cardState = getCardState(variable);
+          // const isCardLocked =
+          //   cardState === "is-correct" || cardState === "is-revealed";
           const isCardLocked =
-            cardState === "is-correct" || cardState === "is-revealed";
+            cardState === "is-correct" ||
+            cardState === "is-revealed" ||
+            hasFeedback;
 
           const displayRole = isRevealed ? expected?.role : answer.role;
           const displayValue = isRevealed ? expected?.value : answer.value;
@@ -677,11 +881,17 @@ const VariableIdentificationPanel = ({
               className={`variable-row-horizontal ${cardState} ${isGhostHint ? "is-hinted" : ""}`}
               key={variable.key}
             >
-              {/* Left Side: Variable Name with Tag */}
+              {/* Left Side: Variable Name with Tag --- SIKE */}
               <div className="variable-row-horizontal__name">
                 {question?.schemaKind === "change" && (
-                  <span className={`variable-tag variable-tag--${variable.key}`}>
-                    {variable.key === "start" ? "Start" : variable.key === "change" ? "Change" : "End"}
+                  <span
+                    className={`variable-tag variable-tag--${variable.key}`}
+                  >
+                    {variable.key === "start"
+                      ? "Start"
+                      : variable.key === "change"
+                        ? "Change"
+                        : "End"}
                   </span>
                 )}
                 {variable.label}
@@ -742,8 +952,16 @@ const VariableIdentificationPanel = ({
                             !isCardLocked && displayRole === "given"
                           }
                           suppressContentEditableWarning
+                          // onBlur={(e) => {
+                          //   const newValue = e.currentTarget.innerText.trim();
+                          //   if (newValue) {
+                          //     updateVariable(variable.key, "value", newValue);
+                          //   }
+                          // }}
                           onBlur={(e) => {
-                            const newValue = e.currentTarget.innerText.trim();
+                            const newValue = e.currentTarget.innerText
+                              .replace(/\D/g, "")
+                              .trim();
                             if (newValue) {
                               updateVariable(variable.key, "value", newValue);
                             }
@@ -753,6 +971,18 @@ const VariableIdentificationPanel = ({
                               e.preventDefault();
                               e.currentTarget.blur();
                             }
+                          }}
+                          onInput={(e) => {
+                            // strip non‑digits immediately
+                            e.currentTarget.innerText =
+                              e.currentTarget.innerText.replace(/\D/g, "");
+                            // move cursor to the end
+                            const range = document.createRange();
+                            range.selectNodeContents(e.currentTarget);
+                            range.collapse(false);
+                            const sel = window.getSelection();
+                            sel.removeAllRanges();
+                            sel.addRange(range);
                           }}
                         >
                           {ghostValueText}
@@ -765,13 +995,20 @@ const VariableIdentificationPanel = ({
                           value={displayValue || ""}
                           disabled={isCardLocked || displayRole !== "given"}
                           placeholder={isGhostHint ? ghostValueText : "?"}
-                          onChange={(e) =>
-                            updateVariable(
-                              variable.key,
-                              "value",
-                              e.target.value,
-                            )
-                          }
+                          // onChange={(e) =>
+                          //   updateVariable(
+                          //     variable.key,
+                          //     "value",
+                          //     e.target.value,
+                          //   )
+                          // }
+                          onChange={(e) => {
+                            const onlyDigits = e.target.value.replace(
+                              /\D/g,
+                              "",
+                            );
+                            updateVariable(variable.key, "value", onlyDigits);
+                          }}
                         />
                       )}
                     </>
@@ -785,8 +1022,6 @@ const VariableIdentificationPanel = ({
     </div>
   );
 };
-
-
 
 const SchemaQuestion = ({
   question,
@@ -813,7 +1048,65 @@ const SchemaQuestion = ({
 
   // --- Change Identification: local 2a feedback state ---
   const [changeIdLocalFeedback, setChangeIdLocalFeedback] = useState(null);
+  const [changeIdLocalCountdown, setChangeIdLocalCountdown] = useState(null);
+  useEffect(() => {
+    if (changeIdLocalCountdown === null) return;
 
+    if (changeIdLocalCountdown > 0) {
+      const timer = setTimeout(() => {
+        setChangeIdLocalCountdown((prev) => prev - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else {
+      // Time is up! Transition to Step 2b
+      setChangeIdLocalCountdown(null);
+      setChangeIdLocalFeedback(null);
+      setResponse((prev) => ({
+        ...prev,
+        subStep: "2b",
+        barModel: "",
+      }));
+    }
+  }, [changeIdLocalCountdown, setResponse]);
+
+  // ── Auto-advance between stages on correct answer ──
+  const isSchemaStage = Number(question?.stageTotal) > 1;
+  const [stageNextCountdown, setStageNextCountdown] = useState(null);
+
+  // 1. Trigger the countdown when the answer becomes correct
+  useEffect(() => {
+    if (!feedback?.isCorrect) {
+      setStageNextCountdown(null); // Reset if wrong
+      return;
+    }
+    if (!isSchemaStage) return;
+    if (question?.stageIndex >= question?.stageTotal) return; // skip final stage
+
+    setStageNextCountdown(2); // Start the 2-second timer
+  }, [
+    feedback?.isCorrect,
+    question?.stageIndex,
+    question?.stageTotal,
+    isSchemaStage,
+  ]);
+
+  // 2. Handle the 1-second ticks
+  useEffect(() => {
+    if (stageNextCountdown === null) return;
+
+    if (stageNextCountdown > 0) {
+      const timer = setTimeout(() => {
+        setStageNextCountdown((prev) => prev - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else {
+      // Time is up! Move to the next tab
+      setStageNextCountdown(null);
+      onNext();
+    }
+  }, [stageNextCountdown, onNext]);
+
+  // -------------------------------------------------------------------------------------------------------
   // Ghost setup for equation board (Module 3)
   const { userInfo } = useSelector((state) => state.auth);
   const userId = userInfo?.id || userInfo?._id;
@@ -964,7 +1257,7 @@ const SchemaQuestion = ({
     return qClone;
   }, [
     question,
-    isEquationBoardActive,
+    // isEquationBoardActive,
     isEquationStage,
     isDummyMode,
     hasFeedback,
@@ -1016,7 +1309,7 @@ const SchemaQuestion = ({
     isEquationStage,
     response?.slots,
     question,
-    isDummyMode,
+    // isDummyMode,
   ]);
 
   // --- THE STRICT LOCK: Protection for Bar Model Stage ---
@@ -1051,7 +1344,7 @@ const SchemaQuestion = ({
   // }, [isEquationStage, response?.slots]);
 
   const isEquationFilled = useMemo(() => {
-    if (!isEquationStage) return true;
+    // if (!isEquationStage) return true;
     if (!isEquationBoardActive) return true;
     const slots = response?.slots || {};
 
@@ -1074,7 +1367,21 @@ const SchemaQuestion = ({
     );
     const requiresOperator =
       opItem && opItem.editable !== false && question?.schemaKind !== "combine";
+
     const hasOperator = !requiresOperator || Boolean(response?.operator);
+
+    if (isPracticeStage) {
+      // In practice mode, the known numbers are pre-filled by the system.
+      // The user only needs to type into the empty box.
+      // If they type a number, it saves to state. If they backspace or clear it, it becomes "".
+      const hasAnswered = currentKeys.some((key) => {
+        const val = String(slots[key] || "").trim();
+        return val !== "" && val !== "?";
+      });
+
+      return hasAnswered && hasOperator;
+    }
+
     if (isFinalAnswerStage) {
       return (
         currentKeys.every((key) => {
@@ -1098,11 +1405,12 @@ const SchemaQuestion = ({
     // 🔥 Make sure isDummyMode is in the dependency array
   }, [
     isEquationBoardActive,
-    isEquationStage,
+    // isEquationStage,
+    isPracticeStage,
     response?.slots,
     response?.operator,
     question,
-    isDummyMode,
+    // isDummyMode,
   ]);
 
   // const canCheck =
@@ -1127,7 +1435,6 @@ const SchemaQuestion = ({
     !isSubmitting &&
     !hasFeedback;
 
-  const isSchemaStage = Number(question?.stageTotal) > 1;
   const isCompareAnswerInput = isCompareAnswerInputQuestion(question);
   const isVariableIdentification = isVariableIdentificationQuestion(question);
   const isChangeIdentification = isChangeIdentificationQuestion(question);
@@ -1158,9 +1465,36 @@ const SchemaQuestion = ({
     question?.schemaKind !== "combine" &&
     !isDummyMode;
 
-  const activeInputLabel = isCompareAnswerInput
-    ? ""
-    : getActiveInputLabel(question, response?.activeField);
+  // const triggerCheck = () => {
+  //   if (!canCheck) return;
+
+  //   // --- Change Identification 2-step intercept ---
+  //   if (isChangeIdentification && response?.subStep === "2a") {
+  //     const directionCorrect =
+  //       response?.changeDirection === question?.validation?.changeDirection;
+
+  //     if (directionCorrect) {
+  //       // Correct! Advance to step 2b
+  //       setChangeIdLocalFeedback({ step: "2a", correct: true });
+  //       setTimeout(() => {
+  //         setChangeIdLocalFeedback(null);
+  //         setResponse((prev) => ({
+  //           ...prev,
+  //           subStep: "2b",
+  //           barModel: "",
+  //         }));
+  //       }, 1200);
+  //     } else {
+  //       // Wrong direction: submit immediately so server feedback can show
+  //       // the selected wrong option and the correct option on the same screen.
+  //       onCheck();
+  //     }
+  //     return;
+  //   }
+  //   onCheck();
+  // };
+  // --- Change Identification: local 2a feedback state ---
+  // 🔥 NEW: Countdown Engine for Step 2a -> 2b transition
 
   const triggerCheck = () => {
     if (!canCheck) return;
@@ -1171,19 +1505,11 @@ const SchemaQuestion = ({
         response?.changeDirection === question?.validation?.changeDirection;
 
       if (directionCorrect) {
-        // Correct! Advance to step 2b
+        // Show correct feedback and start 2s countdown
         setChangeIdLocalFeedback({ step: "2a", correct: true });
-        setTimeout(() => {
-          setChangeIdLocalFeedback(null);
-          setResponse((prev) => ({
-            ...prev,
-            subStep: "2b",
-            barModel: "",
-          }));
-        }, 1200);
+        setChangeIdLocalCountdown(2);
       } else {
-        // Wrong direction: submit immediately so server feedback can show
-        // the selected wrong option and the correct option on the same screen.
+        // Submit immediately on wrong answer
         onCheck();
       }
       return;
@@ -1191,7 +1517,6 @@ const SchemaQuestion = ({
 
     onCheck();
   };
-
   const isSlotLockedInDummy = (field) => {
     if (!isDummyMode || !isEquationStage || !field) return false;
     const expected = String(question?.validation?.slots?.[field] || "").trim();
@@ -1258,44 +1583,6 @@ const SchemaQuestion = ({
     });
   };
 
-  // 🔥 FIX: Push the correct math result AND correct story numbers into the memory on success OR reveal
-  // useEffect(() => {
-  //   if ((hasFeedback && feedback?.isCorrect) || isRevealed) {
-  //     const numericResult = solveMissingValue(question);
-
-  //     setResponse((prev) => {
-  //       const newSlots = { ...prev.slots };
-  //       let changed = false;
-
-  //       // Get all keys used in the equation
-  //       const templateKeys = (question?.equationSpec?.template || [])
-  //         .filter((item) => item.type === "slot" && item.key)
-  //         .map((item) => item.key);
-
-  //       templateKeys.forEach((key) => {
-  //         const trueExpected = getTrueExpectedValue(question, key);
-  //         const isTrueUnknown = trueExpected === "?";
-
-  //         // 1. If it's the unknown box, inject the calculated math result
-  //         if (isTrueUnknown && numericResult) {
-  //           if (newSlots[key] !== numericResult) {
-  //             newSlots[key] = numericResult;
-  //             changed = true;
-  //           }
-  //         }
-  //         // 2. REVEAL FIX: If it's a number box, overwrite the student's wrong answer with the original story number
-  //         else if (!isTrueUnknown) {
-  //           if (newSlots[key] !== trueExpected) {
-  //             newSlots[key] = trueExpected;
-  //             changed = true;
-  //           }
-  //         }
-  //       });
-
-  //       return changed ? { ...prev, slots: newSlots } : prev;
-  //     });
-  //   }
-  // }, [hasFeedback, feedback?.isCorrect, isRevealed, question, setResponse]);
   // 🔥 FIX 4: Push the correct numbers into memory AND clear the active selection
   useEffect(() => {
     if ((hasFeedback && feedback?.isCorrect) || isRevealed) {
@@ -1616,6 +1903,7 @@ const SchemaQuestion = ({
     if (hasFeedback) return; // Never scroll or animate after feedback
 
     setKeypadReady(false); // Reset animation state on new question
+    setChangeIdReady(false); //  Reset animation state on new question for Module 2a, 2b
 
     const initTimer = setTimeout(() => {
       const wrapperEl = keypadWrapperRef.current;
@@ -1685,6 +1973,41 @@ const SchemaQuestion = ({
     return () => clearTimeout(initTimer);
   }, [question?.id, hasFeedback]);
 
+  // ------------------------ Conditional Auto-Scroll  (Change Module 2a and 2b)------------------------
+  const [changeIdReady, setChangeIdReady] = useState(false);
+  const changeIdentifyRef = useRef(null);
+
+  useEffect(() => {
+    if (!isChangeIdentification || hasFeedback) return;
+
+    setChangeIdReady(false); // reset animation state
+
+    const initTimer = setTimeout(() => {
+      const actionsEl = actionsRef.current;
+      if (!actionsEl) {
+        setChangeIdReady(true);
+        return;
+      }
+
+      const rect = actionsEl.getBoundingClientRect();
+      const viewportHeight =
+        window.innerHeight || document.documentElement.clientHeight;
+      const needsScroll = rect.bottom > viewportHeight;
+
+      if (needsScroll) {
+        setTimeout(() => {
+          actionsEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          setTimeout(() => setChangeIdReady(true), 110); // unfold after scroll
+        }, 200);
+      } else {
+        // setTimeout(() => setChangeIdReady(true), 200);
+        setChangeIdReady(true);
+      }
+    }, 50);
+
+    return () => clearTimeout(initTimer);
+  }, [question?.id, hasFeedback, isChangeIdentification, response?.subStep]);
+
   return (
     <div className={`worksheet ${hasFeedback ? "is-completed" : ""}`}>
       <div className="worksheet-utility-bar">
@@ -1728,7 +2051,9 @@ const SchemaQuestion = ({
         </div>
       </div>
       {/* Only render the top line wrapper if there is actually a tab to show inside it */}
-      {(question?.moduleStage === "practice" || question?.moduleStage === "equations" || isSchemaStage) && (
+      {(question?.moduleStage === "practice" ||
+        question?.moduleStage === "equations" ||
+        isSchemaStage) && (
         <div className="worksheet__topline">
           <div className="worksheet__topline-main">
             {question?.moduleStage === "practice" && (
@@ -1841,25 +2166,31 @@ const SchemaQuestion = ({
       )}
 
       {isChangeIdentification && (
-        <ChangeIdentificationPanel
-          question={question}
-          response={response}
-          setResponse={setResponse}
-          disabled={hasFeedback || isSubmitting || changeIdLocalFeedback !== null}
-          hasFeedback={hasFeedback || changeIdLocalFeedback !== null}
-          feedbackData={{
-            changeDirectionCorrect:
-              changeIdLocalFeedback?.step === "2a"
-                ? changeIdLocalFeedback.correct
-                : hasFeedback
-                  ? response?.changeDirection === question?.validation?.changeDirection
-                  : undefined,
-            barModelCorrect:
-              hasFeedback
+        <div ref={changeIdentifyRef}>
+          <ChangeIdentificationPanel
+            question={question}
+            response={response}
+            setResponse={setResponse}
+            disabled={
+              hasFeedback || isSubmitting || changeIdLocalFeedback !== null
+            }
+            hasFeedback={hasFeedback || changeIdLocalFeedback !== null}
+            feedbackData={{
+              changeDirectionCorrect:
+                changeIdLocalFeedback?.step === "2a"
+                  ? changeIdLocalFeedback.correct
+                  : hasFeedback
+                    ? response?.changeDirection ===
+                      question?.validation?.changeDirection
+                    : undefined,
+              barModelCorrect: hasFeedback
                 ? response?.barModel === question?.validation?.correctBarModel
                 : undefined,
-          }}
-        />
+            }}
+            animate={changeIdReady}
+            userId={userId}
+          />
+        </div>
       )}
 
       {(question?.moduleStage === "schema_solve" || isDirectSchemaSolve) && (
@@ -1943,12 +2274,28 @@ const SchemaQuestion = ({
               showUnknown={false}
               showOperatorPad={false}
               disabled={hasFeedback || isSubmitting}
+              // onDigit={(digit) => {
+              //   if (!hasFeedback) {
+              //     setResponse((current) => ({
+              //       ...(current || {}),
+              //       textAnswer: (current?.textAnswer || "") + digit,
+              //     }));
+              //   }
+              // }}
               onDigit={(digit) => {
                 if (!hasFeedback) {
-                  setResponse((current) => ({
-                    ...(current || {}),
-                    textAnswer: (current?.textAnswer || "") + digit,
-                  }));
+                  if (digit === "?") {
+                    // ← treat ? as clear/reset
+                    setResponse((current) => ({
+                      ...(current || {}),
+                      textAnswer: "",
+                    }));
+                  } else {
+                    setResponse((current) => ({
+                      ...(current || {}),
+                      textAnswer: (current?.textAnswer || "") + digit,
+                    }));
+                  }
                 }
               }}
               onBackspace={() => {
@@ -1972,31 +2319,36 @@ const SchemaQuestion = ({
         </div>
       )}
 
-      {question?.inputMode !== "text_answer" && !isCompareAnswerInput && !isChangeIdentification && (
-        <div
-          ref={keypadWrapperRef}
-          key={question?.id || question?.text}
-          // className={`keypad-animator ${hasFeedback ? "is-hidden" : ""}`}
-          className={`keypad-animator ${hasFeedback ? "is-hidden" : ""} ${keypadReady ? "animate-unfold" : ""}`}
-        >
-          <Keypad
-            title={showOperatorPad ? "Choose the operator" : "Enter the number"}
-            showUnknown={showUnknownButton}
-            showOperatorPad={showOperatorPad}
-            onDigit={updateActiveSlotValue}
-            onUnknown={() => updateActiveSlotValue("?")}
-            onBackspace={handleBackspace}
-            onClear={handleClear}
-            onOperator={(operator) => {
-              if (isEquationGhostHint) markEquationGhostCompleted();
-              setResponse((current) => ({ ...(current || {}), operator }));
-            }}
-            disabled={hasFeedback || isSubmitting}
-          />
-        </div>
-      )}
+      {question?.inputMode !== "text_answer" &&
+        !isCompareAnswerInput &&
+        !isChangeIdentification && (
+          <div
+            ref={keypadWrapperRef}
+            key={question?.id || question?.text}
+            // className={`keypad-animator ${hasFeedback ? "is-hidden" : ""}`}
+            className={`keypad-animator ${hasFeedback ? "is-hidden" : ""} ${keypadReady ? "animate-unfold" : ""}`}
+          >
+            <Keypad
+              title={
+                showOperatorPad ? "Choose the operator" : "Enter the number"
+              }
+              showUnknown={showUnknownButton}
+              showOperatorPad={showOperatorPad}
+              onDigit={updateActiveSlotValue}
+              onUnknown={() => updateActiveSlotValue("?")}
+              onBackspace={handleBackspace}
+              onClear={handleClear}
+              onOperator={(operator) => {
+                if (isEquationGhostHint) markEquationGhostCompleted();
+                setResponse((current) => ({ ...(current || {}), operator }));
+              }}
+              disabled={hasFeedback || isSubmitting}
+            />
+          </div>
+        )}
 
       <div className="worksheet-actions" ref={actionsRef}>
+        {/* 1. Standard SUBMIT button (Hides during the transition) */}
         {!hasFeedback && !isDummyMode && changeIdLocalFeedback === null && (
           <button
             type="button"
@@ -2007,6 +2359,20 @@ const SchemaQuestion = ({
             SUBMIT ✓
           </button>
         )}
+        {/* 2.  Disabled "Next Step" button for Change 2a*/}
+        {changeIdLocalFeedback?.step === "2a" &&
+          changeIdLocalFeedback?.correct && (
+            <button
+              type="button"
+              className="worksheet-button worksheet-button--continue"
+              disabled={true}
+              style={{ opacity: 0.7, cursor: "wait" }}
+            >
+              {changeIdLocalCountdown !== null && changeIdLocalCountdown > 0
+                ? `Next Step in ${changeIdLocalCountdown}s`
+                : "Loading..."}
+            </button>
+          )}
 
         {hasFeedback &&
           !feedback?.isCorrect &&
@@ -2097,21 +2463,77 @@ const SchemaQuestion = ({
             !isPracticeStage &&
             hasFeedback &&
             !feedback?.isCorrect)) && (
+          // <button
+          //   type="button"
+          //   // className="worksheet-button worksheet-button worksheet-button--primary"
+          //   className="worksheet-button worksheet-button--continue "
+          //   onClick={onNext}
+          //   disabled={
+          //     autoNextCountdown !== null || disableAutoNext || isExiting
+          //   }
+          // >
+          //   {autoNextCountdown !== null
+          //     ? `Next Problem in ${autoNextCountdown}s`
+          //     : isExiting
+          //       ? "Loading…"
+          //       : isSchemaStage && question?.stageIndex < question?.stageTotal
+          //         ? "Next Step →"
+          //         : "Next Problem →"}
+          // </button>
           <button
             type="button"
-            className="worksheet-button worksheet-button worksheet-button--primary"
+            className="worksheet-button worksheet-button--continue"
             onClick={onNext}
             disabled={
-              autoNextCountdown !== null || disableAutoNext || isExiting
+              autoNextCountdown !== null ||
+              stageNextCountdown !== null ||
+              // disableAutoNext ||
+              isExiting
             }
           >
-            {autoNextCountdown !== null
-              ? `Next Problem in ${autoNextCountdown}s`
-              : isExiting
-                ? "Loading…"
-                : isSchemaStage && question?.stageIndex < question?.stageTotal
-                  ? "Next Step →"
-                  : "Next Problem →"}
+            {/* The hidden left arrow that slides in */}
+            <svg
+              viewBox="0 0 24 24"
+              className="arr-2"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
+            </svg>
+
+            {/* The Text */}
+            {/* <span className="text">
+              {autoNextCountdown !== null
+                ? `Next Problem in ${autoNextCountdown}s`
+                : isExiting
+                  ? "Loading…"
+                  : isSchemaStage && question?.stageIndex < question?.stageTotal
+                    ? "Next Step"
+                    : "Next Problem"}
+            </span> */}
+            <span className="text">
+              {autoNextCountdown !== null
+                ? `Next Problem in ${autoNextCountdown}s`
+                : stageNextCountdown !== null
+                  ? `Next Stage in ${stageNextCountdown}s` /* Shows the internal tab countdown */
+                  : isExiting
+                    ? "Loading…"
+                    : isSchemaStage &&
+                        question?.stageIndex < question?.stageTotal
+                      ? "Next Step"
+                      : "Next Problem"}
+            </span>
+
+            {/* The expanding Uiverse circle */}
+            <span className="circle"></span>
+
+            {/* The visible right arrow that slides out */}
+            <svg
+              viewBox="0 0 24 24"
+              className="arr-1"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
+            </svg>
           </button>
         )}
       </div>

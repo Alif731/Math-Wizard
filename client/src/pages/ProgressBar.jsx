@@ -383,7 +383,7 @@ import { useEffect } from "react";
 import {
   Lock,
   Play,
-  PlayCircle,
+  // PlayCircle,
   Sparkles,
   Loader2,
   RefreshCw,
@@ -423,7 +423,7 @@ const ProgressBar = () => {
   const {
     data: status,
     isLoading,
-    refetch,
+    // refetch,
   } = useGetUserStatusQuery(currentUsername, {
     skip: !currentUsername,
   });
@@ -692,7 +692,7 @@ const ProgressBar = () => {
       }, {});
 
       return (
-        <div className="schema-groups-wrapper" style={{ marginTop: "20px" }}>
+        <div className="schema-groups-wrapper">
           {Object.entries(grouped).map(([type, nodesGroup]) => (
             <div key={type} className="schema-group">
               <div className="schema-group__header">

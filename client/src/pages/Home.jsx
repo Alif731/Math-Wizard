@@ -1,5 +1,5 @@
 // Home.jsx
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import {
@@ -11,7 +11,7 @@ import {
 import QuestionCard from "../components/QuestionCard";
 import MasteryModal from "../components/MasteryModal"; // Keep this import!
 import "../sass/page/homePage.scss";
-import { Sunrise, Sun, Moon, Trophy, Sparkles } from "lucide-react";
+import { Sunrise, Sun, MoonStar, Trophy, Sparkles } from "lucide-react";
 
 const Home = () => {
   const { userInfo } = useSelector((state) => state.auth);
@@ -243,7 +243,6 @@ const Home = () => {
         rest: "orning",
         Icon: Sunrise,
         iconColor: "#f59e0b", // Bright Amber
-        // textColor: "#d97706", // Deep Amber for readable text
       };
     } else if (hour < 17) {
       return {
@@ -251,21 +250,19 @@ const Home = () => {
         rest: "fternoon",
         Icon: Sun,
         iconColor: "#eab308", // Bright Gold
-        // textColor: "#ca8a04", // Deep Gold for readable text
       };
     } else {
       return {
         firstLetter: "E",
         rest: "vening",
-        Icon: Moon,
-        iconColor: "#8b5cf6", // Twilight Purple
-        // textColor: "#6d28d9", // Deep Purple for readable text
+        Icon: MoonStar, // Adds detail compared to a plain Moon
+        iconColor: "#8183fa",
       };
     }
   };
 
   // Destructure the new color variables
-  const { firstLetter, rest, Icon, iconColor, textColor } = getGreeting();
+  const { firstLetter, rest, Icon, iconColor } = getGreeting();
 
   return (
     <div className="home-page">
@@ -284,7 +281,7 @@ const Home = () => {
             <span className="highlight1">G</span>
             <span style={{ marginRight: "6px" }}>ood</span>
             <span className="highlight2"> {firstLetter}</span>
-            {rest} {username}
+            {rest} {""} <span className="player-badge__name"> {username}</span>
             {/* <strong style={{ marginLeft: "0.4rem" }}>
             {" "}
             . <span className="highlight1">L</span>et's Continue this Journey!
@@ -375,7 +372,7 @@ const Home = () => {
             onSubmit={handleAnswerSubmit}
             onNext={handleNextProblem}
             disabled={isSubmitting}
-            practiceSummary={practiceSummary}
+            // practiceSummary={practiceSummary}
             pendingResult={pendingResult}
             setPendingResult={setPendingResult}
             statAnim={statAnim}
@@ -383,24 +380,69 @@ const Home = () => {
             hasPendingMastery={hasPendingMastery}
           />
         ) : loadingProblem ? (
-          // <div className="status-card loading">
-          //   <div className="spinner">⏳</div>
-          //   Loading your challenge...
-          // </div>
           <div className="loading-next-overlay">
-            <div className="status-card loading status-card--inline">
-              <div className="spinner">⏳</div>
-              <p>Loading next challenge…</p>
+            {/* Background Speed Lines */}
+            <div className="longfazers">
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
             </div>
+
+            {/* The Flying Ship */}
+            <div className="loader">
+              <span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+              </span>
+              <div className="base">
+                <span></span>
+                <div className="face"></div>
+              </div>
+            </div>
+
+            {/* Centered Text */}
+            <p className="loading-text">Loading…</p>
           </div>
         ) : errorProblem ? (
           <div className="status-card error-msg">
-            Error loading game data. Please try refreshing.
+            <div className="error-msg__icon">
+              {/* Chunky Exclamation SVG */}
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+            </div>
+
+            <div className="error-msg__content">
+              <h3 className="error-msg__title">Page Interrupted!</h3>
+              <p className="error-msg__text">
+                We couldn't load the game data. The Page might have fizzled out.
+              </p>
+            </div>
+
+            <button
+              className="error-msg__button"
+              onClick={() => window.location.reload()}
+            >
+              Cast Reload ↺
+            </button>
           </div>
         ) : null}
       </main>
 
       {/* --- INJECTED MODAL AS AN OVERLAY --- */}
+
       <MasteryModal
         isOpen={!!masteredModalInfo}
         moduleName={masteredModalInfo?.name || "Concept"}
