@@ -1,11 +1,11 @@
 // WorksheetPart.jsx
-import React from "react";
-import { Delete, Check, Lock } from "lucide-react";
-import {
-  getSlotDisplayValue,
-  getEquationFixedValue,
-} from "../../../utils/questionValidation";
-import { getLearnerFacingLabel } from "./SchemaUtils";
+import { Delete, Check, Lock, X } from "lucide-react";
+// import {
+//   getSlotDisplayValue,
+//   getEquationFixedValue,
+// } from "../../../utils/questionValidation";
+// import { getLearnerFacingLabel } from "./SchemaUtils";
+// import { getExpectedSlotValue } from "./SchemaUtils";
 
 const PRACTICE_PILLS = [
   { key: "single_add", label: "Single +" },
@@ -18,6 +18,13 @@ const SCHEMA_STAGES = [
   { key: 1, label: "1. Bar model" },
   { key: 2, label: "2. Equation" },
   { key: 3, label: "3. Solve" },
+];
+
+const CHANGE_FULL_STAGES = [
+  { key: 1, label: "1. Identify" },
+  { key: 2, label: "2. Bar model" },
+  { key: 3, label: "3. Equation" },
+  { key: 4, label: "4. Solve" },
 ];
 
 export const PracticeTabs = ({ activeKey }) => {
@@ -53,23 +60,26 @@ export const PracticeTabs = ({ activeKey }) => {
   );
 };
 
-export const StageTabs = ({ currentStage }) => {
+const EQUATION_PILLS = [
+  { key: "missing_part_easy", label: "Missing Easy" },
+  { key: "missing_part_hard", label: "Missing Hard" },
+];
+
+export const EquationTabs = ({ activeKey }) => {
+  const activeIndex = EQUATION_PILLS.findIndex(
+    (pill) => pill.key === activeKey,
+  );
+
   return (
     <div className="worksheet-tabs progression-track">
-      {SCHEMA_STAGES.map((stage) => {
-        // Determine the state based on the current stage number (1, 2, or 3)
+      {EQUATION_PILLS.map((pill, index) => {
         let statusClass = "";
-
-        if (stage.key < currentStage) {
-          statusClass = "is-completed";
-        } else if (stage.key === currentStage) {
-          statusClass = "is-active";
-        } else {
-          statusClass = "is-locked";
-        }
+        if (index < activeIndex) statusClass = "is-completed";
+        else if (index === activeIndex) statusClass = "is-active";
+        else statusClass = "is-locked";
 
         return (
-          <div key={stage.key} className={`worksheet-tab ${statusClass}`}>
+          <div key={pill.key} className={`worksheet-tab ${statusClass}`}>
             {statusClass === "is-completed" && (
               <Check size={14} className="tab-icon" />
             )}
@@ -77,6 +87,55 @@ export const StageTabs = ({ currentStage }) => {
               <Lock size={12} className="tab-icon" />
             )}
 
+            <span>{pill.label}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+export const StageTabs = ({
+  currentStage,
+  stageResults = {},
+  stageTotal = 3,
+}) => {
+  const stages = stageTotal === 4 ? CHANGE_FULL_STAGES : SCHEMA_STAGES;
+  // console.log("StageTabs render", { currentStage, stageResults });
+  return (
+    <div className="worksheet-tabs progression-track">
+      {stages.map((stage) => {
+        // Determine the state based on the current stage number (1, 2, or 3)
+        const result = stageResults[stage.key];
+        let statusClass = "";
+
+        if (stage.key < currentStage) {
+          statusClass = result === "wrong" ? "is-wrong" : "is-completed";
+          // statusClass = "is-wrong";
+        } else if (stage.key === currentStage) {
+          // statusClass = "is-active";
+          statusClass = result === "wrong" ? "is-wrong" : "is-active";
+        } else {
+          statusClass = "is-locked";
+        }
+
+        return (
+          <div key={stage.key} className={`worksheet-tab ${statusClass}`}>
+            {/* {statusClass === "is-completed" && (
+              <Check size={14} className="tab-icon" />
+            )}
+            {statusClass === "is-wrong" && <X size={14} className="tab-icon" />}
+            {statusClass === "is-locked" && (
+              <Lock size={12} className="tab-icon" />
+            )} */}
+            {statusClass === "is-completed" && (
+              <Check size={14} className="tab-icon" />
+            )}
+            {statusClass === "is-wrong" && <X size={14} className="tab-icon" />}
+            {statusClass === "is-active" && !result && null}
+            {statusClass === "is-locked" && (
+              <Lock size={12} className="tab-icon" />
+            )}
             <span>{stage.label}</span>
           </div>
         );
@@ -112,122 +171,6 @@ export const BarBox = ({
   );
 };
 
-export const EquationBoard = ({
-  question,
-  response,
-  setResponse,
-  locked,
-  feedback,
-}) => {
-  const setActiveField = (field) =>
-    !locked &&
-    setResponse((current) => ({ ...(current || {}), activeField: field }));
-
-  // Fallback global validation
-  const globalValidationClass = feedback
-    ? feedback.isCorrect
-      ? "is-correct"
-      : "is-wrong"
-    : "";
-
-  const isBarStage = ["bar_to_equation", "schema_equation"].includes(
-    question?.moduleStage,
-  );
-
-  const isCombine = question?.schemaKind === "combine";
-
-  return (
-    <div
-      className={`equation-board ${isBarStage ? "equation-board--bar-stage" : ""}`}
-    >
-      {(question?.equationSpec?.template || []).map((item, index) => {
-        if (item.type === "symbol") {
-          return (
-            <span key={`symbol-${index}`} className="equation-board__symbol">
-              {item.value}
-            </span>
-          );
-        }
-
-        if (item.type === "operator") {
-          const operatorValue = isCombine
-            ? "+"
-            : response?.operator || (item.editable ? "" : item.value) || "?";
-
-          const displayOperator = operatorValue;
-
-          // 🔥 FIX 1: Check individual Operator feedback
-          let opClass = "";
-          if (feedback) {
-            if (feedback.operator) {
-              opClass = feedback.operator.isCorrect ? "is-correct" : "is-wrong";
-            } else {
-              opClass = globalValidationClass;
-            }
-          }
-
-          return (
-            <button
-              type="button"
-              key="operator"
-              className={`equation-box equation-box--operator ${!item.editable || isCombine ? "is-fixed" : ""} ${response?.activeField === "__operator__" ? "is-active" : ""} ${locked ? "is-locked" : ""} ${item.editable && !isCombine ? opClass : ""}`}
-              onClick={() =>
-                !isCombine && item.editable && setActiveField("__operator__")
-              }
-              disabled={locked || !item.editable || isCombine}
-              style={isCombine ? { cursor: "default" } : {}}
-            >
-              <strong>
-                {displayOperator || <span className="hide-on-focus">?</span>}
-              </strong>{" "}
-              <span>{item.label || "operator"}</span>
-            </button>
-          );
-        }
-
-        const isEditable = item.editable !== false;
-        const slotValue = getSlotDisplayValue(response, item.key);
-        
-        const displayValue =
-          isEditable && String(slotValue || "").trim() !== "" ? (
-            slotValue
-          ) : isEditable ? (
-            <span className="hide-on-focus">?</span>
-          ) : (
-            getEquationFixedValue(item)
-          );
-        const displayLabel = getLearnerFacingLabel(question, item);
-
-        // 🔥 FIX 2: Check individual Slot feedback for this specific box
-        let slotClass = "";
-        if (feedback) {
-          if (feedback.slots && feedback.slots[item.key]) {
-            slotClass = feedback.slots[item.key].isCorrect
-              ? "is-correct"
-              : "is-wrong";
-          } else {
-            slotClass = globalValidationClass;
-          }
-        }
-
-        return (
-          <button
-            type="button"
-            key={item.key}
-            // Use the specific slotClass instead of the global validationClass
-            className={`equation-box ${isEditable ? "is-editable" : "is-fixed"} ${response?.activeField === item.key ? "is-active" : ""} ${locked ? "is-locked" : ""} ${isEditable ? slotClass : ""}`}
-            onClick={() => isEditable && setActiveField(item.key)}
-            disabled={locked || !isEditable}
-          >
-            <strong>{displayValue}</strong>
-            <span>{displayLabel}</span>
-          </button>
-        );
-      })}
-    </div>
-  );
-};
-
 // export const EquationBoard = ({
 //   question,
 //   response,
@@ -239,6 +182,7 @@ export const EquationBoard = ({
 //     !locked &&
 //     setResponse((current) => ({ ...(current || {}), activeField: field }));
 
+//   // Fallback global validation
 //   const globalValidationClass = feedback
 //     ? feedback.isCorrect
 //       ? "is-correct"
@@ -269,23 +213,23 @@ export const EquationBoard = ({
 //             ? "+"
 //             : response?.operator || (item.editable ? "" : item.value) || "?";
 
-//           const displayOperator =
-//             item.editable && String(operatorValue || "").trim() === "?"
-//               ? ""
-//               : operatorValue;
+//           const displayOperator = operatorValue;
 
-//           // Check individual operator feedback
-//           let opClass = globalValidationClass;
-//           if (feedback?.operator) {
-//             opClass = feedback.operator.isCorrect ? "is-correct" : "is-wrong";
+//           // 🔥 FIX 1: Check individual Operator feedback
+//           let opClass = "";
+//           if (feedback) {
+//             if (feedback.operator) {
+//               opClass = feedback.operator.isCorrect ? "is-correct" : "is-wrong";
+//             } else {
+//               opClass = globalValidationClass;
+//             }
 //           }
 
 //           return (
 //             <button
 //               type="button"
 //               key="operator"
-//               // 🔥 UPDATED: Removed the 'item.editable' check so the operator gets styled green/red too!
-//               className={`equation-box equation-box--operator ${!item.editable || isCombine ? "is-fixed" : ""} ${response?.activeField === "__operator__" ? "is-active" : ""} ${locked ? "is-locked" : ""} ${opClass}`}
+//               className={`equation-box equation-box--operator ${!item.editable || isCombine ? "is-fixed" : ""} ${response?.activeField === "__operator__" ? "is-active" : ""} ${locked ? "is-locked" : ""} ${item.editable && !isCombine ? opClass : ""}`}
 //               onClick={() =>
 //                 !isCombine && item.editable && setActiveField("__operator__")
 //               }
@@ -294,7 +238,7 @@ export const EquationBoard = ({
 //             >
 //               <strong>
 //                 {displayOperator || <span className="hide-on-focus">?</span>}
-//               </strong>
+//               </strong>{" "}
 //               <span>{item.label || "operator"}</span>
 //             </button>
 //           );
@@ -302,9 +246,10 @@ export const EquationBoard = ({
 
 //         const isEditable = item.editable !== false;
 //         const slotValue = getSlotDisplayValue(response, item.key);
+
 //         const displayValue =
-//           isEditable && String(slotValue || "").trim() !== "?" ? (
-//             slotValue || <span className="hide-on-focus">?</span>
+//           isEditable && String(slotValue || "").trim() !== "" ? (
+//             slotValue
 //           ) : isEditable ? (
 //             <span className="hide-on-focus">?</span>
 //           ) : (
@@ -312,21 +257,24 @@ export const EquationBoard = ({
 //           );
 //         const displayLabel = getLearnerFacingLabel(question, item);
 
-//         // Check individual slot feedback
-//         let slotClass = globalValidationClass;
-//         if (feedback?.slots && feedback.slots[item.key]) {
-//           slotClass = feedback.slots[item.key].isCorrect
-//             ? "is-correct"
-//             : "is-wrong";
+//         // 🔥 FIX 2: Check individual Slot feedback for this specific box
+//         let slotClass = "";
+//         if (feedback) {
+//           if (feedback.slots && feedback.slots[item.key]) {
+//             slotClass = feedback.slots[item.key].isCorrect
+//               ? "is-correct"
+//               : "is-wrong";
+//           } else {
+//             slotClass = globalValidationClass;
+//           }
 //         }
 
 //         return (
 //           <button
 //             type="button"
 //             key={item.key}
-//             // 🔥 UPDATED: Removed the 'isEditable ?' check at the end.
-//             // Now, even "Fixed" boxes will turn Green if they are correct!
-//             className={`equation-box ${isEditable ? "is-editable" : "is-fixed"} ${response?.activeField === item.key ? "is-active" : ""} ${locked ? "is-locked" : ""} ${slotClass}`}
+//             // Use the specific slotClass instead of the global validationClass
+//             className={`equation-box ${isEditable ? "is-editable" : "is-fixed"} ${response?.activeField === item.key ? "is-active" : ""} ${locked ? "is-locked" : ""} ${isEditable ? slotClass : ""}`}
 //             onClick={() => isEditable && setActiveField(item.key)}
 //             disabled={locked || !isEditable}
 //           >
@@ -339,6 +287,185 @@ export const EquationBoard = ({
 //   );
 // };
 
+export const EquationBoard = ({
+  question,
+  response,
+  setResponse,
+  locked,
+  feedback,
+  isGhostHint = false,
+  markCompleted = () => {},
+}) => {
+  const setActiveField = (field) =>
+    !locked &&
+    setResponse((current) => ({ ...(current || {}), activeField: field }));
+
+  const globalValidationClass = feedback
+    ? feedback.isCorrect
+      ? "is-correct"
+      : "is-wrong"
+    : "";
+
+  const isCombine = question?.schemaKind === "combine";
+
+  const getExpectedSlotValue = (slotKey) => {
+    if (question?.validation?.slots?.[slotKey] !== undefined)
+      return String(question.validation.slots[slotKey]).trim();
+    const templateItem = question?.equationSpec?.template?.find(
+      (t) => t.key === slotKey,
+    );
+    return templateItem?.value ? String(templateItem.value).trim() : "";
+  };
+
+  const getGhostPlaceholder = (slotKey) => {
+    if (!isGhostHint) return null;
+    const expected = getExpectedSlotValue(slotKey);
+    if (expected === "?" || expected === "") return "e.g: ?";
+    return `e.g: ${expected}`;
+  };
+
+  const isSlotGhost = (slotKey, currentValue) => {
+    if (!isGhostHint) return false;
+    const val =
+      currentValue !== undefined ? currentValue : response?.slots?.[slotKey];
+    return !val || val === "" || val === "?";
+  };
+
+  // 🔥 UPGRADED HELPER: Checks keys, but falls back to reading the actual label text!
+  const getTagKey = (item) => {
+    if (!item) return null;
+
+    const k = String(item.key || "").toLowerCase();
+    const label = String(item.label || "").toLowerCase();
+
+    // 1. Try standard math keys first
+    if (["start", "left", "part1", "addend1", "minuend"].includes(k))
+      return "start";
+    if (["change", "right", "part2", "addend2", "subtrahend"].includes(k))
+      return "change";
+    if (["end", "result", "total", "sum", "difference"].includes(k))
+      return "end";
+
+    // 2. BULLETPROOF FALLBACK: Read the text label displayed under the box
+    if (label.includes("first") || label.includes("start")) return "start";
+    if (
+      label.includes("now") ||
+      label.includes("total") ||
+      label.includes("left")
+    )
+      return "end";
+
+    // 3. If it has a label and wasn't start/end, it must be the change!
+    if (label !== "") return "change";
+
+    return null;
+  };
+
+  return (
+    <div className="equation-board">
+      {(question?.equationSpec?.template || []).map((item, index) => {
+        if (item.type === "symbol") {
+          return (
+            <span key={`symbol-${index}`} className="equation-board__symbol">
+              {item.value}
+            </span>
+          );
+        }
+        if (item.type === "operator") {
+          const operatorValue = isCombine
+            ? "+"
+            : response?.operator || (item.editable ? "" : item.value) || "?";
+          const displayOperator = operatorValue;
+          let opClass = "";
+          if (feedback && !isGhostHint)
+            opClass = feedback.operator?.isCorrect ? "is-correct" : "is-wrong";
+          const isOperatorGhost =
+            isGhostHint && (!response?.operator || response.operator === "");
+          const ghostOperatorPlaceholder = isOperatorGhost ? "e.g: +" : null;
+
+          return (
+            <button
+              type="button"
+              key="operator"
+              className={`equation-box equation-box--operator ${isOperatorGhost ? "ghost-input" : ""} ${!item.editable || isCombine ? "is-fixed" : ""} ${response?.activeField === "__operator__" ? "is-active" : ""} ${locked ? "is-locked" : ""} ${item.editable && !isCombine && !isGhostHint ? opClass : ""}`}
+              onClick={() => {
+                if (!isCombine && item.editable) {
+                  if (isOperatorGhost) markCompleted();
+                  setActiveField("__operator__");
+                }
+              }}
+              disabled={locked || !item.editable || isCombine}
+            >
+              <strong>
+                {isOperatorGhost
+                  ? ghostOperatorPlaceholder
+                  : displayOperator || <span className="hide-on-focus">?</span>}
+              </strong>
+              <span>{item.label || "operator"}</span>
+            </button>
+          );
+        }
+        if (item.type === "slot") {
+          const isEditable = item.editable !== false;
+          // const slotValue = response?.slots?.[item.key];
+          const slotValue =
+            response?.slots?.[item.key] ??
+            (!isEditable ? item.value : undefined);
+
+          const isGhost = isSlotGhost(item.key, slotValue);
+          const ghostPlaceholder = getGhostPlaceholder(item.key);
+          const displayValue = isGhost
+            ? ghostPlaceholder
+            : slotValue || <span className="hide-on-focus">?</span>;
+          const displayLabel = item.label || item.key;
+
+          let slotClass = "";
+          if (feedback && !isGhostHint && feedback.slots?.[item.key]) {
+            slotClass = feedback.slots[item.key].isCorrect
+              ? "is-correct"
+              : "is-wrong";
+          } else if (feedback && !isGhostHint) {
+            slotClass = globalValidationClass;
+          }
+
+          const tagKey =
+            question?.schemaKind === "change" ? getTagKey(item) : null;
+
+          return (
+            <button
+              type="button"
+              key={item.key}
+              className={`equation-box ${isEditable ? "is-editable" : "is-fixed"} ${isGhost ? "ghost-input" : ""} ${response?.activeField === item.key && !isGhost ? "is-active" : ""} ${locked ? "is-locked" : ""} ${isEditable && !isGhostHint ? slotClass : ""}`}
+              // className={`equation-box ${isEditable ? "is-editable" : "is-fixed"} ${isGhost ? "ghost-input" : ""} ${response?.activeField === item.key ? "is-active" : ""} ${locked ? "is-locked" : ""} ${isEditable && !isGhostHint ? slotClass : ""}`}
+              onClick={() => {
+                if (isEditable) {
+                  if (isGhost) markCompleted();
+                  setActiveField(item.key);
+                }
+              }}
+              disabled={locked || !isEditable}
+            >
+              {tagKey && (
+                <span className={`variable-tag variable-tag--${tagKey}`}>
+                  {tagKey.charAt(0).toUpperCase() + tagKey.slice(1)}
+                </span>
+              )}
+              <strong>{displayValue}</strong>
+              {/* {question?.schemaKind === "change" &&
+                ["start", "change", "end"].includes(item.key) && (
+                  <span className={`variable-tag variable-tag--${item.key}`}>
+                    {item.key.charAt(0).toUpperCase() + item.key.slice(1)}
+                  </span>
+                )} */}
+              <span className="variable-tag-span">{displayLabel}</span>
+            </button>
+          );
+        }
+        return null;
+      })}
+    </div>
+  );
+};
 export const Keypad = ({
   title,
   showUnknown,
@@ -365,6 +492,7 @@ export const Keypad = ({
             className="worksheet-keypad__operator"
             onClick={() => onOperator(operator)}
             disabled={disabled}
+            aria-label={`Operator ${operator === "+" ? "plus" : "minus"}`}
           >
             {operator}
           </button>
@@ -379,6 +507,7 @@ export const Keypad = ({
             className="worksheet-keypad__key"
             onClick={() => onDigit(digit)}
             disabled={disabled}
+            aria-label={`Digit ${digit}`}
           >
             {digit}
           </button>
@@ -388,6 +517,7 @@ export const Keypad = ({
           className="worksheet-keypad__key"
           onClick={onBackspace}
           disabled={disabled}
+          aria-label="Backspace"
         >
           {/* ⌫ */}
           <Delete size={28} />
@@ -397,6 +527,7 @@ export const Keypad = ({
           className="worksheet-keypad__key"
           onClick={() => onDigit("0")}
           disabled={disabled}
+          aria-label="Digit 0"
         >
           0
         </button>
@@ -405,6 +536,7 @@ export const Keypad = ({
           className="worksheet-keypad__key"
           onClick={showUnknown ? onUnknown : () => onDigit("?")}
           disabled={disabled}
+          aria-label="Unknown value"
         >
           ?
         </button>

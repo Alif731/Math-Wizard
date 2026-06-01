@@ -1,17 +1,18 @@
 const mongoose = require("mongoose");
 const assert = require("node:assert/strict");
 const { MongoMemoryServer } = require("mongodb-memory-server");
-const seedData = require("./utils/seeder");
-const Concept = require("./models/Concept");
-const User = require("./models/User");
-const { updateMastery, getNextProblem } = require("./utils/learningEngine");
+const seedData = require("../utils/seeder");
+const Concept = require("../models/Concept");
+const User = require("../models/User");
+const { updateMastery, getNextProblem } = require("../utils/learningEngine");
 
 const orderedConcepts = [
   "single_add",
   "single_sub",
   "multi_add",
   "multi_sub",
-  "missing_part_equations",
+  "missing_part_easy",
+  "missing_part_hard",
   "combine_mod1",
   "combine_mod2",
   "combine_mod3",
@@ -22,6 +23,7 @@ const orderedConcepts = [
   "change_mod3",
   "change_mod4",
   "change_mod5",
+  "change_mod6",
   "compare_mod1",
   "compare_mod2",
   "compare_mod3",
@@ -34,8 +36,9 @@ const expectedPrerequisites = {
   single_sub: ["single_add"],
   multi_add: ["single_sub"],
   multi_sub: ["multi_add"],
-  missing_part_equations: ["multi_sub"],
-  combine_mod1: ["missing_part_equations"],
+  missing_part_easy: ["multi_sub"],
+  missing_part_hard: ["missing_part_easy"],
+  combine_mod1: ["missing_part_hard"],
   combine_mod2: ["combine_mod1"],
   combine_mod3: ["combine_mod2"],
   combine_mod4: ["combine_mod3"],
@@ -45,7 +48,8 @@ const expectedPrerequisites = {
   change_mod3: ["change_mod2"],
   change_mod4: ["change_mod3"],
   change_mod5: ["change_mod4"],
-  compare_mod1: ["change_mod5"],
+  change_mod6: ["change_mod5"],
+  compare_mod1: ["change_mod6"],
   compare_mod2: ["compare_mod1"],
   compare_mod3: ["compare_mod2"],
   compare_mod4: ["compare_mod3"],
@@ -85,23 +89,53 @@ function assertSchemaQuestionShape(concept) {
         getGivenSlotKeys(question.validation?.slots),
         `${concept.id} should only make given equation slots editable`,
       );
+      if (question.schemaKind === "change") {
+        const operatorItem = (question.equationSpec?.template || []).find(
+          (item) => item.key === "operator",
+        );
+        assert.equal(
+          question.equationSpec?.operatorEditable,
+          false,
+          `${concept.id} should lock change operators`,
+        );
+        assert.equal(operatorItem?.editable, false, `${concept.id} operator should not be editable`);
+        assert.equal(operatorItem?.type, "symbol", `${concept.id} operator should render as fixed`);
+      }
     }
   }
 }
 
-function assertModuleBundleOrder(concept) {
-  assert.equal(concept.questions.length, 30, `${concept.id} should have 30 records`);
+function assertModuleBundleOrder(
+  concept,
+  expectedStages = ["schema_bar_model", "schema_equation", "schema_solve"],
+) {
+  assert.equal(
+    concept.questions.length,
+    expectedStages.length * 10,
+    `${concept.id} should have ${expectedStages.length * 10} records`,
+  );
 
-  for (let index = 0; index < concept.questions.length; index += 3) {
+  for (let index = 0; index < concept.questions.length; index += expectedStages.length) {
     const stages = concept.questions
-      .slice(index, index + 3)
+      .slice(index, index + expectedStages.length)
       .map((question) => question.moduleStage);
 
     assert.deepEqual(
       stages,
-      ["schema_bar_model", "schema_equation", "schema_solve"],
-      `${concept.id} bundle ${index / 3 + 1} should be bar -> equation -> solve`,
+      expectedStages,
+      `${concept.id} bundle ${index / expectedStages.length + 1} should follow the expected full-integration order`,
     );
+  }
+}
+
+function assertChangeIdentificationConcept(concept) {
+  assert.equal(concept.questions.length, 15, `${concept.id} should have 15 questions`);
+  for (const question of concept.questions) {
+    assert.equal(question.moduleStage, "change_identify");
+    assert.equal(question.interactionMode, "change_identification");
+    assert.equal(question.inputMode, "change_identify");
+    assert.ok(["increase", "decrease"].includes(question.validation?.changeDirection));
+    assert.ok(["increase_bar", "decrease_bar"].includes(question.validation?.correctBarModel));
   }
 }
 
@@ -121,7 +155,7 @@ function assertVariableIdentificationConcept(concept) {
 }
 
 function assertDirectSchemaConcept(concept) {
-  assert.equal(concept.questions.length, 15, `${concept.id} should have 15 questions`);
+  assert.equal(concept.questions.length, 10, `${concept.id} should have 10 questions`);
   for (const question of concept.questions) {
     assert.equal(question.moduleStage, "schema_direct_solve");
     assert.equal(question.interactionMode, "direct_answer");
@@ -152,21 +186,28 @@ async function verify() {
   assertVariableIdentificationConcept(conceptMap.get("combine_mod1"));
   assertDirectSchemaConcept(conceptMap.get("combine_mod5"));
   assertVariableIdentificationConcept(conceptMap.get("change_mod1"));
-  assertDirectSchemaConcept(conceptMap.get("change_mod5"));
+  assertChangeIdentificationConcept(conceptMap.get("change_mod2"));
+  assertDirectSchemaConcept(conceptMap.get("change_mod6"));
   assert.equal(conceptMap.get("combine_mod2").questions.length, 15);
   assert.equal(conceptMap.get("combine_mod3").questions.length, 10);
-  assert.equal(conceptMap.get("change_mod2").questions.length, 10);
+  assert.equal(conceptMap.get("change_mod2").questions.length, 15); // identification questions
   assert.equal(conceptMap.get("change_mod3").questions.length, 10);
+  assert.equal(conceptMap.get("change_mod4").questions.length, 10);
   assertModuleBundleOrder(conceptMap.get("combine_mod4"));
-  assertModuleBundleOrder(conceptMap.get("change_mod4"));
+  assertModuleBundleOrder(conceptMap.get("change_mod5"), [
+    "change_identify",
+    "schema_bar_model",
+    "schema_equation",
+    "schema_solve",
+  ]);
 
   for (const conceptId of [
     "combine_mod2",
     "combine_mod3",
     "combine_mod4",
-    "change_mod2",
     "change_mod3",
     "change_mod4",
+    "change_mod5",
   ]) {
     assertSchemaQuestionShape(conceptMap.get(conceptId));
   }
@@ -205,6 +246,41 @@ async function verify() {
   assert.equal(failedBundleEntry.successCount, 0);
   assert.deepEqual(failedBundleEntry.lastAttempts, [false]);
 
+  const changeBundleUser = await User.create({
+    username: "change_bundle_student",
+    password: "password123",
+    role: "student",
+    mastery: {},
+    zpdNodes: ["change_mod5"],
+  });
+
+  let changeBundleProblem = await getNextProblem(changeBundleUser);
+  assert.equal(changeBundleProblem.concept.id, "change_mod5");
+  assert.equal(changeBundleProblem.question.moduleStage, "change_identify");
+  const changeBundleText = changeBundleProblem.question.text;
+
+  await updateMastery(changeBundleUser, "change_mod5", true);
+  changeBundleProblem = await getNextProblem(changeBundleUser);
+  assert.equal(changeBundleProblem.question.moduleStage, "schema_bar_model");
+  assert.equal(changeBundleProblem.question.text, changeBundleText);
+  assert.equal(changeBundleUser.mastery.get("change_mod5").attemptCount, 0);
+
+  await updateMastery(changeBundleUser, "change_mod5", true);
+  changeBundleProblem = await getNextProblem(changeBundleUser);
+  assert.equal(changeBundleProblem.question.moduleStage, "schema_equation");
+  assert.equal(changeBundleProblem.question.text, changeBundleText);
+
+  await updateMastery(changeBundleUser, "change_mod5", true);
+  changeBundleProblem = await getNextProblem(changeBundleUser);
+  assert.equal(changeBundleProblem.question.moduleStage, "schema_solve");
+  assert.equal(changeBundleProblem.question.text, changeBundleText);
+
+  await updateMastery(changeBundleUser, "change_mod5", true);
+  const passedChangeBundleEntry = changeBundleUser.mastery.get("change_mod5");
+  assert.equal(passedChangeBundleEntry.adaptiveState.timesPlayed, 4);
+  assert.equal(passedChangeBundleEntry.attemptCount, 1);
+  assert.equal(passedChangeBundleEntry.successCount, 1);
+
   let user = await User.create({
     username: "adaptive_student",
     password: "password123",
@@ -230,7 +306,8 @@ async function verify() {
     const currentConceptId = orderedConcepts[index];
     const nextConceptId = orderedConcepts[index + 1];
     const existingAttempts = currentConceptId === "single_add" ? 1 : 0;
-    const requiredAttempts = 15 - existingAttempts;
+    const requiredAttempts =
+      (currentConceptId === "change_mod5" ? 20 : 15) - existingAttempts;
 
     for (let i = 0; i < requiredAttempts; i += 1) {
       await updateMastery(user, currentConceptId, true);

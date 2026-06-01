@@ -68,8 +68,8 @@ app.use(express.json({ limit: "32kb" }));
 app.use(express.urlencoded({ extended: false, limit: "8kb" }));
 app.use(cookieParser());
 
-const { globalLimiter } = require("./controllers/middleware/rateLimitMiddleware");
-const { csrfGuard } = require("./controllers/middleware/csrfMiddleware");
+const { globalLimiter } = require("./middleware/rateLimitMiddleware");
+const { csrfGuard } = require("./middleware/csrfMiddleware");
 
 // Apply global rate limiting
 app.use("/api/", globalLimiter);
@@ -91,7 +91,7 @@ app.get("/", (_req, res) => {
   res.send("API is running...");
 });
 
-const { errorHandler } = require("./controllers/middleware/errorMiddleware");
+const { errorHandler } = require("./middleware/errorMiddleware");
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;

@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
-import "../sass/components/CustomSelect.scss"; // We will create this next
+import "../sass/components/CustomSelect.scss";
 
 const CustomSelect = ({
   options,
@@ -8,11 +8,12 @@ const CustomSelect = ({
   onChange,
   placeholder = "Select",
   disabled,
+  isGhosted = false,
+  ghostPlaceholder = "",
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Close when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -28,8 +29,12 @@ const CustomSelect = ({
     setIsOpen(false);
   };
 
-  const selectedLabel =
-    options.find((opt) => opt.value === value)?.label || placeholder;
+  // 🔥 Determine what label to show based on ghost state vs actual value
+  const displayLabel = value
+    ? options.find((opt) => opt.value === value)?.label
+    : isGhosted
+      ? ghostPlaceholder
+      : placeholder;
 
   return (
     <div
@@ -37,16 +42,15 @@ const CustomSelect = ({
       ref={dropdownRef}
       tabIndex={0}
     >
-      {/* The Trigger Button */}
       <div
-        className={`wizard-select__trigger ${isOpen ? "is-open" : ""}`}
+        // 🔥 Apply the ghost-select class if ghosted and no value selected
+        className={`wizard-select__trigger ${isOpen ? "is-open" : ""} ${isGhosted && !value ? "ghost-select" : ""}`}
         onClick={() => !disabled && setIsOpen(!isOpen)}
       >
-        <span className={!value ? "is-placeholder" : ""}>{selectedLabel}</span>
+        <span className={!value ? "is-placeholder" : ""}>{displayLabel}</span>
         <ChevronDown size={20} className="wizard-select__icon" />
       </div>
 
-      {/* The Dropdown Menu */}
       {isOpen && !disabled && (
         <ul className="wizard-select__menu">
           <li

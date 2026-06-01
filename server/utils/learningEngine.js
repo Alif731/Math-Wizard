@@ -1,14 +1,14 @@
 const Concept = require("../models/Concept");
 
-// const WINDOW_SIZE = 5;
-// const MASTERY_MIN_ATTEMPTS = 1;
-// const MASTERY_SCORE_THRESHOLD = 1;
-// const MASTERY_SUCCESS_RATE = 0.8; // 80% — student must get 4/5, 8/10, etc.
-
 const WINDOW_SIZE = 5;
-const MASTERY_MIN_ATTEMPTS = 5;
-const MASTERY_SCORE_THRESHOLD = 5;
+const MASTERY_MIN_ATTEMPTS = 4;
+const MASTERY_SCORE_THRESHOLD = 4;
 const MASTERY_SUCCESS_RATE = 0.8; // 80% — student must get 4/5, 8/10, etc.
+
+// const WINDOW_SIZE = 5;
+// const MASTERY_MIN_ATTEMPTS = 5;
+// const MASTERY_SCORE_THRESHOLD = 5;
+// const MASTERY_SUCCESS_RATE = 0.8; // 80% — student must get 4/5, 8/10, etc.
 
 const CHANGE_POINT_FALSE_POSITIVE_RATE = Math.exp(-MASTERY_SCORE_THRESHOLD);
 const BANDIT_PRIORS = Object.freeze({
@@ -18,8 +18,14 @@ const BANDIT_PRIORS = Object.freeze({
 const BANDIT_HISTORY_LIMIT = 25;
 const EPSILON = 1e-9;
 
-const isFullIntegrationConceptId = (conceptId) =>
-  String(conceptId || "").endsWith("_mod4");
+const isFullIntegrationConceptId = (conceptId) => {
+  const id = String(conceptId || "");
+  return id === "combine_mod4" || id === "compare_mod4" || id === "change_mod5";
+};
+
+const getBundleSize = (conceptId) => {
+  return String(conceptId || "") === "change_mod5" ? 4 : 3;
+};
 
 function clampProbability(value, fallback = 0.5) {
   const numericValue = Number(value);
@@ -494,11 +500,11 @@ function chooseNextConceptId(user, frontier) {
         timeAdded: getTotalInteractionCount(user),
       });
 
-      // If timesPlayed is not a multiple of 3, they are mid-bundle!
-      // (e.g., timesPlayed is 1 or 2, meaning they finished Bar or Eq but not Solve)
+      // If timesPlayed is not a multiple of the bundle size, they are mid-bundle!
+      const bundleSize = getBundleSize(conceptId);
       if (
         masteryEntry.adaptiveState.timesPlayed > 0 &&
-        masteryEntry.adaptiveState.timesPlayed % 3 !== 0
+        masteryEntry.adaptiveState.timesPlayed % bundleSize !== 0
       ) {
         // Bypass all AI logic and force them to finish this bundle!
         return conceptId;
@@ -576,9 +582,9 @@ function getQuestionForConcept(concept, masteryEntry, user) {
 
   if (isFullIntegration) {
     // ==========================================
-    // FULL-INTEGRATION LOGIC: Randomize Bundles of 3
+    // FULL-INTEGRATION LOGIC: Randomize Bundles
     // ==========================================
-    const BUNDLE_SIZE = 3;
+    const BUNDLE_SIZE = getBundleSize(concept.id);
     const numBundles = Math.floor(length / BUNDLE_SIZE);
 
     if (numBundles === 0) return questions[timesPlayed % length]; // Safety fallback
@@ -587,10 +593,10 @@ function getQuestionForConcept(concept, masteryEntry, user) {
     let bundleStep = 3;
     if (numBundles % bundleStep === 0) bundleStep = 5;
 
-    // Which bundle are we on? (Changes every 3 plays)
+    // Which bundle are we on?
     const currentBundleIndex = Math.floor(timesPlayed / BUNDLE_SIZE);
 
-    // Which step of the bundle are we on? (0 = Bar, 1 = Eq, 2 = Solve)
+    // Which step of the bundle are we on?
     const stepInsideBundle = timesPlayed % BUNDLE_SIZE;
 
     // Calculate which bundle to load next, then pick the exact step inside it
@@ -599,33 +605,29 @@ function getQuestionForConcept(concept, masteryEntry, user) {
     const finalIndex = randomizedBundle * BUNDLE_SIZE + stepInsideBundle;
 
     return questions[finalIndex];
-  } else if (concept.id === "missing_part_equations") {
+  } else if (
+    concept.id === "missing_part_easy" ||
+    concept.id === "missing_part_hard"
+  ) {
     // ==========================================
-    // MISSING PART EQUATIONS: Proportion Logic
-    // 20% Diff1 Add, 20% Diff1 Sub, 60% Diff2 Mix
+    // MISSING PART EQUATIONS: Balanced Alternating Selector Logic
+    // 50% Add, 50% Sub
     // ==========================================
-    const diff1Add = questions.filter(
-      (q) => q.difficulty === 1 && q.equationSpec?.operator === "+",
-    );
-    const diff1Sub = questions.filter(
-      (q) => q.difficulty === 1 && q.equationSpec?.operator === "-",
-    );
-    const diff2 = questions.filter((q) => q.difficulty === 2);
+    const addPool = questions.filter((q) => q.equationSpec?.operator === "+");
+    const subPool = questions.filter((q) => q.equationSpec?.operator === "-");
 
-    const cycleIndex = timesPlayed % 5;
-    let selectedPool;
+    const cycleIndex = timesPlayed % 2;
+    const selectedPool =
+      cycleIndex === 0
+        ? addPool.length
+          ? addPool
+          : questions
+        : subPool.length
+          ? subPool
+          : questions;
 
-    if (cycleIndex === 0) {
-      selectedPool = diff1Add.length ? diff1Add : questions;
-    } else if (cycleIndex === 1) {
-      selectedPool = diff1Sub.length ? diff1Sub : questions;
-    } else {
-      selectedPool = diff2.length ? diff2 : questions;
-    }
-
-    let step = 7;
-    if (selectedPool.length % step === 0) step = 11;
-    if (selectedPool.length % step === 0) step = 3;
+    let step = 3;
+    if (selectedPool.length % step === 0) step = 5;
 
     const poolIndex = (salt + timesPlayed * step) % selectedPool.length;
     return selectedPool[poolIndex];
@@ -777,16 +779,17 @@ async function updateMastery(user, conceptId, isCorrect) {
 
   if (isFullIntegration) {
     // ==========================================
-    // BUNDLE-AWARE SCORING for Module 4
+    // BUNDLE-AWARE SCORING for Full Integration
     // ==========================================
+    const bundleSize = getBundleSize(conceptId);
     const tp = masteryEntry.adaptiveState.timesPlayed; // already incremented
 
-    if (tp % 3 === 0) {
-      // Bundle completed naturally after the 3rd step.
+    if (tp % bundleSize === 0) {
+      // Bundle completed naturally after the last step.
       bundleJustCompleted = true;
       const record = masteryEntry.adaptiveState.correctnessRecord;
-      const last3 = record.slice(-3);
-      bundleCorrect = last3.length === 3 && last3.every(Boolean);
+      const lastN = record.slice(-bundleSize);
+      bundleCorrect = lastN.length === bundleSize && lastN.every(Boolean);
 
       masteryEntry.attemptCount += 1;
       if (bundleCorrect) {
@@ -820,7 +823,7 @@ async function updateMastery(user, conceptId, isCorrect) {
   // Step 3: Check for mastery graduation
   // For full-integration, timesPlayed (not attemptCount) tracks bundle boundaries
   const isBundleComplete = isFullIntegration
-    ? masteryEntry.adaptiveState.timesPlayed % 3 === 0
+    ? masteryEntry.adaptiveState.timesPlayed % getBundleSize(conceptId) === 0
     : true;
 
   // Success rate check: student must achieve >= MASTERY_SUCCESS_RATE (80%) over the recent window
@@ -912,7 +915,7 @@ async function jumpToConcept(user, targetConceptId) {
 async function switchSection(user, sectionId) {
   const PATHWAYS = {
     practice: ["single_add", "single_sub", "multi_add", "multi_sub"],
-    equations: ["missing_part_equations"],
+    equations: ["missing_part_easy", "missing_part_hard"],
   };
 
   if (sectionId === "schemas") {

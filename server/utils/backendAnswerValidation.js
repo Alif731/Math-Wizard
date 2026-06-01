@@ -10,6 +10,7 @@ const QUESTION_TYPES = Object.freeze([
   "bar_model_builder",
   "full_model",
   "variable_identification",
+  "change_identification",
 ]);
 
 const SCHEMA_KINDS = Object.freeze([
@@ -26,6 +27,7 @@ const INTERACTION_MODES = Object.freeze([
   "bar_model_builder",
   "full_model",
   "variable_identification",
+  "change_identification",
 ]);
 
 const MODULE_STAGES = Object.freeze([
@@ -38,6 +40,7 @@ const MODULE_STAGES = Object.freeze([
   "schema_solve",
   "schema_variables",
   "word_to_bar",
+  "change_identify",
 ]);
 
 const INPUT_MODES = Object.freeze([
@@ -45,6 +48,7 @@ const INPUT_MODES = Object.freeze([
   "keypad_equation",
   "keypad_bar_model",
   "text_answer",
+  "change_identify",
 ]);
 
 const normalizeString = (value) =>
@@ -406,6 +410,14 @@ const validateFullModel = (question, response) => {
 
 const validateQuestionResponse = (question, response) => {
   const mode = question?.interactionMode || "direct_answer";
+
+  if (mode === "change_identification") {
+    const expectedDirection = normalizeString(question?.validation?.changeDirection);
+    const expectedBarModel = normalizeString(question?.validation?.correctBarModel);
+    const submittedDirection = normalizeString(response?.changeDirection);
+    const submittedBarModel = normalizeString(response?.barModel);
+    return submittedDirection === expectedDirection && submittedBarModel === expectedBarModel;
+  }
 
   if (mode === "variable_identification") {
     const expectedVariables = question?.validation?.variables || {};
@@ -790,12 +802,100 @@ const createQuestionEnvelope = ({
   moduleStage,
   practiceMode,
   promptTitle,
+  practiceMode,
+  promptTitle,
   inputMode,
   stageIndex,
   stageLabel,
   stageTotal,
   helperText,
 });
+
+const extractNounFromQuestion = (text) => {
+  if (!text) return "items";
+  const t = text.toLowerCase();
+  
+  const mapping = [
+    { key: "cookie", value: "cookies" },
+    { key: "leave", value: "leaves" },
+    { key: "cand", value: "candies" },
+    { key: "sticker", value: "stickers" },
+    { key: "money", value: "money" },
+    { key: "dollar", value: "money" },
+    { key: "card", value: "baseball cards" },
+    { key: "page", value: "pages" },
+    { key: "point", value: "points" },
+    { key: "passenger", value: "passengers" },
+    { key: "pencil", value: "pencils" },
+    { key: "player", value: "players" },
+    { key: "cupcake", value: "cupcakes" },
+    { key: "book", value: "books" },
+    { key: "bird", value: "birds" },
+    { key: "stamp", value: "stamps" },
+    { key: "member", value: "members" },
+    { key: "puzzle", value: "puzzles solved" },
+    { key: "token", value: "tokens" },
+    { key: "apple", value: "apples" },
+    { key: "berry", value: "berries" },
+    { key: "fruit", value: "fruits" },
+    { key: "toy", value: "toys" },
+    { key: "ball", value: "balls" },
+  ];
+  
+  for (const item of mapping) {
+    if (t.includes(item.key)) {
+      return item.value;
+    }
+  }
+  
+  const match = text.match(/had\s+(?:some\s+|already\s+|)?(?:\d+\s+)?([a-zA-Z]+)/i);
+  if (match && match[1]) {
+    const word = match[1].toLowerCase();
+    if (!["some", "a", "an", "the", "already"].includes(word)) {
+      return word;
+    }
+  }
+  
+  return "items";
+};
+
+const isUncountableNoun = (noun) => {
+  if (!noun) return false;
+  const n = noun.toLowerCase().trim();
+  const uncountables = ["money", "water", "juice", "milk", "sand", "time", "cash", "gold", "flour", "sugar", "salt", "bread", "cheese", "butter", "rice", "homework", "music"];
+  if (uncountables.includes(n)) return true;
+  
+  // Plural countable nouns in math stories typically end in 's'
+  if (!n.endsWith("s")) {
+    return true; // assume singular/uncountable (e.g. money, cash, water)
+  }
+  
+  return false;
+};
+
+const getChangeIdentifyDynamicData = (text, itemNoun, increaseSubtext, decreaseSubtext) => {
+  const resolvedNoun = itemNoun || extractNounFromQuestion(text);
+  
+  let resolvedIncrease = increaseSubtext;
+  let resolvedDecrease = decreaseSubtext;
+  
+  const isUncountable = isUncountableNoun(resolvedNoun);
+  const verb = isUncountable ? "was" : "were";
+  
+  if (!resolvedIncrease) {
+    resolvedIncrease = resolvedNoun ? `${resolvedNoun} ${verb} added or received` : "quantity was added or received";
+  }
+  if (!resolvedDecrease) {
+    resolvedDecrease = resolvedNoun ? `${resolvedNoun} ${verb} removed or given away` : "quantity was removed or given away";
+  }
+  
+  return {
+    itemNoun: resolvedNoun,
+    increaseSubtext: resolvedIncrease,
+    decreaseSubtext: resolvedDecrease,
+    isUncountable,
+  };
+};
 
 module.exports = {
   QUESTION_TYPES,
@@ -809,5 +909,7 @@ module.exports = {
   createQuestionEnvelope,
   serializeResponse,
   validateQuestionResponse,
+  extractNounFromQuestion,
+  isUncountableNoun,
+  getChangeIdentifyDynamicData,
 };
-

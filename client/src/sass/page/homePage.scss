@@ -37,15 +37,18 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   // max-width: 1200px;
   // margin: 0.5rem;
   // width: fit-content;
-  margin: 0.8rem 0;
+  padding: 0.4rem;
+  margin: 0.4rem 0;
   margin-right: 0.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap; // Wrap on small phones
   gap: 1rem;
   @include ut.breakpoint(medium) {
-    // flex-direction: column;
+    flex-wrap: wrap; // Wrap on small phones
+    gap: 0.5rem;
+    padding: 0rem;
+    margin: 0.5rem 0;
   }
   @include ut.breakpoint(small) {
   }
@@ -57,6 +60,14 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     color: $primary-color;
     margin: 0;
   }
+
+  .player-badge-div {
+    @include ut.breakpoint(medium) {
+      display: flex;
+      justify-content: center;
+      width: -webkit-fill-available;
+    }
+  }
   .player-badge {
     border-radius: 12px;
     border-right: 5px solid #f2cc8f;
@@ -64,23 +75,32 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 
     font-family: "ActualComicSans", cursive;
 
-    color: #3d405b;
-    padding: 10px;
+    // color: #3d405b;
+    background: linear-gradient(180deg, #3d405b 0%, #1f2235 100%);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); // Slight lift on hover
+    // animation: none;
+    color: white;
+    text-shadow: none;
+    cursor: pointer;
+    padding: 9px 10px;
     border-radius: 9999px;
     font-weight: bold;
-    font-size: 1.1rem;
+    font-size: 0.8rem;
     @include ut.breakpoint(large) {
       width: fit-content;
+      font-size: 0.85rem;
     }
     @include ut.breakpoint(medium) {
+      justify-content: center;
       width: fit-content;
-      font-size: 0.72rem;
+      font-size: 0.82rem;
+      flex: 1;
     }
     @include ut.breakpoint(small) {
-      font-size: 0.62rem;
+      font-size: 0.72rem;
     }
     @include ut.breakpoint(xSmall) {
-      font-size: 0.47rem;
+      font-size: 0.62rem;
     }
 
     // transition
@@ -90,15 +110,20 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     transition: all 0.5s ease-in-out;
     // animation: tilt-shaking 1s ease-in-out infinite;
 
-    &:hover {
-      background-color: #3d405b;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); // Slight lift on hover
-      // animation: none;
-      color: white;
-      text-shadow: none;
-      cursor: pointer;
-    }
+    // &:hover {
+    //   background-color: #3d405b;
+    //   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); // Slight lift on hover
+    //   // animation: none;
+    //   color: white;
+    //   text-shadow: none;
+    //   cursor: pointer;
+    // }
 
+    &__name {
+      margin-left: 6px;
+      // color: #e07a5f;
+      // text-transform: capitalize;
+    }
     // --- THE HOVER LOGIC ---
     strong {
       // 1. Hidden State (Default)
@@ -162,21 +187,146 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     }
   }
 
-  &.loading {
-    color: $page-text-soft;
+  // .loading-next-overlay {
+  //   position: absolute;
+  //   inset: 0;
+  //   display: flex;
+  //   align-items: center;
+  //   justify-content: center;
+  //   background: rgba(255, 255, 255, 0.7); // already present
+  //   z-index: 10;
 
-    .spinner {
-      font-size: 2.3rem;
-      margin-bottom: 0.9rem;
-      display: inline-block;
-      animation: spin 1s linear infinite;
+  //   // Remove default card margins so it sits perfectly in the center
+  //   .status-card {
+  //     margin: 0;
+  //     background: transparent;
+  //     box-shadow: none;
+  //   }
+  // }
+
+  .status-card.error-msg {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2.5rem 2rem;
+    margin: 2rem auto;
+    max-width: 420px;
+
+    /* Soft Coral / Red Palette */
+    background-color: #fef2f2;
+    border-radius: 24px;
+    border: 4px solid #fecaca;
+
+    /* Chunky Jelly Physics for Errors */
+    box-shadow:
+      inset 0 4px 0 rgba(255, 255, 255, 1),
+      /* Top glass highlight */ 0 8px 0 #fca5a5,
+      /* Chunky 3D bottom */ 0 15px 30px rgba(239, 68, 68, 0.15); /* Soft glowing shadow */
+
+    /* Bounces in aggressively so the user notices it */
+    animation: errorPopIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  /* The Warning Icon */
+  .error-msg__icon {
+    width: 64px;
+    height: 64px;
+    color: #ef4444;
+    background: #ffffff;
+    border-radius: 50%;
+    padding: 12px;
+    margin-bottom: 1rem;
+
+    /* Gives the icon its own mini 3D block feel */
+    border: 3px solid #fecaca;
+    box-shadow:
+      inset 0 -3px 0 rgba(239, 68, 68, 0.1),
+      0 4px 0 #fca5a5;
+
+    svg {
+      width: 100%;
+      height: 100%;
     }
   }
 
-  &.error-msg {
-    background: linear-gradient(180deg, #fff5f2 0%, #fde9e4 100%);
-    border-color: rgba(199, 104, 79, 0.34);
-    color: #b65a4f;
+  /* Typography */
+  .error-msg__content {
+    margin-bottom: 1.5rem;
+  }
+
+  .error-msg__title {
+    font-family: "ActualComicSans", "Comic Sans MS", cursive;
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #991b1b;
+    margin: 0 0 0.5rem 0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-shadow: 0 1.5px 0 rgba(255, 255, 255, 0.8);
+  }
+
+  .error-msg__text {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #b91c1c;
+    margin: 0;
+    line-height: 1.4;
+    opacity: 0.9;
+  }
+
+  /* The Actionable Reload Button */
+  .error-msg__button {
+    font-family: "ActualComicSans", "Comic Sans MS", cursive;
+    font-size: 1.1rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    padding: 0.8rem 1.5rem;
+    border-radius: 16px;
+    cursor: pointer;
+    outline: none;
+
+    /* Matches the button physics of the rest of the game */
+    background-color: #ef4444;
+    color: #ffffff;
+    border: 2px solid #b91c1c;
+    box-shadow:
+      inset 0 3px 0 rgba(255, 255, 255, 0.4),
+      0 6px 0 #991b1b;
+
+    transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &:hover {
+      background-color: #dc2626;
+      transform: translateY(2px);
+      box-shadow:
+        inset 0 3px 0 rgba(255, 255, 255, 0.4),
+        0 4px 0 #991b1b;
+    }
+
+    &:active {
+      transform: translateY(6px);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.4),
+        0 0px 0 transparent;
+    }
+  }
+
+  /* Entrance Animation */
+  @keyframes errorPopIn {
+    0% {
+      opacity: 0;
+      transform: translateY(40px) scale(0.9);
+    }
+    50% {
+      opacity: 1;
+      transform: translateY(-10px) scale(1.02);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
   }
 }
 
@@ -231,20 +381,38 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     width: 100%;
     justify-content: space-between;
     flex-wrap: wrap;
+    @include ut.breakpoint(medium) {
+      width: fit-content;
+    }
   }
 
   .practice-summary__stat {
-    flex: 1 1 30%;
-    min-width: 0;
+    // flex: 1 1 30%;
+    // min-width: 0;
+    @include ut.breakpoint(medium) {
+      flex: 1;
+    }
     strong {
       @include ut.breakpoint(medium) {
-        font-size: 0.9rem;
+        font-size: 0.85rem;
+      }
+      @include ut.breakpoint(small) {
+        font-size: 0.8rem;
+      }
+      @include ut.breakpoint(xSmall) {
+        font-size: 0.7rem;
       }
     }
   }
   .practice-summary__label {
     @include ut.breakpoint(medium) {
       font-size: 0.7rem;
+    }
+    @include ut.breakpoint(small) {
+      font-size: 0.6rem;
+    }
+    @include ut.breakpoint(small) {
+      font-size: 0.5rem;
     }
   }
 
@@ -254,49 +422,104 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
 /* --- Streak System Badge --- */
+// .streak__badge {
+//   position: relative;
+//   margin-left: auto;
+//   width: fit-content;
+//   font-family: "ActualComicSans", cursive;
+//   color: #ffffff;
+//   padding: 8px 20px;
+//   font-size: 1.1rem;
+//   font-weight: 800;
+//   color: #fff;
+//   overflow: hidden;
+//   border-radius: 10px;
+//   background: #22223b;
+//   border: 1px solid rgba(255, 255, 255, 0.1); // ← subtle unified border instead of 4 colored ones
+//   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08); // ← soft inner highlight
+
+//   &.pop-active {
+//     animation: popBounce 0.5s cubic-bezier(0.25, 1.5, 0.5, 1);
+//   }
+//   &.shake-active {
+//     animation: shakeError 0.5s ease-in-out;
+//     background-color: #b91c1c;
+//     color: white;
+//     border-color: rgba(255, 255, 255, 0.1);
+//     .highlight1,
+//     .highlight2 {
+//       text-shadow: none;
+//       color: #f2cc8f;
+//     }
+//   }
+//   @include ut.breakpoint(medium) {
+//     // margin-left: 0;
+//     width: fit-content;
+//     font-size: 0.72rem;
+//   }
+//   @include ut.breakpoint(small) {
+//     font-size: 0.62rem;
+//   }
+//   @include ut.breakpoint(xSmall) {
+//     font-size: 0.47rem;
+//   }
+// }
 .streak__badge {
   position: relative;
-  margin-left: auto;
-  width: 15%;
-  text-align: center;
-  // background: linear-gradient(135deg, #f4f1de, #f2cc8f);
-  // border-right: 5px solid #f2cc8f;
-  // border-bottom: 5px solid #f2cc8f;
+  // margin-left: auto;
+  width: fit-content;
   font-family: "ActualComicSans", cursive;
-  color: #ffffff;
-  // background-color: #22223b;
-  padding: 8px 16px;
-  // border-radius: 20px;
-  font-size: 1.1rem;
-  font-weight: 800;
-  // background-color: #3d405b;
-  // text-shadow: rgba(255, 162, 0, 0.84) 0px 0px 39px; // animation: popInBounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
   color: #fff;
+  padding: 9px 22px;
+  font-size: 0.8rem;
+  font-weight: 800;
   overflow: hidden;
-  border-top: 1px solid rgb(255 49 49);
-  border-right: 1px solid rgb(0 255 255);
-  border-bottom: 1px solid rgb(57 255 20);
-  border-left: 1px solid rgb(255 255 113);
   border-radius: 10px;
-  background: #22223b;
+  // background: #0f0f1a;
+  @include ut.breakpoint(large) {
+    // width: fit-content;
+    font-size: 0.85rem;
+  }
+  @include ut.breakpoint(medium) {
+    text-align: center;
+    flex: 1;
+  }
+  background: linear-gradient(180deg, #3d405b 0%, #1f2235 100%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+
+  // Amber shimmer sweep
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(251, 191, 36, 0.12),
+      transparent
+    );
+    animation: amberShimmer 2.5s ease-in-out infinite;
+  }
+
   &.pop-active {
     animation: popBounce 0.5s cubic-bezier(0.25, 1.5, 0.5, 1);
   }
+
   &.shake-active {
     animation: shakeError 0.5s ease-in-out;
     background-color: #b91c1c;
-    color: white;
-    border-color: #b91c1c;
-
-    /* Force the inner spans to turn white so they don't clash with the red background */
+    border-color: rgba(255, 255, 255, 0.15);
     .highlight1,
     .highlight2 {
       text-shadow: none;
       color: #f2cc8f;
     }
   }
+
   @include ut.breakpoint(medium) {
-    // margin-left: 0;
     width: fit-content;
     font-size: 0.72rem;
   }
@@ -305,6 +528,15 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   }
   @include ut.breakpoint(xSmall) {
     font-size: 0.47rem;
+  }
+}
+
+@keyframes amberShimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 200%;
   }
 }
 
@@ -496,7 +728,7 @@ $shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   }
 }
 
-// ---------------------------------------- Game Over Screen
+// ---------------------------------------- Game Over Screen -------------------------------------------
 .mastery-complete-banner {
   position: relative;
   display: flex;

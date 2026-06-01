@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { getProblem, submitAnswer, getUserStatus, jumpToConcept, switchSection } = require('../controllers/learningController');
-const { protect } = require('../controllers/middleware/authMiddleware');
+const { protect } = require('../middleware/authMiddleware');
 
 router.use(protect); // Apply protect middleware to all routes in this file
 
