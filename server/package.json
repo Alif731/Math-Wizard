@@ -10,7 +10,9 @@
     "test": "vitest run",
     "verify:curriculum": "node __tests__/verify.js",
     "verify:schema": "node __tests__/verifySchemaQuestions.js",
-    "db:seed": "node utils/seeder.js"
+    "db:seed": "node utils/seeder.js",
+    "db:seed:prod": "node utils/seeder.js --prod-seed",
+    "db:seed:prod:wipe": "node utils/seeder.js --prod-wipe"
   },
   "keywords": [],
   "author": "",

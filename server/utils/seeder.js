@@ -3814,7 +3814,7 @@ const seedData = async () => {
       // Here are some common jump points:
       // ----------------------------------------------867
       // const testStage = "combine_mod3"; // CHANGE THIS TO JUMP
-      const testStage = "change_mod5"; // CHANGE THIS TO JUMP
+      const testStage = "change_mod1"; // CHANGE THIS TO JUMP
 
       // 3. Create the test user with ONLY that stage active
       const testUser = new User({
@@ -3899,7 +3899,29 @@ module.exports = seedData;
 if (require.main === module) {
   const dotenv = require("dotenv");
   const path = require("path");
-  dotenv.config({ path: path.resolve(__dirname, "../.env") });
+
+  const isProdWipe = process.argv.includes("--prod-wipe");
+  const isProdSeed = process.argv.includes("--prod-seed");
+
+  if (isProdWipe || isProdSeed) {
+    // Load the shared production config (Atlas URI + JWT — no wipe flag baked in)
+    const prodEnvPath = path.resolve(__dirname, "../.env.prod");
+    dotenv.config({ path: prodEnvPath });
+
+    if (isProdWipe) {
+      // Unlock the wipe via CLI arg only — the file itself is always safe
+      process.env.RESET_DEMO_DATA = "true";
+      console.log("⚠️  --prod-wipe: FULL WIPE + RESEED on production Atlas DB");
+    } else {
+      console.log("🔄 --prod-seed: Upsert concepts only, user data untouched");
+    }
+    console.log(`   MONGO_URI → ${process.env.MONGO_URI}`);
+    console.log(`   RESET_DEMO_DATA → ${process.env.RESET_DEMO_DATA ?? "false (upsert only)"}`);
+    console.log("");
+  } else {
+    dotenv.config({ path: path.resolve(__dirname, "../.env") });
+  }
+
   const connectDB = require("../config/db");
   const mongoose = require("mongoose");
 
