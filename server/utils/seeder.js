@@ -2257,7 +2257,7 @@ const changeMod1Items = [
     values: { start: 63, change: 15, end: 48 },
     labels: {
       start: "players at first",
-      change: "players left",
+      change: "players that left",
       end: "players now",
     },
     unknownSlot: "change",
@@ -3814,7 +3814,7 @@ const seedData = async () => {
       // Here are some common jump points:
       // ----------------------------------------------867
       // const testStage = "combine_mod3"; // CHANGE THIS TO JUMP
-      const testStage = "change_mod1"; // CHANGE THIS TO JUMP
+      const testStage = "change_mod5"; // CHANGE THIS TO JUMP
 
       // 3. Create the test user with ONLY that stage active
       const testUser = new User({

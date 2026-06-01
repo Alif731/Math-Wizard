@@ -1433,7 +1433,8 @@ const SchemaQuestion = ({
           ? isBarModelFullyFilled
           : isQuestionResponseReady(question, response)) &&
     !isSubmitting &&
-    !hasFeedback;
+    !hasFeedback &&
+    changeIdLocalCountdown === null; // prevent re-trigger during 2a→2b transition
 
   const isCompareAnswerInput = isCompareAnswerInputQuestion(question);
   const isVariableIdentification = isVariableIdentificationQuestion(question);
@@ -1784,6 +1785,15 @@ const SchemaQuestion = ({
     const handleKeyDown = (event) => {
       // 1. Global Enter key handler for workflow progression
       if (event.key === "Enter") {
+        // Skip the 2a→2b local countdown immediately (same transition the timer fires at 0)
+        if (changeIdLocalCountdown !== null) {
+          event.preventDefault();
+          setChangeIdLocalCountdown(null);
+          setChangeIdLocalFeedback(null);
+          setResponse((prev) => ({ ...prev, subStep: "2b", barModel: "" }));
+          return;
+        }
+
         if (canCheck && !isSubmitting) {
           event.preventDefault();
           triggerCheck();
@@ -1896,6 +1906,9 @@ const SchemaQuestion = ({
     onNext,
     question,
     setIsRevealed,
+    changeIdLocalCountdown,
+    setChangeIdLocalCountdown,
+    setChangeIdLocalFeedback,
   ]);
 
   // ------------------------ Conditional Auto-Scroll & Unfold (Module 2-5)------------------------
@@ -2229,17 +2242,8 @@ const SchemaQuestion = ({
             className={`worksheet-answer-field ${hasFeedback ? (feedback?.isCorrect || isRevealed ? "is-correct" : "is-wrong") : ""}`}
           >
             <input
-              type="number"
+              type="text"
               inputMode="numeric"
-              onWheel={(e) => e.target.blur()}
-              // value={
-              //   isRevealed
-              //     ? mathResult ||
-              //       feedback?.correctAnswer ||
-              //       feedback?.expected ||
-              //       ""
-              //     : getDisplayedTextAnswer(response) || ""
-              // }
               value={
                 isRevealed
                   ? mathResult ||
@@ -2251,14 +2255,16 @@ const SchemaQuestion = ({
                     ""
                   : getDisplayedTextAnswer(response) || ""
               }
-              onChange={(event) =>
-                !hasFeedback &&
-                !isSubmitting &&
-                setResponse((current) => ({
-                  ...(current || {}),
-                  textAnswer: event.target.value,
-                }))
-              }
+              onChange={(event) => {
+                if (!hasFeedback && !isSubmitting) {
+                  // Only digits and "?" are allowed
+                  const filtered = event.target.value.replace(/[^\d?]/g, "");
+                  setResponse((current) => ({
+                    ...(current || {}),
+                    textAnswer: filtered,
+                  }));
+                }
+              }}
               disabled={hasFeedback || isSubmitting}
               placeholder="Type Here"
             />
@@ -2284,18 +2290,11 @@ const SchemaQuestion = ({
               // }}
               onDigit={(digit) => {
                 if (!hasFeedback) {
-                  if (digit === "?") {
-                    // ← treat ? as clear/reset
-                    setResponse((current) => ({
-                      ...(current || {}),
-                      textAnswer: "",
-                    }));
-                  } else {
-                    setResponse((current) => ({
-                      ...(current || {}),
-                      textAnswer: (current?.textAnswer || "") + digit,
-                    }));
-                  }
+                  // Append digit or "?" — both are valid inputs
+                  setResponse((current) => ({
+                    ...(current || {}),
+                    textAnswer: (current?.textAnswer || "") + digit,
+                  }));
                 }
               }}
               onBackspace={() => {

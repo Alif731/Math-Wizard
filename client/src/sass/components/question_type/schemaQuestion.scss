@@ -1262,7 +1262,7 @@ $worksheet-shadow:
   gap: 14px;
   margin: 0rem 1rem;
 
-  padding: 0.3rem;
+  padding: 0.6rem;
   border: 2px solid #e2e8f0;
   border-radius: 12px;
   background: #fff;
@@ -1276,19 +1276,19 @@ $worksheet-shadow:
 
   p {
     margin: 0;
-    font-size: 1rem;
+    font-size: 1.1rem;
     font-weight: 600;
     color: #3d405b;
     line-height: 1.55;
     font-family: "ActualComicSans", cursive;
     @include ut.breakpoint(medium) {
-      font-size: 0.9rem;
+      font-size: 0.95rem;
     }
     @include ut.breakpoint(small) {
-      font-size: 0.8rem;
+      font-size: 0.85rem;
     }
     @include ut.breakpoint(xSmall) {
-      font-size: 0.7rem;
+      font-size: 0.75rem;
     }
   }
 
@@ -5895,7 +5895,7 @@ button.equation-box:active {
   margin: 0rem 1rem;
   margin-top: 1rem;
 
-  padding: 0.3rem;
+  padding: 0.6rem;
   border: 2px solid #e2e8f0;
   border-radius: 12px;
   background: #fff;
@@ -5910,19 +5910,19 @@ button.equation-box:active {
 
   p {
     margin: 0;
-    font-size: 1rem;
+    font-size: 1.1rem;
     font-weight: 600;
     color: #3d405b;
     line-height: 1.55;
     font-family: "ActualComicSans", cursive;
     @include ut.breakpoint(medium) {
-      font-size: 0.9rem;
+      font-size: 0.95rem;
     }
     @include ut.breakpoint(small) {
-      font-size: 0.8rem;
+      font-size: 0.85rem;
     }
     @include ut.breakpoint(xSmall) {
-      font-size: 0.7rem;
+      font-size: 0.75rem;
     }
   }
 
@@ -6050,9 +6050,9 @@ button.equation-box:active {
   position: absolute;
   top: -10px; /* Pulls it halfway up over the border */
   right: 16px; /* Aligns it to the right */
-  padding: 0.2rem 0.75rem;
+  padding: 0.4rem 1.1rem;
   border-radius: 99px; /* Pill shape */
-  font-size: 0.7rem;
+  font-size: 0.85rem;
   font-weight: 800;
   font-family: "ActualComicSans", cursive;
   letter-spacing: 0.02em;
@@ -6064,10 +6064,10 @@ button.equation-box:active {
     right: 7px;
   }
   @include ut.breakpoint(small) {
-    font-size: 0.6rem;
+    font-size: 0.75rem;
   }
   @include ut.breakpoint(xSmall) {
-    font-size: 0.5rem;
+    font-size: 0.65rem;
   }
 }
 
@@ -6080,10 +6080,10 @@ button.equation-box:active {
   background-color: #fef08a;
   color: #a16207;
   border: 3px solid #fde047;
-  padding: 0.3rem 1.2rem;
+  padding: 0.4rem 1.4rem;
   border-radius: 999px;
   font-weight: 800;
-  font-size: 0.7rem;
+  font-size: 0.85rem;
   box-shadow: none !important; /* Soft drop shadow */
   text-transform: capitalize;
   letter-spacing: 0.3px;
@@ -6095,10 +6095,10 @@ button.equation-box:active {
     right: 7px;
   }
   @include ut.breakpoint(small) {
-    font-size: 0.6rem;
+    font-size: 0.75rem;
   }
   @include ut.breakpoint(xSmall) {
-    font-size: 0.5rem;
+    font-size: 0.65rem;
   }
 }
 
