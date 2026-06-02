@@ -3813,8 +3813,8 @@ const seedData = async () => {
       // Change this variable to the ID you want to test right now.
       // Here are some common jump points:
       // ----------------------------------------------867
-      // const testStage = "combine_mod3"; // CHANGE THIS TO JUMP
-      const testStage = "change_mod5"; // CHANGE THIS TO JUMP
+      // const testStage = "combine_mod4"; // CHANGE THIS TO JUMP
+      const testStage = "change_mod2"; // CHANGE THIS TO JUMP
 
       // 3. Create the test user with ONLY that stage active
       const testUser = new User({

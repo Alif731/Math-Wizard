@@ -87,6 +87,8 @@ $worksheet-shadow:
   padding: 0 0.5rem;
   // margin-bottom: 2rem;
   @include ut.breakpoint(medium) {
+    padding: 0 0.2rem;
+
     margin-bottom: 0.5rem;
   }
 }
@@ -109,16 +111,17 @@ $worksheet-shadow:
     font-size: 0.8rem;
   }
   @include ut.breakpoint(medium) {
+    text-align: center;
     padding: 0.5rem;
-    font-size: 0.6rem;
+    font-size: 0.7rem;
   }
   @include ut.breakpoint(small) {
-    padding: 0.3rem;
-    font-size: 0.5rem;
+    padding: 0.4rem;
+    font-size: 0.56rem;
   }
   @include ut.breakpoint(xSmall) {
-    padding: 0.1rem;
-    font-size: 0.37rem;
+    padding: 0.25rem;
+    font-size: 0.42rem;
   }
 }
 
@@ -1262,33 +1265,37 @@ $worksheet-shadow:
   gap: 14px;
   margin: 0rem 1rem;
 
-  padding: 0.6rem;
+  // padding: 0.6rem;
+  padding: 0.2rem 0.5rem;
   border: 2px solid #e2e8f0;
   border-radius: 12px;
   background: #fff;
   box-shadow: 0 4px 0 #f1f5f9;
   margin-bottom: 2rem;
+  margin-top: 1rem;
   // margin-bottom: 1.5rem;
   @include ut.breakpoint(medium) {
     margin: 0rem;
+    margin-top: 1.4rem;
     margin-bottom: 2rem;
+    gap: 7px;
   }
 
   p {
     margin: 0;
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 600;
     color: #3d405b;
     line-height: 1.55;
     font-family: "ActualComicSans", cursive;
     @include ut.breakpoint(medium) {
-      font-size: 0.95rem;
-    }
-    @include ut.breakpoint(small) {
       font-size: 0.85rem;
     }
-    @include ut.breakpoint(xSmall) {
+    @include ut.breakpoint(small) {
       font-size: 0.75rem;
+    }
+    @include ut.breakpoint(xSmall) {
+      font-size: 0.65rem;
     }
   }
 
@@ -6050,55 +6057,56 @@ button.equation-box:active {
   position: absolute;
   top: -10px; /* Pulls it halfway up over the border */
   right: 16px; /* Aligns it to the right */
-  padding: 0.4rem 1.1rem;
+  padding: 0.2rem 0.8rem;
   border-radius: 99px; /* Pill shape */
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 800;
   font-family: "ActualComicSans", cursive;
   letter-spacing: 0.02em;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08); /* Gives it a slight pop off the page */
   z-index: 10;
-
-  @include ut.breakpoint(medium) {
-    top: -20px;
-    right: 7px;
-  }
-  @include ut.breakpoint(small) {
-    font-size: 0.75rem;
-  }
-  @include ut.breakpoint(xSmall) {
-    font-size: 0.65rem;
-  }
 }
 
 /* Tag Step 2a */
 .v-action-tag--step2a {
   position: absolute;
-  top: -10px; /* Pulls it halfway up over the border */
+  top: -16px;
   right: 16px;
   transform: translateY(-50%);
   background-color: #fef08a;
   color: #a16207;
   border: 3px solid #fde047;
-  padding: 0.4rem 1.4rem;
+  // padding: 0.4rem 1.4rem;
+  padding: 0.2rem 1rem;
   border-radius: 999px;
   font-weight: 800;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   box-shadow: none !important; /* Soft drop shadow */
   text-transform: capitalize;
   letter-spacing: 0.3px;
   z-index: 10;
   margin: 0rem 1rem;
   margin-top: 1rem;
-  @include ut.breakpoint(medium) {
+  @include ut.breakpoint(large) {
     top: -20px;
     right: 7px;
-  }
-  @include ut.breakpoint(small) {
     font-size: 0.75rem;
   }
-  @include ut.breakpoint(xSmall) {
+  @include ut.breakpoint(medium) {
+    font-size: 0.7rem;
+
+    padding: 0.1rem 0.6rem;
+    top: -24px;
+    right: 5px;
+  }
+  @include ut.breakpoint(small) {
+    top: -21px;
+    padding: 0rem 0.5rem;
     font-size: 0.65rem;
+  }
+  @include ut.breakpoint(xSmall) {
+    padding: 0 0.3rem;
+    font-size: 0.52rem;
   }
 }
 
@@ -6111,6 +6119,34 @@ button.equation-box:active {
   display: flex;
   align-items: center;
   gap: 0.2rem;
+
+  top: -12px; /* Pulls it halfway up over the border */
+  right: 16px; /* Aligns it to the right */
+  // background: linear-gradient(180deg, #3d405b 0%, #1f2235 100%);
+  // box-shadow: 3px 3px 0 #e9b50b;
+  // color: white;
+
+  @include ut.breakpoint(large) {
+    // top: -20px;
+    // right: 7px;
+    font-size: 0.75rem;
+  }
+  @include ut.breakpoint(medium) {
+    top: -15px;
+    right: 7px;
+    font-size: 0.68rem;
+    padding: 0.1rem 0.6rem;
+    // top: -22px;
+    // right: 5px;
+  }
+  @include ut.breakpoint(small) {
+    padding: 0rem 0.5rem;
+    font-size: 0.65rem;
+  }
+  @include ut.breakpoint(xSmall) {
+    padding: 0 0.3rem;
+    font-size: 0.52rem;
+  }
 }
 
 /* Blue tag for DECREASE */
@@ -6121,9 +6157,33 @@ button.equation-box:active {
   display: flex;
   gap: 0.25rem;
   align-items: center;
+  top: -12px; /* Pulls it halfway up over the border */
+  right: 16px; /* Aligns it to the right */
   // background: linear-gradient(180deg, #3d405b 0%, #1f2235 100%);
   // box-shadow: 3px 3px 0 #e9b50b;
   // color: white;
+
+  @include ut.breakpoint(large) {
+    // top: -20px;
+    // right: 7px;
+    font-size: 0.75rem;
+  }
+  @include ut.breakpoint(medium) {
+    top: -15px;
+    right: 7px;
+    font-size: 0.68rem;
+    padding: 0.1rem 0.6rem;
+    // top: -22px;
+    // right: 5px;
+  }
+  @include ut.breakpoint(small) {
+    padding: 0rem 0.5rem;
+    font-size: 0.65rem;
+  }
+  @include ut.breakpoint(xSmall) {
+    padding: 0 0.3rem;
+    font-size: 0.52rem;
+  }
 }
 
 /* --- THE TEXT RECAP --- */
