@@ -1612,13 +1612,36 @@ const SchemaQuestion = ({
           const isTrueUnknown = trueExpected === "?";
 
           // 1. Inject the math answer if final stage, otherwise keep "?"
+          // if (isTrueUnknown && numericResult) {
+          //   const desiredUnknownValue = isFinalAnswerStage
+          //     ? numericResult
+          //     : "?";
+          //   if (newSlots[key] !== desiredUnknownValue) {
+          //     newSlots[key] = desiredUnknownValue;
+          //     changed = true;
+          //   }
+          // }
           if (isTrueUnknown && numericResult) {
-            const desiredUnknownValue = isFinalAnswerStage
-              ? numericResult
-              : "?";
-            if (newSlots[key] !== desiredUnknownValue) {
-              newSlots[key] = desiredUnknownValue;
-              changed = true;
+            if (isFinalAnswerStage) {
+              // Final solve: always show the solved number
+              if (newSlots[key] !== numericResult) {
+                newSlots[key] = numericResult;
+                changed = true;
+              }
+            } else {
+              // Equation stage: keep student’s value if non‑empty, otherwise show "?"
+              const currentValue = (newSlots[key] ?? "").trim();
+              if (
+                !currentValue ||
+                currentValue === "" ||
+                currentValue === "?"
+              ) {
+                if (newSlots[key] !== "?") {
+                  newSlots[key] = "?";
+                  changed = true;
+                }
+              }
+              // if the student typed something (the correct answer), leave it alone
             }
           }
           // 2. Overwrite student's wrong numbers with correct story numbers
@@ -2206,6 +2229,7 @@ const SchemaQuestion = ({
         </div>
       )}
 
+      {/* ------------------------Solve Module */}
       {(question?.moduleStage === "schema_solve" || isDirectSchemaSolve) && (
         <div className="worksheet-solve">
           {(question?.validation?.displayEquation ||
@@ -2280,23 +2304,31 @@ const SchemaQuestion = ({
               showUnknown={false}
               showOperatorPad={false}
               disabled={hasFeedback || isSubmitting}
+              onDigit={(digit) => {
+                if (!hasFeedback) {
+                  // Treat "?" as a clear command
+                  if (digit === "?") {
+                    setResponse((current) => ({
+                      ...(current || {}),
+                      textAnswer: "",
+                    }));
+                  } else {
+                    setResponse((current) => ({
+                      ...(current || {}),
+                      textAnswer: (current?.textAnswer || "") + digit,
+                    }));
+                  }
+                }
+              }}
               // onDigit={(digit) => {
               //   if (!hasFeedback) {
+              //     // Append digit or "?" — both are valid inputs
               //     setResponse((current) => ({
               //       ...(current || {}),
               //       textAnswer: (current?.textAnswer || "") + digit,
               //     }));
               //   }
               // }}
-              onDigit={(digit) => {
-                if (!hasFeedback) {
-                  // Append digit or "?" — both are valid inputs
-                  setResponse((current) => ({
-                    ...(current || {}),
-                    textAnswer: (current?.textAnswer || "") + digit,
-                  }));
-                }
-              }}
               onBackspace={() => {
                 if (!hasFeedback) {
                   setResponse((current) => ({
@@ -2456,6 +2488,7 @@ const SchemaQuestion = ({
         )} */}
         {(feedback?.isCorrect ||
           isRevealed ||
+          // (isDummyMode && hasFeedback) ||
           (!isBarModelStage &&
             !isVariableIdentification &&
             !isSolveStage &&

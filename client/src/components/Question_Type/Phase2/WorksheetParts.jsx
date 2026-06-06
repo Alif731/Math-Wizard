@@ -307,6 +307,7 @@ export const EquationBoard = ({
     : "";
 
   const isCombine = question?.schemaKind === "combine";
+  const isPractice = ["practice", "equations"].includes(question?.moduleStage);
 
   const getExpectedSlotValue = (slotKey) => {
     if (question?.validation?.slots?.[slotKey] !== undefined)
@@ -371,14 +372,65 @@ export const EquationBoard = ({
             </span>
           );
         }
+        // if (item.type === "operator") {
+        //   const operatorValue = isCombine
+        //     ? "+"
+        //     : response?.operator || (item.editable ? "" : item.value) || "?";
+        //   const displayOperator = operatorValue;
+        //   let opClass = "";
+        //   if (feedback && !isGhostHint)
+        //     opClass = feedback.operator?.isCorrect ? "is-correct" : "is-wrong";
+        //   const isOperatorGhost =
+        //     isGhostHint && (!response?.operator || response.operator === "");
+        //   const ghostOperatorPlaceholder = isOperatorGhost ? "e.g: +" : null;
+
+        //   return (
+        //     <button
+        //       type="button"
+        //       key="operator"
+        //       className={`equation-box equation-box--operator ${isOperatorGhost ? "ghost-input" : ""} ${!item.editable || isCombine ? "is-fixed" : ""} ${response?.activeField === "__operator__" ? "is-active" : ""} ${locked ? "is-locked" : ""} ${item.editable && !isCombine && !isGhostHint ? opClass : ""}`}
+        //       onClick={() => {
+        //         if (!isCombine && item.editable) {
+        //           if (isOperatorGhost) markCompleted();
+        //           setActiveField("__operator__");
+        //         }
+        //       }}
+        //       disabled={locked || !item.editable || isCombine}
+        //     >
+        //       <strong>
+        //         {isOperatorGhost
+        //           ? ghostOperatorPlaceholder
+        //           : displayOperator || <span className="hide-on-focus">?</span>}
+        //       </strong>
+        //       <span>{item.label || "operator"}</span>
+        //     </button>
+        //   );
+        // }
+
+        // FOR COMBINE FLOATING OPERATOR
         if (item.type === "operator") {
-          const operatorValue = isCombine
-            ? "+"
-            : response?.operator || (item.editable ? "" : item.value) || "?";
+          // 🔥 THE FIX: If it's a Combine schema, render it as a floating symbol!
+          if (isCombine) {
+            return (
+              <span
+                key={`operator-${index}`}
+                className="equation-board__symbol"
+              >
+                +
+              </span>
+            );
+          }
+
+          // --- Standard Operator Box for other schemas ---
+          const operatorValue =
+            response?.operator || (item.editable ? "" : item.value) || "?";
           const displayOperator = operatorValue;
           let opClass = "";
-          if (feedback && !isGhostHint)
+
+          if (feedback && !isGhostHint) {
             opClass = feedback.operator?.isCorrect ? "is-correct" : "is-wrong";
+          }
+
           const isOperatorGhost =
             isGhostHint && (!response?.operator || response.operator === "");
           const ghostOperatorPlaceholder = isOperatorGhost ? "e.g: +" : null;
@@ -387,14 +439,15 @@ export const EquationBoard = ({
             <button
               type="button"
               key="operator"
-              className={`equation-box equation-box--operator ${isOperatorGhost ? "ghost-input" : ""} ${!item.editable || isCombine ? "is-fixed" : ""} ${response?.activeField === "__operator__" ? "is-active" : ""} ${locked ? "is-locked" : ""} ${item.editable && !isCombine && !isGhostHint ? opClass : ""}`}
+              // className={`equation-box equation-box--operator ${isOperatorGhost ? "ghost-input" : ""} ${!item.editable ? "is-fixed" : ""} ${response?.activeField === "__operator__" ? "is-active" : ""} ${locked ? "is-locked" : ""} ${item.editable && !isGhostHint ? opClass : ""}`}
+              className={`equation-box equation-box--operator ${isOperatorGhost ? "ghost-input" : ""} ${!item.editable ? "is-fixed" : ""} ${response?.activeField === "__operator__" && !opClass ? "is-active" : ""} ${locked ? "is-locked" : ""} ${item.editable && !isGhostHint ? opClass : ""}`}
               onClick={() => {
-                if (!isCombine && item.editable) {
+                if (item.editable) {
                   if (isOperatorGhost) markCompleted();
                   setActiveField("__operator__");
                 }
               }}
-              disabled={locked || !item.editable || isCombine}
+              disabled={locked || !item.editable}
             >
               <strong>
                 {isOperatorGhost
@@ -419,13 +472,31 @@ export const EquationBoard = ({
             : slotValue || <span className="hide-on-focus">?</span>;
           const displayLabel = item.label || item.key;
 
+          // let slotClass = "";
+          // if (feedback && !isGhostHint && feedback.slots?.[item.key]) {
+          //   slotClass = feedback.slots[item.key].isCorrect
+          //     ? "is-correct"
+          //     : "is-wrong";
+          // } else if (feedback && !isGhostHint) {
+          //   slotClass = globalValidationClass;
+          // }
           let slotClass = "";
-          if (feedback && !isGhostHint && feedback.slots?.[item.key]) {
-            slotClass = feedback.slots[item.key].isCorrect
-              ? "is-correct"
-              : "is-wrong";
-          } else if (feedback && !isGhostHint) {
-            slotClass = globalValidationClass;
+
+          // Determine if this is the unknown (empty/?) slot
+          const expectedForSlot = getExpectedSlotValue(item.key); // already defined above
+          const studentVal = response?.slots?.[item.key];
+          const isEmptyUnknown =
+            (expectedForSlot === "?" || expectedForSlot === "") &&
+            (!studentVal || studentVal === "" || studentVal === "?");
+
+          if (feedback && !isGhostHint && !isEmptyUnknown) {
+            if (feedback.slots?.[item.key]) {
+              slotClass = feedback.slots[item.key].isCorrect
+                ? "is-correct"
+                : "is-wrong";
+            } else {
+              slotClass = globalValidationClass;
+            }
           }
 
           const tagKey =
@@ -435,8 +506,9 @@ export const EquationBoard = ({
             <button
               type="button"
               key={item.key}
-              className={`equation-box ${isEditable ? "is-editable" : "is-fixed"} ${isGhost ? "ghost-input" : ""} ${response?.activeField === item.key && !isGhost ? "is-active" : ""} ${locked ? "is-locked" : ""} ${isEditable && !isGhostHint ? slotClass : ""}`}
-              // className={`equation-box ${isEditable ? "is-editable" : "is-fixed"} ${isGhost ? "ghost-input" : ""} ${response?.activeField === item.key ? "is-active" : ""} ${locked ? "is-locked" : ""} ${isEditable && !isGhostHint ? slotClass : ""}`}
+              // className={`equation-box ${isEditable ? "is-editable" : "is-fixed"} ${isGhost ? "ghost-input" : ""} ${response?.activeField === item.key && !isGhost ? "is-active" : ""} ${locked ? "is-locked" : ""} ${isEditable && !isGhostHint ? slotClass : ""}`}
+              // className={`equation-box ${isEditable ? "is-editable" : "is-fixed"} ${isGhost ? "ghost-input" : ""} ${response?.activeField === item.key && !isGhost && !slotClass ? "is-active" : ""} ${locked ? "is-locked" : ""} ${isEditable && !isGhostHint ? slotClass : ""}`}
+              className={`equation-box ${isEditable ? "is-editable" : isPractice ? "" : "is-fixed"} ${isGhost ? "ghost-input" : ""} ${response?.activeField === item.key && !isGhost && !slotClass ? "is-active" : ""} ${locked ? "is-locked" : ""} ${isEditable && !isGhostHint ? slotClass : ""}`}
               onClick={() => {
                 if (isEditable) {
                   if (isGhost) markCompleted();

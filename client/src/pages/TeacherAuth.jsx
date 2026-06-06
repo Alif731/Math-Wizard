@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logout, setCredentials } from "../store/slices/authSlice";
@@ -53,7 +53,9 @@ const TeacherAuth = () => {
         }
 
         dispatch(setCredentials({ ...profile }));
-        navigate(getDefaultRouteForRole(profile.role, profile.loginCount), { replace: true });
+        navigate(getDefaultRouteForRole(profile.role, profile.loginCount), {
+          replace: true,
+        });
       } catch (_error) {
         if (!isActive) {
           return;
@@ -88,7 +90,9 @@ const TeacherAuth = () => {
     dispatch(setCredentials({ ...payload }));
 
     toast.success(`Welcome to the Dashboard, ${payload.username}!`);
-    navigate(getDefaultRouteForRole(payload?.role, payload?.loginCount), { replace: true });
+    navigate(getDefaultRouteForRole(payload?.role, payload?.loginCount), {
+      replace: true,
+    });
   };
 
   const handleLogin = async (e) => {
@@ -144,17 +148,31 @@ const TeacherAuth = () => {
       setError(err?.data?.message || err.error || "Teacher sign up failed");
     }
   };
+
+  const videoRef = useRef(null);
   const videoSrc = isLogin ? "/TG.mp4" : "/TG1.mp4";
+  const posterSrc = isLogin ? "/TG.png" : "/TG1.png";
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.load();
+      // play() may still be blocked until the user interacts,
+      // but we can attempt it once the video is ready.
+      videoRef.current.play().catch(() => {});
+    }
+  }, [videoSrc]);
 
   return (
     <div className="login__main">
       <div className="login__img">
         <video
-          key={videoSrc}
+          // key={videoSrc}
+          ref={videoRef}
           autoPlay
           loop
           muted
           playsInline
+          poster={posterSrc}
           className="bg-video"
         >
           <source src={videoSrc} type="video/mp4" />
