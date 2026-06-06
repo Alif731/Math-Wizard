@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { logout, setCredentials } from "../store/slices/authSlice";
@@ -68,7 +68,9 @@ const Login = () => {
         }
 
         dispatch(setCredentials({ ...profile }));
-        navigate(getDefaultRouteForRole(profile.role, profile.loginCount), { replace: true });
+        navigate(getDefaultRouteForRole(profile.role, profile.loginCount), {
+          replace: true,
+        });
       } catch (_error) {
         if (!isActive) {
           return;
@@ -111,7 +113,9 @@ const Login = () => {
     dispatch(setCredentials({ ...payload }));
 
     toast.success(`Welcome back, ${payload.username}!`);
-    navigate(getDefaultRouteForRole(payload?.role, payload?.loginCount), { replace: true });
+    navigate(getDefaultRouteForRole(payload?.role, payload?.loginCount), {
+      replace: true,
+    });
   };
 
   const handleLogin = async (e) => {
@@ -184,17 +188,30 @@ const Login = () => {
       : googleEnabled
         ? ""
         : "Credentials not added";
-
+  const videoRef = useRef(null);
   const videoSrc = isLogin ? "/BG.mp4" : "/BG1.mp4";
+  const posterSrc = isLogin ? "/BG.png" : "/BG1.png";
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.load();
+      // play() may still be blocked until the user interacts,
+      // but we can attempt it once the video is ready.
+      videoRef.current.play().catch(() => {});
+    }
+  }, [videoSrc]);
+
   return (
     <div className="login__main">
       <div className="login__img">
         <video
-          key={videoSrc}
+          // key={videoSrc}
+          ref={videoRef}
           autoPlay
           loop
           muted
           playsInline
+          poster={posterSrc}
           className="bg-video"
         >
           <source src={videoSrc} type="video/mp4" />

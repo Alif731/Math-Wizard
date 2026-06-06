@@ -1581,7 +1581,12 @@ const TotalPartsBarModel = ({
 
     let expected = getExpectedVal(question, boxSpec);
     const student = String(response?.slots?.[boxKey] || "").trim();
-    if (!student) return "wrong";
+    // if (!student) return "wrong";
+    if (!student) {
+      // If it’s an unknown box and the student hasn’t entered anything → no feedback
+      if (expected === "?" || expected === "") return null;
+      return "wrong";
+    }
     if (expected === "?" || expected === "") {
       const calcAnswer = solveMath(question, spec);
       return student === calcAnswer && calcAnswer !== "" ? "correct" : "wrong";
@@ -1914,7 +1919,12 @@ const ChangeBarModel = ({
 
     let expected = getExpectedVal(question, boxSpec);
     const student = String(response?.slots?.[boxKey] || "").trim();
-    if (!student) return "wrong";
+    // if (!student) return "wrong";
+    if (!student) {
+      // If it’s an unknown box and the student hasn’t entered anything → no feedback
+      if (expected === "?" || expected === "") return null;
+      return "wrong";
+    }
 
     if (expected === "?" || expected === "") {
       const calcAnswer = solveMath(question, spec, isSubtraction);
