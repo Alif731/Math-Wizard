@@ -2300,7 +2300,7 @@ const changeMod1Items = [
 
 const changeMod2Items = [
   {
-    text: "Oliver had 20 apples. He ate 6 apples.",
+    text: "Oliver had 20 apples. He ate 6 apples. How many apples does Oliver have left?",
     values: { start: 20, change: 6, end: 14 },
     labels: {
       start: "apples at first",
@@ -2313,7 +2313,7 @@ const changeMod2Items = [
     decreaseSubtext: "apples were eaten or removed",
   },
   {
-    text: "A bush had 24 flowers. The wind blew 9 flowers away.",
+    text: "A bush had 24 flowers. The wind blew 9 flowers away. How many flowers are left on the bush?",
     values: { start: 24, change: 9, end: 15 },
     labels: {
       start: "flowers at first",
@@ -2326,7 +2326,7 @@ const changeMod2Items = [
     decreaseSubtext: "flowers blew away or died",
   },
   {
-    text: "Sophie had 50 tickets. She spent 18 tickets on a prize.",
+    text: "Sophie had 50 tickets. She spent 18 tickets on a prize. How many tickets does Sophie have left?",
     values: { start: 50, change: 18, end: 32 },
     labels: {
       start: "tickets at first",
@@ -2339,7 +2339,7 @@ const changeMod2Items = [
     decreaseSubtext: "tickets were spent or lost",
   },
   {
-    text: "Twelve bugs were on a leaf. Five bugs flew away.",
+    text: "Twelve bugs were on a leaf. Five bugs flew away. How many bugs are left on the leaf?",
     values: { start: 12, change: 5, end: 7 },
     labels: {
       start: "bugs at first",
@@ -2352,7 +2352,7 @@ const changeMod2Items = [
     decreaseSubtext: "bugs flew away or left",
   },
   {
-    text: "Aiden had 35 gems. He gave 15 gems to his brother.",
+    text: "Aiden had 35 gems. He gave 15 gems to his brother. How many gems does Aiden have left?",
     values: { start: 35, change: 15, end: 20 },
     labels: { start: "gems at first", change: "gems given", end: "gems left" },
     difficulty: 3,
@@ -2361,7 +2361,7 @@ const changeMod2Items = [
     decreaseSubtext: "gems were given away or lost",
   },
   {
-    text: "Chloe had 6 bracelets. She got 4 more bracelets.",
+    text: "Chloe had 6 bracelets. She got 4 more bracelets. How many bracelets does Chloe have now?",
     values: { start: 6, change: 4, end: 10 },
     labels: {
       start: "bracelets at first",
@@ -2374,7 +2374,7 @@ const changeMod2Items = [
     decreaseSubtext: "bracelets were lost or broken",
   },
   {
-    text: "Max had 52 tokens. He earned 16 tokens at the arcade.",
+    text: "Max had 52 tokens. He earned 16 tokens at the arcade. How many tokens does Max have now?",
     values: { start: 52, change: 16, end: 68 },
     labels: {
       start: "tokens at first",
@@ -2387,7 +2387,7 @@ const changeMod2Items = [
     decreaseSubtext: "tokens were spent or lost",
   },
   {
-    text: "A jar had 20 buttons. Someone added 15 more buttons.",
+    text: "A jar had 20 buttons. Someone added 15 more buttons. How many buttons are in the jar now?",
     values: { start: 20, change: 15, end: 35 },
     labels: {
       start: "buttons at first",
@@ -2400,7 +2400,7 @@ const changeMod2Items = [
     decreaseSubtext: "buttons were used or lost",
   },
   {
-    text: "Lily had already collected 12 pebbles. She collected 8 more pebbles.",
+    text: "Lily had already collected 12 pebbles. She collected 8 more pebbles. How many pebbles does Lily have now?",
     values: { start: 12, change: 8, end: 20 },
     labels: {
       start: "pebbles at first",
@@ -2413,7 +2413,7 @@ const changeMod2Items = [
     decreaseSubtext: "pebbles were thrown or removed",
   },
   {
-    text: "The game had 45 levels. The creators added 10 more levels.",
+    text: "The game had 45 levels. The creators added 10 more levels. How many levels does the game have now?",
     values: { start: 45, change: 10, end: 55 },
     labels: {
       start: "levels at first",
@@ -2426,7 +2426,7 @@ const changeMod2Items = [
     decreaseSubtext: "levels were removed",
   },
   {
-    text: "A ship had 38 sailors. Fourteen sailors got off.",
+    text: "A ship had 38 sailors. Fourteen sailors got off. How many sailors are left on the ship?",
     values: { start: 38, change: 14, end: 24 },
     labels: {
       start: "sailors at first",
@@ -2439,7 +2439,7 @@ const changeMod2Items = [
     decreaseSubtext: "sailors got off or left",
   },
   {
-    text: "A bag had 25 carrots. The farmer added 17 carrots.",
+    text: "A bag had 25 carrots. The farmer added 17 carrots. How many carrots are in the bag now?",
     values: { start: 25, change: 17, end: 42 },
     labels: {
       start: "carrots at first",
@@ -2452,7 +2452,7 @@ const changeMod2Items = [
     decreaseSubtext: "carrots were eaten or sold",
   },
   {
-    text: "A pond had 63 fish. 15 fish swam away.",
+    text: "A pond had 63 fish. 15 fish swam away. How many fish are left in the pond?",
     values: { start: 63, change: 15, end: 48 },
     labels: {
       start: "fish at first",
@@ -2465,7 +2465,7 @@ const changeMod2Items = [
     decreaseSubtext: "fish swam away or were caught",
   },
   {
-    text: "A chef had 29 pizzas. He baked 18 more pizzas.",
+    text: "A chef had 29 pizzas. He baked 18 more pizzas. How many pizzas does the chef have now?",
     values: { start: 29, change: 18, end: 47 },
     labels: {
       start: "pizzas at first",
@@ -2478,7 +2478,7 @@ const changeMod2Items = [
     decreaseSubtext: "pizzas were eaten or sold",
   },
   {
-    text: "A desk had 55 papers. A student took 21 papers.",
+    text: "A desk had 55 papers. A student took 21 papers. How many papers are left on the desk?",
     values: { start: 55, change: 21, end: 34 },
     labels: {
       start: "papers at first",
@@ -2495,13 +2495,13 @@ const changeMod2Items = [
 const changeMod3Items = [
   {
     concept: "change_mod3",
-    text: "Noah had 20 crackers. He ate 6 of them. How many crackers does Noah have left?",
+    text: "Noah had 20 cookies. He ate 6 of them. How many cookies does Noah have left?",
     schemaKind: "change",
     values: { start: 20, change: 6, end: 14 },
     labels: {
-      end: "crackers left",
-      start: "crackers at first",
-      change: "crackers eaten",
+      end: "cookies left",
+      start: "cookies at first",
+      change: "cookies eaten",
     },
     displayValues: { start: "?", change: "?", end: "?" },
     validationSlots: { end: "?", start: "20", change: "6" },
@@ -3002,7 +3002,7 @@ const changeMod5Items = [
     operator: "+",
     difficulty: 3,
     itemNoun: "muffins",
-    increaseSubtext: "muffins were baked",
+    increaseSubtext: "more muffins were baked",
     decreaseSubtext: "muffins were sold or eaten",
   },
 ];
@@ -3814,7 +3814,7 @@ const seedData = async () => {
       // Here are some common jump points:
       // ----------------------------------------------867
       // const testStage = "combine_mod3"; // CHANGE THIS TO JUMP
-      const testStage = "change_mod5"; // CHANGE THIS TO JUMP
+      const testStage = "combine_mod4"; // CHANGE THIS TO JUMP
 
       // 3. Create the test user with ONLY that stage active
       const testUser = new User({
@@ -3899,7 +3899,29 @@ module.exports = seedData;
 if (require.main === module) {
   const dotenv = require("dotenv");
   const path = require("path");
-  dotenv.config({ path: path.resolve(__dirname, "../.env") });
+
+  const isProdWipe = process.argv.includes("--prod-wipe");
+  const isProdSeed = process.argv.includes("--prod-seed");
+
+  if (isProdWipe || isProdSeed) {
+    // Load the shared production config (Atlas URI + JWT — no wipe flag baked in)
+    const prodEnvPath = path.resolve(__dirname, "../.env.prod");
+    dotenv.config({ path: prodEnvPath });
+
+    if (isProdWipe) {
+      // Unlock the wipe via CLI arg only — the file itself is always safe
+      process.env.RESET_DEMO_DATA = "true";
+      console.log("⚠️  --prod-wipe: FULL WIPE + RESEED on production Atlas DB");
+    } else {
+      console.log("🔄 --prod-seed: Upsert concepts only, user data untouched");
+    }
+    console.log(`   MONGO_URI → ${process.env.MONGO_URI}`);
+    console.log(`   RESET_DEMO_DATA → ${process.env.RESET_DEMO_DATA ?? "false (upsert only)"}`);
+    console.log("");
+  } else {
+    dotenv.config({ path: path.resolve(__dirname, "../.env") });
+  }
+
   const connectDB = require("../config/db");
   const mongoose = require("mongoose");
 

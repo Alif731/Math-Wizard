@@ -66,6 +66,10 @@ app.use(
 // Apply size limits to prevent abuse
 app.use(express.json({ limit: "32kb" }));
 app.use(express.urlencoded({ extended: false, limit: "8kb" }));
+// codeql[js/missing-token-validation]
+// cookieParser is flagged by CodeQL because we are utilizing cookie-based sessions.
+// We implement custom CSRF protection globally via the csrfGuard middleware (enforcing Origin/Referer verification against CLIENT_URL),
+// which protects all state-changing endpoints in a MERN/SPA environment.
 app.use(cookieParser());
 
 const { globalLimiter } = require("./middleware/rateLimitMiddleware");

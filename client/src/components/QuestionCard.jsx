@@ -85,12 +85,15 @@ const QuestionCard = ({
     setIsDummyMode(false);
     setFailedFirstTry(false);
     setIsRevealed(false);
+    setIsExiting(false);
+    setShowLoadingMsg(false);
+
     // setPendingResult(null);
     // setFailedAnyStage(false);
     // setStageResults({});
-    setIsExiting(false);
-    setShowLoadingMsg(false);
-  }, [problem]);
+    if (setPendingResult) setPendingResult(null);
+    // }, [problem]);
+  }, [problem, setPendingResult]);
 
   useEffect(() => {
     if (pendingResult === "correct") {
@@ -248,16 +251,66 @@ const QuestionCard = ({
         });
         setFeedback({ isCorrect: isDummyCorrect });
       } else if (isEquationStage) {
-        const result = evaluateEquationStageResponse(problem.question, answer);
-        isDummyCorrect = result.isCorrect;
-        detailedFeedback.isCorrect = result.isCorrect;
-        detailedFeedback.slots = result.feedback;
-        if (result.operatorFeedback) {
-          detailedFeedback.operator = result.operatorFeedback;
+        // !old code
+        // const result = evaluateEquationStageResponse(problem.question, answer);
+        // isDummyCorrect = result.isCorrect;
+        // detailedFeedback.isCorrect = result.isCorrect;
+        // detailedFeedback.slots = result.feedback;
+        // if (result.operatorFeedback) {
+        //   detailedFeedback.operator = result.operatorFeedback;
+        // }
+        // setFeedback(detailedFeedback);
+
+        const localSlotFeedback = {};
+        const templateKeys = (problem.question.equationSpec?.template || [])
+          .filter((item) => item.type === "slot" && item.key)
+          .map((item) => item.key);
+
+        templateKeys.forEach((key) => {
+          let expected = String(
+            problem.question.validation?.slots?.[key] ||
+              problem.question.equationSpec?.[key]?.value ||
+              "",
+          ).trim();
+          const submitted = String(answer?.slots?.[key] || "").trim();
+
+          if (expected === "?" || expected === "") {
+            if (submitted !== "?" && submitted !== "") {
+              isDummyCorrect = false;
+              localSlotFeedback[key] = { isCorrect: false };
+            } else {
+              localSlotFeedback[key] = { isCorrect: true };
+            }
+          } else {
+            if (submitted !== expected) {
+              isDummyCorrect = false;
+              localSlotFeedback[key] = { isCorrect: false };
+            } else {
+              localSlotFeedback[key] = { isCorrect: true };
+            }
+          }
+        });
+
+        // Lenient Operator Check (Ignores it if it's locked/empty)
+        let operatorCorrect = true;
+        const expectedOp =
+          problem.question.validation?.operator ||
+          problem.question.equationSpec?.operator;
+        if (expectedOp && problem.question.schemaKind !== "combine") {
+          if (answer?.operator && answer.operator !== expectedOp) {
+            operatorCorrect = false;
+            isDummyCorrect = false;
+          }
+        }
+
+        detailedFeedback.isCorrect = isDummyCorrect;
+        detailedFeedback.slots = localSlotFeedback;
+        if (!operatorCorrect) {
+          detailedFeedback.operator = { isCorrect: false };
         }
         setFeedback(detailedFeedback);
       } else {
-        // Module 2 Practice Grading
+        // ! (OLD CODE ) Module 2 Practice Grading
         const result = evaluateBarModelStageResponse(problem.question, answer);
         isDummyCorrect = result.isCorrect;
         setFeedback({ isCorrect: isDummyCorrect, slots: result.feedback });
@@ -281,6 +334,7 @@ const QuestionCard = ({
         setAutoNextCountdown(3);
       }
       setIsError(!isDummyCorrect && isFinalStage);
+
       // if (isSchemaStage)
       //   setStageResults((prev) => ({
       //     ...prev,
@@ -305,6 +359,23 @@ const QuestionCard = ({
       if (result.operatorFeedback) {
         detailedFeedback.operator = result.operatorFeedback;
       }
+      // Remove feedback for unknown slots that are still empty/"?"
+      const templateSlots = problem.question.equationSpec?.template || [];
+      templateSlots.forEach((item) => {
+        if (item.type === "slot") {
+          const expected = String(
+            problem.question.validation?.slots?.[item.key] || item.value || "",
+          ).trim();
+          const submitted = String(answer?.slots?.[item.key] || "").trim();
+          // If it’s an unknown slot AND nothing meaningful was typed, delete the feedback
+          if (
+            (expected === "?" || expected === "") &&
+            (submitted === "" || submitted === "?")
+          ) {
+            delete detailedFeedback.slots[item.key];
+          }
+        }
+      });
 
       setFeedback(detailedFeedback);
       setIsSuccess(isLocalCorrect);

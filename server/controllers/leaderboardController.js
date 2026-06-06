@@ -1,4 +1,5 @@
 const Attempt = require("../models/Attempt");
+const User = require("../models/User");
 const AppSettings = require("../models/AppSettings");
 
 const SETTINGS_KEY = "global";
@@ -60,29 +61,25 @@ const getLeaderboard = async (req, res) => {
     ? Math.min(Math.max(parsedLimit, 1), 100)
     : 20;
 
-  const entries = await Attempt.aggregate([
+  const entries = await User.aggregate([
+    { $match: { role: "student" } },
     {
-      $group: {
-        _id: "$user",
-        totalAttempts: { $sum: 1 },
-        correctAttempts: {
-          $sum: {
-            $cond: ["$isCorrect", 1, 0],
-          },
-        },
-        lastAttemptAt: { $max: "$timestamp" },
+      $project: {
+        username: 1,
+        avatar: 1,
+        avatarSeed: 1,
+        masteryArray: { $objectToArray: { $ifNull: ["$mastery", {}] } },
       },
     },
     {
-      $lookup: {
-        from: "users",
-        localField: "_id",
-        foreignField: "_id",
-        as: "user",
+      $project: {
+        username: 1,
+        avatar: 1,
+        avatarSeed: 1,
+        totalAttempts: { $sum: "$masteryArray.v.attemptCount" },
+        correctAttempts: { $sum: "$masteryArray.v.successCount" },
       },
     },
-    { $unwind: "$user" },
-    { $match: { "user.role": "student" } },
     {
       $addFields: {
         accuracy: {
@@ -100,7 +97,36 @@ const getLeaderboard = async (req, res) => {
       },
     },
     {
+      $addFields: {
+        score: {
+          $max: [
+            0,
+            {
+              $subtract: [
+                { $multiply: ["$correctAttempts", 12] },
+                { $multiply: ["$totalAttempts", 2] },
+              ],
+            },
+          ],
+        },
+      },
+    },
+    {
+      $lookup: {
+        from: "attempts",
+        localField: "_id",
+        foreignField: "user",
+        as: "attempts",
+      },
+    },
+    {
+      $addFields: {
+        lastAttemptAt: { $max: "$attempts.timestamp" },
+      },
+    },
+    {
       $sort: {
+        score: -1,
         correctAttempts: -1,
         accuracy: -1,
         totalAttempts: -1,
@@ -111,14 +137,15 @@ const getLeaderboard = async (req, res) => {
     {
       $project: {
         _id: 0,
-        userId: "$user._id",
-        username: "$user.username",
-        avatar: "$user.avatar",
-        avatarSeed: "$user.avatarSeed",
+        userId: "$_id",
+        username: 1,
+        avatar: 1,
+        avatarSeed: 1,
+        score: 1,
         correctAttempts: 1,
         totalAttempts: 1,
         accuracy: 1,
-        lastAttemptAt: 1,
+        lastAttemptAt: { $ifNull: ["$lastAttemptAt", new Date(0)] },
       },
     },
   ]);

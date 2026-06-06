@@ -373,6 +373,8 @@
 }
 
 .login__error {
+  font-family: "ActualComicSans", cursive;
+  text-transform: capitalize;
   margin: 0.2rem 0 0;
   padding: 0.6rem 0.8rem;
   border-left: 4px solid #dc2626;
@@ -381,6 +383,15 @@
   color: #b91c1c;
   font-size: 0.95rem;
   text-align: left;
+  @include ut.breakpoint(medium) {
+    font-size: 0.65rem;
+  }
+  @include ut.breakpoint(small) {
+    font-size: 0.6rem;
+  }
+  @include ut.breakpoint(xSmall) {
+    font-size: 0.55rem;
+  }
 }
 
 .loginMain__btn {

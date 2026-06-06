@@ -41,10 +41,12 @@ const MasteryModal = ({
           <div className="stat-box">
             <span className="stat-label">Accuracy: </span>
             <span className="stat-value">{score}%</span>
+            <span className="stat-subtext">(last 5 attempts)</span>
           </div>
           <div className="stat-box">
             <span className="stat-label">Attempts: </span>
             <span className="stat-value">{attempts}</span>
+            <span className="stat-subtext">(total attempts)</span>
           </div>
         </div>
 

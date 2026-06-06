@@ -242,6 +242,58 @@
     // }
   }
 
+  .points-header-cell {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    .info-tooltip {
+      position: relative;
+      cursor: help;
+      color: #9ca3af;
+      display: inline-flex;
+      align-items: center;
+
+      &:hover .tooltip-text {
+        visibility: visible;
+        opacity: 1;
+      }
+
+      .tooltip-text {
+        visibility: hidden;
+        opacity: 0;
+        width: 220px;
+        background-color: #334155;
+        color: #fff;
+        text-align: center;
+        border-radius: 6px;
+        padding: 8px 12px;
+        position: absolute;
+        z-index: 100;
+        top: 125%;
+        left: 50%;
+        transform: translateX(-50%);
+        transition: opacity 0.3s;
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-transform: none; // Disable uppercase in header tooltip text!
+        letter-spacing: normal;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+
+        &::after {
+          content: "";
+          position: absolute;
+          bottom: 100%;
+          left: 50%;
+          margin-left: -5px;
+          border-width: 5px;
+          border-style: solid;
+          border-color: transparent transparent #334155 transparent;
+        }
+      }
+    }
+  }
+
   tr {
     border-bottom: 1px solid #f3f4f6;
     transition: background 0.2s;
@@ -329,6 +381,17 @@
     border-radius: 6px;
     font-weight: 700;
     font-size: 0.9rem;
+  }
+
+  .points-badge {
+    background: #fef3c7;
+    color: #d97706;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    display: inline-block;
+    white-space: nowrap;
   }
 }
 
