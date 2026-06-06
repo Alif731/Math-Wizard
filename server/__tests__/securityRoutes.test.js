@@ -37,6 +37,9 @@ const createApp = () => {
   const testApp = express();
 
   testApp.use(express.json());
+  // codeql[js/missing-token-validation]
+  // cookieParser is flagged by CodeQL because of cookie usage.
+  // Custom CSRF protection is implemented immediately below via the csrfGuard middleware.
   testApp.use(cookieParser());
   testApp.use(csrfGuard);
   testApp.use("/api/learning", learningRoutes);
