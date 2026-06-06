@@ -92,10 +92,8 @@ const QuestionCard = ({
     // setFailedAnyStage(false);
     // setStageResults({});
     if (setPendingResult) setPendingResult(null);
-    if (setFailedAnyStage) setFailedAnyStage(false);
-    if (setStageResults) setStageResults({});
     // }, [problem]);
-  }, [problem, setPendingResult, setFailedAnyStage, setStageResults]);
+  }, [problem, setPendingResult]);
 
   useEffect(() => {
     if (pendingResult === "correct") {

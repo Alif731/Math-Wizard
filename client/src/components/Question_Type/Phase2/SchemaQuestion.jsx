@@ -2306,29 +2306,13 @@ const SchemaQuestion = ({
               disabled={hasFeedback || isSubmitting}
               onDigit={(digit) => {
                 if (!hasFeedback) {
-                  // Treat "?" as a clear command
-                  if (digit === "?") {
-                    setResponse((current) => ({
-                      ...(current || {}),
-                      textAnswer: "",
-                    }));
-                  } else {
-                    setResponse((current) => ({
-                      ...(current || {}),
-                      textAnswer: (current?.textAnswer || "") + digit,
-                    }));
-                  }
+                  // Append digit or "?" — both are valid inputs
+                  setResponse((current) => ({
+                    ...(current || {}),
+                    textAnswer: (current?.textAnswer || "") + digit,
+                  }));
                 }
               }}
-              // onDigit={(digit) => {
-              //   if (!hasFeedback) {
-              //     // Append digit or "?" — both are valid inputs
-              //     setResponse((current) => ({
-              //       ...(current || {}),
-              //       textAnswer: (current?.textAnswer || "") + digit,
-              //     }));
-              //   }
-              // }}
               onBackspace={() => {
                 if (!hasFeedback) {
                   setResponse((current) => ({

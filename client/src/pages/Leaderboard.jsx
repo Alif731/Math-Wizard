@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 
-import { Crown, Settings, Eye, EyeOff, Medal } from "lucide-react";
+import { Crown, Settings, Eye, EyeOff, Medal, HelpCircle } from "lucide-react";
 import UserAvatar from "../components/UserAvatar";
 
 import {
@@ -72,33 +72,7 @@ const Leaderboard = () => {
    */
 
   const sortedLeaderboard = useMemo(() => {
-    if (!leaderboardData?.entries) return [];
-
-    // 1. Calculate a unified "Power Score" for each student
-    const entriesWithScores = [...leaderboardData.entries].map((entry) => {
-      // Base Score: Punishes spamming (e.g., 10 correct * 0.50 accuracy = 5 base points)
-      const baseScore = entry.correctAttempts * (entry.accuracy / 100);
-
-      // Volume Bonus: Rewards hard work (e.g., +0.1 points just for trying a question)
-      // This ensures a student who did 100 questions beats a student who did 1 question!
-      const volumeBonus = entry.totalAttempts * 0.1;
-
-      // Final unified score
-      const powerScore = baseScore + volumeBonus;
-
-      return { ...entry, powerScore };
-    });
-
-    // 2. Sort everyone by their new Power Score (highest to lowest)
-    const sorted = entriesWithScores.sort(
-      (a, b) => b.powerScore - a.powerScore,
-    );
-
-    // 3. Re-assign the rank numbers (1, 2, 3...) based on the new order
-    return sorted.map((entry, index) => ({
-      ...entry,
-      rank: index + 1,
-    }));
+    return leaderboardData?.entries || [];
   }, [leaderboardData]);
 
   const toggleLeaderboard = async () => {
@@ -181,6 +155,17 @@ const Leaderboard = () => {
                       <tr>
                         <th>Rank</th>
                         <th>Student</th>
+                        <th>
+                          <div className="points-header-cell">
+                            Points
+                            <div className="info-tooltip">
+                              <HelpCircle size={14} className="info-icon" />
+                              <span className="tooltip-text">
+                                Points are calculated based on correct answers, with a small penalty for incorrect attempts to discourage guessing.
+                              </span>
+                            </div>
+                          </div>
+                        </th>
                         <th>Correct</th>
                         <th>Attempts</th>
                         <th>Accuracy</th>
@@ -215,6 +200,11 @@ const Leaderboard = () => {
                             </span>
                             <span className="student-name">
                               {entry.username}
+                            </span>
+                          </td>
+                          <td>
+                            <span className="points-badge">
+                              {entry.score || 0} pts
                             </span>
                           </td>
                           <td>{entry.correctAttempts}</td>

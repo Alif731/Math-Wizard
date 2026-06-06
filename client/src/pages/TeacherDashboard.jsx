@@ -286,6 +286,17 @@ const TeacherDashboard = () => {
                   <tr>
                     <th>Rank</th>
                     <th>Student</th>
+                    <th>
+                      <div className="points-header-cell">
+                        Points
+                        <div className="info-tooltip">
+                          <HelpCircle size={14} className="info-icon" />
+                          <span className="tooltip-text">
+                            Points are calculated based on correct answers, with a small penalty for incorrect attempts to discourage guessing.
+                          </span>
+                        </div>
+                      </div>
+                    </th>
                     <th>Correct</th>
                     <th>Attempts</th>
                     <th>Accuracy</th>
@@ -311,6 +322,11 @@ const TeacherDashboard = () => {
                           />
                         </div>
                         <span>{entry.username}</span>
+                      </td>
+                      <td>
+                        <span className="points-badge">
+                          {entry.score || 0} pts
+                        </span>
                       </td>
                       <td>{entry.correctAttempts}</td>
                       <td>{entry.totalAttempts}</td>
