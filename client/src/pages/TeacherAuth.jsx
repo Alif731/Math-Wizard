@@ -155,10 +155,14 @@ const TeacherAuth = () => {
 
   useEffect(() => {
     if (videoRef.current) {
+      // 🔥 FIX 1: Explicitly force WebKit to recognize the mute state
+      videoRef.current.defaultMuted = true;
+      videoRef.current.muted = true;
+
       videoRef.current.load();
-      // play() may still be blocked until the user interacts,
-      // but we can attempt it once the video is ready.
-      videoRef.current.play().catch(() => {});
+      videoRef.current.play().catch((err) => {
+        console.log("iOS Autoplay blocked (Usually Low Power Mode):", err);
+      });
     }
   }, [videoSrc]);
 
@@ -166,7 +170,7 @@ const TeacherAuth = () => {
     <div className="login__main">
       <div className="login__img">
         <video
-          // key={videoSrc}
+          key={videoSrc}
           ref={videoRef}
           autoPlay
           loop

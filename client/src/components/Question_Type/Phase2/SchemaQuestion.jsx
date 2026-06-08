@@ -1424,6 +1424,25 @@ const SchemaQuestion = ({
   const isSolveStage =
     question?.moduleStage === "schema_solve" || isDirectSchemaSolve;
 
+  //   Create a reference for the solve input
+  const solveInputRef = useRef(null);
+
+  //  Auto-focus the input when the solve stage loads
+  // useEffect(() => {
+  //   if (
+  //     isSolveStage &&
+  //     solveInputRef.current &&
+  //     !hasFeedback &&
+  //     !isSubmitting
+  //   ) {
+  //     // A tiny 100ms delay ensures your CSS animations finish before the browser forces focus
+  //     const timer = setTimeout(() => {
+  //       solveInputRef.current?.focus();
+  //     }, 100);
+  //     return () => clearTimeout(timer);
+  //   }
+  // }, [question?.id, isSolveStage, hasFeedback, isSubmitting]);
+
   const canCheck =
     (isVariableIdentificationQuestion(question)
       ? isQuestionResponseReady(question, response)
@@ -2266,6 +2285,8 @@ const SchemaQuestion = ({
             className={`worksheet-answer-field ${hasFeedback ? (feedback?.isCorrect || isRevealed ? "is-correct" : "is-wrong") : ""}`}
           >
             <input
+              // auto focus for onload for SOLVE MODULE
+              ref={solveInputRef}
               type="text"
               inputMode="numeric"
               value={
@@ -2304,13 +2325,28 @@ const SchemaQuestion = ({
               showUnknown={false}
               showOperatorPad={false}
               disabled={hasFeedback || isSubmitting}
+              clearLabel="AC"
               onDigit={(digit) => {
                 if (!hasFeedback) {
                   // Append digit or "?" — both are valid inputs
-                  setResponse((current) => ({
-                    ...(current || {}),
-                    textAnswer: (current?.textAnswer || "") + digit,
-                  }));
+                  // setResponse((current) => ({
+                  //   ...(current || {}),
+                  //   textAnswer: (current?.textAnswer || "") + digit,
+                  // }));
+
+                  // Treat "?" as a clear command
+                  if (digit === "?") {
+                    setResponse((current) => ({
+                      ...(current || {}),
+                      textAnswer: "",
+                    }));
+                    solveInputRef.current?.focus();
+                  } else {
+                    setResponse((current) => ({
+                      ...(current || {}),
+                      textAnswer: (current?.textAnswer || "") + digit,
+                    }));
+                  }
                 }
               }}
               onBackspace={() => {
@@ -2327,6 +2363,7 @@ const SchemaQuestion = ({
                     ...(current || {}),
                     textAnswer: "",
                   }));
+                  solveInputRef.current?.focus();
                 }
               }}
             />

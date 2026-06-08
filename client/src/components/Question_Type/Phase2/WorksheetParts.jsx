@@ -548,6 +548,7 @@ export const Keypad = ({
   onClear,
   onOperator,
   disabled,
+  clearLabel = "?",
 }) => (
   <div
     className="worksheet-keypad"
@@ -610,7 +611,8 @@ export const Keypad = ({
           disabled={disabled}
           aria-label="Unknown value"
         >
-          ?
+          {clearLabel}
+          {/* ? */}
         </button>
       </div>
     )}
